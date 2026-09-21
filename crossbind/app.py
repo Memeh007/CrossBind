@@ -6,7 +6,7 @@ import json
 import shutil
 import threading
 from pathlib import Path
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
@@ -95,8 +95,8 @@ async def dock(
     num_modes: int = Form(9),
     cpu: int = Form(0),
     receptor: UploadFile = File(...),
-    ligand_file: Optional[UploadFile] = File(None),
-    reference_ligand: Optional[UploadFile] = File(None),
+    ligand_file: Annotated[Optional[UploadFile], File()] = None,
+    reference_ligand: Annotated[Optional[UploadFile], File()] = None,
 ):
     jid = new_job_id()
     jdir = job_dir(jid)
