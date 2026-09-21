@@ -1,11 +1,11 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}CrossBind — Dock{% endblock %}
 {% block content %}
 <section class="hero">
-  <h1>Local molecular docking</h1>
+  <h1>Dock locally. Trust the pose.</h1>
   <p class="lede">
-    Prepare ligands with RDKit + Meeko, receptors with Open Babel, dock with AutoDock Vina 1.2.x
-    (optional GNINA CNN scores). Scores are engine-specific — not interchangeable with ICM/Molsoft.
+    Receptor in. Ligand in. Box set. Vina runs on your machine — optional GNINA scores stay labeled separate.
+    Affinities are not ICM. Validate with RMSD and wet lab.
   </p>
 </section>
 
@@ -92,3 +92,4 @@
 {% block scripts %}
 <script src="/static/js/app.js"></script>
 {% endblock %}
+

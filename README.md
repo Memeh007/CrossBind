@@ -1,4 +1,4 @@
-# CrossBind
+﻿# CrossBind
 
 **Local molecular docking for researchers** — *biology × compute*.
 
@@ -121,3 +121,14 @@ git push -u origin main
 ## Disclaimer
 
 Research / educational software. Docking scores guide hypotheses; they are not clinical or regulatory decisions.
+
+## Make it better (roadmap)
+
+- Prefer **GNINA** when installed; show Vina + CNN side-by-side and optional consensus rank
+- **Auto-box** from uploaded reference ligand / selected residues
+- **Batch dock** from a SMILES CSV (queue jobs)
+- Explicit **protonation / pH** prep notes (and Open Babel options) in the UI
+- Always-on **redock RMSD report card** when a crystal pose is supplied
+- One-click **demo fixture** (public PDB + ligand) for first-run
+- Portfolio card + short LinkedIn clip of the boot → dock loop
+- Multi-conformer ligand ensemble (often improves pose quality)
