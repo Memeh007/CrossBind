@@ -80,7 +80,6 @@ async def api_pubchem(name: str = Form(...)):
 
 @app.post("/dock")
 async def dock(
-    background_tasks: BackgroundTasks,
     request: Request,
     compound_name: str = Form("ligand"),
     smiles: str = Form(""),
