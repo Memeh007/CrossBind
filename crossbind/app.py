@@ -239,6 +239,7 @@ async def viewer_page(request: Request, job_id: str):
                 "center": result.get("center") or [0, 0, 0],
                 "size": result.get("size") or [20, 20, 20],
             },
+            "engines": _engine_status(),
         },
     )
 
@@ -313,7 +314,7 @@ async def jobs_list(request: Request):
     return templates.TemplateResponse(
         request,
         "jobs.html",
-        {"jobs": list_jobs(100), "version": __version__},
+        {"jobs": list_jobs(100), "version": __version__, "engines": _engine_status()},
     )
 
 
