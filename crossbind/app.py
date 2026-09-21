@@ -144,9 +144,11 @@ async def dock(
         rb = await reference_ligand.read()
         ref_path.write_bytes(rb)
 
-    # Also keep original PDB for viewer if provided
+    # Always mirror receptor for viewer (even if docking fails mid-pipeline)
     if rec_ext == ".pdb":
         shutil.copy(rec_path, jdir / "receptor.pdb")
+    elif rec_ext == ".pdbqt":
+        shutil.copy(rec_path, jdir / "receptor.pdbqt")
 
     meta = {
         "id": jid,
