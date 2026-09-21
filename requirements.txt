@@ -1,0 +1,14 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+jinja2>=3.1
+python-multipart>=0.0.9
+requests>=2.31
+numpy>=1.26
+scipy>=1.11
+gemmi>=0.6
+meeko>=0.5,<0.9
+# RDKit: prefer conda-forge on some platforms; pip wheel works on many Windows/Linux builds
+rdkit>=2023.9.1
+# Open Babel is optional as a pip package (often hard on Windows).
+# Prefer system Open Babel / obabel CLI, or upload receptor as .pdbqt.
+# openbabel-wheel  # optional; may not install on all platforms

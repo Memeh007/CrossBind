@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}CrossBind{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/crossbind.css" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">
+      <span class="brand-mark">✕</span>
+      <span class="brand-text">CrossBind</span>
+      <span class="brand-tag">biology × compute</span>
+    </a>
+    <nav>
+      <a href="/">Dock</a>
+      <a href="/jobs">Jobs</a>
+      <a href="/api/health" target="_blank" rel="noopener">Health</a>
+    </nav>
+    <div class="engine-pills">
+      {% if engines is defined %}
+        <span class="pill {% if engines.vina_ok %}ok{% else %}bad{% endif %}">Vina {% if engines.vina_ok %}ready{% else %}missing{% endif %}</span>
+        <span class="pill {% if engines.gnina_ok %}ok{% else %}muted{% endif %}">GNINA {% if engines.gnina_ok %}ready{% else %}optional{% endif %}</span>
+      {% endif %}
+    </div>
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    <span>CrossBind v{{ version }} — local researchers-only docking</span>
+    <span>Alexander Cecena / <a href="https://github.com/Memeh007" target="_blank" rel="noopener">Memeh007</a> · MIT</span>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

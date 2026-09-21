@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Jobs — CrossBind{% endblock %}
+{% block content %}
+<section class="panel">
+  <h1>All jobs</h1>
+  <table class="jobs">
+    <thead><tr><th>ID</th><th>Compound</th><th>Status</th><th>Vina</th><th>GNINA CNN</th><th></th></tr></thead>
+    <tbody>
+    {% for j in jobs %}
+      <tr>
+        <td><code>{{ j.id }}</code></td>
+        <td>{{ j.compound_name or "—" }}</td>
+        <td><span class="status {{ j.status }}">{{ j.status }}</span></td>
+        <td>{% if j.vina_affinity is not none %}{{ '%.2f'|format(j.vina_affinity) }}{% else %}—{% endif %}</td>
+        <td>{% if j.gnina_cnn_score is not none %}{{ '%.2f'|format(j.gnina_cnn_score) }}{% else %}—{% endif %}</td>
+        <td><a href="/job/{{ j.id }}">details</a> · <a href="/viewer/{{ j.id }}">3D</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

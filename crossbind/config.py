@@ -1,0 +1,63 @@
+"""Runtime settings for CrossBind."""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+# Project root: CrossBind/
+ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = Path(os.environ.get("CROSSBIND_DATA", ROOT / "data")).resolve()
+JOBS_DIR = DATA_DIR / "jobs"
+UPLOAD_MAX_BYTES = int(os.environ.get("CROSSBIND_UPLOAD_MAX", 50 * 1024 * 1024))
+
+HOST = os.environ.get("CROSSBIND_HOST", "127.0.0.1")
+PORT = int(os.environ.get("CROSSBIND_PORT", "8787"))
+
+VINA_BIN = os.environ.get("VINA_BIN", "").strip() or None
+GNINA_BIN = os.environ.get("GNINA_BIN", "").strip() or None
+
+# Common Windows fallbacks (checked only if VINA_BIN unset)
+_VINA_CANDIDATES = [
+    ROOT / "bin" / "vina",
+    ROOT / "bin" / "vina.exe",
+    ROOT / "bin" / "vina_1.2.7_win.exe",
+    Path("C:/Program Files/AutoDock Vina/vina.exe"),
+]
+
+ALLOWED_RECEPTOR_EXT = {".pdb", ".pdbqt"}
+ALLOWED_LIGAND_EXT = {".pdb", ".pdbqt", ".mol", ".mol2", ".sdf", ".smi", ".smiles"}
+
+
+def resolve_vina_bin() -> str | None:
+    if VINA_BIN and Path(VINA_BIN).is_file():
+        return VINA_BIN
+    if VINA_BIN:
+        # User set path but missing — still return so error message is clear
+        return VINA_BIN
+    for p in _VINA_CANDIDATES:
+        if p.is_file():
+            return str(p)
+    # PATH lookup
+    import shutil
+
+    for name in ("vina", "vina.exe"):
+        found = shutil.which(name)
+        if found:
+            return found
+    return None
+
+
+def resolve_gnina_bin() -> str | None:
+    if GNINA_BIN and Path(GNINA_BIN).is_file():
+        return GNINA_BIN
+    if GNINA_BIN:
+        return GNINA_BIN
+    import shutil
+
+    found = shutil.which("gnina")
+    return found
+
+
+def ensure_dirs() -> None:
+    JOBS_DIR.mkdir(parents=True, exist_ok=True)

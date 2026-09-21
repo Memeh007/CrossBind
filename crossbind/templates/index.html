@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}CrossBind — Dock{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Local molecular docking</h1>
+  <p class="lede">
+    Prepare ligands with RDKit + Meeko, receptors with Open Babel, dock with AutoDock Vina 1.2.x
+    (optional GNINA CNN scores). Scores are engine-specific — not interchangeable with ICM/Molsoft.
+  </p>
+</section>
+
+{% if not engines.vina_ok %}
+<div class="banner warn">
+  <strong>Vina binary not found.</strong>
+  Set <code>VINA_BIN</code> to your <code>vina</code> / <code>vina.exe</code> path, or place it in <code>CrossBind/bin/</code>.
+  You can still browse the UI; docking jobs will fail until Vina is installed.
+</div>
+{% endif %}
+
+<form class="dock-form panel" action="/dock" method="post" enctype="multipart/form-data">
+  <div class="grid-2">
+    <fieldset>
+      <legend>Receptor</legend>
+      <label>PDB or PDBQT<input type="file" name="receptor" accept=".pdb,.pdbqt" required /></label>
+    </fieldset>
+    <fieldset>
+      <legend>Ligand</legend>
+      <label>Compound name<input type="text" name="compound_name" value="ligand" /></label>
+      <label>SMILES<textarea name="smiles" rows="2" placeholder="e.g. CCO or full drug SMILES"></textarea></label>
+      <label>Or PubChem name<input type="text" name="pubchem_name" placeholder="e.g. metformin" /></label>
+      <label>Or ligand file<input type="file" name="ligand_file" accept=".sdf,.mol,.mol2,.pdb,.pdbqt,.smi" /></label>
+      <label>Reference ligand (optional RMSD)<input type="file" name="reference_ligand" accept=".pdb,.pdbqt,.sdf,.mol" /></label>
+    </fieldset>
+  </div>
+
+  <fieldset>
+    <legend>Search box</legend>
+    <div class="grid-3">
+      <label>center X<input type="number" step="any" name="center_x" value="0" /></label>
+      <label>center Y<input type="number" step="any" name="center_y" value="0" /></label>
+      <label>center Z<input type="number" step="any" name="center_z" value="0" /></label>
+      <label>size X<input type="number" step="any" name="size_x" value="20" min="1" /></label>
+      <label>size Y<input type="number" step="any" name="size_y" value="20" min="1" /></label>
+      <label>size Z<input type="number" step="any" name="size_z" value="20" min="1" /></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Engine</legend>
+    <div class="grid-3">
+      <label>Engine
+        <select name="engine">
+          <option value="vina" selected>AutoDock Vina</option>
+          <option value="gnina" {% if not engines.gnina_ok %}disabled{% endif %}>GNINA (optional)</option>
+        </select>
+      </label>
+      <label>Exhaustiveness<input type="number" name="exhaustiveness" value="8" min="1" max="64" /></label>
+      <label>Modes<input type="number" name="num_modes" value="9" min="1" max="20" /></label>
+      <label>CPU threads (0=auto)<input type="number" name="cpu" value="0" min="0" max="64" /></label>
+    </div>
+  </fieldset>
+
+  <div class="actions">
+    <button type="submit" class="btn primary">Run docking</button>
+    <button type="button" class="btn ghost" id="btn-pubchem">Resolve PubChem → SMILES</button>
+  </div>
+  <p class="hint" id="pubchem-status"></p>
+</form>
+
+<section class="panel">
+  <h2>Recent jobs</h2>
+  {% if jobs %}
+  <table class="jobs">
+    <thead><tr><th>ID</th><th>Compound</th><th>Status</th><th>Vina affinity</th><th></th></tr></thead>
+    <tbody>
+    {% for j in jobs %}
+      <tr>
+        <td><code>{{ j.id }}</code></td>
+        <td>{{ j.compound_name or "—" }}</td>
+        <td><span class="status {{ j.status }}">{{ j.status }}</span></td>
+        <td>{% if j.vina_affinity is not none %}{{ '%.2f'|format(j.vina_affinity) }}{% else %}—{% endif %}</td>
+        <td><a href="/job/{{ j.id }}">open</a> · <a href="/viewer/{{ j.id }}">3D</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No jobs yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/app.js"></script>
+{% endblock %}

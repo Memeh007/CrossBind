@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Job {{ job_id }} — CrossBind{% endblock %}
+{% block content %}
+<section class="panel">
+  <div class="row-between">
+    <h1>Job <code>{{ job_id }}</code></h1>
+    <div class="actions">
+      <a class="btn primary" href="/viewer/{{ job_id }}">Open 3D viewer</a>
+      <a class="btn ghost" href="/">New dock</a>
+    </div>
+  </div>
+  <div id="job-status" data-job="{{ job_id }}">
+    <p>Status: <span class="status {{ result.status }}">{{ result.status }}</span></p>
+    <div class="metrics">
+      <div class="metric"><span class="k">vina_affinity</span><span class="v" id="m-vina">{% if result.vina_affinity is not none %}{{ '%.3f'|format(result.vina_affinity) }} kcal/mol{% else %}—{% endif %}</span></div>
+      <div class="metric"><span class="k">gnina_cnn_score</span><span class="v" id="m-cnn">{% if result.gnina_cnn_score is not none %}{{ '%.3f'|format(result.gnina_cnn_score) }}{% else %}—{% endif %}</span></div>
+      <div class="metric"><span class="k">RMSD (ref)</span><span class="v" id="m-rmsd">{% if result.rmsd_to_reference is not none %}{{ '%.3f'|format(result.rmsd_to_reference) }} Å{% else %}—{% endif %}</span></div>
+    </div>
+    {% if result.error %}
+    <div class="banner bad"><strong>Error:</strong> {{ result.error }}</div>
+    {% endif %}
+    <h2>Poses</h2>
+    <div id="poses-table">
+      {% if result.poses %}
+      <table class="jobs">
+        <thead><tr><th>Mode</th><th>Affinity / scores</th></tr></thead>
+        <tbody>
+        {% for p in result.poses %}
+          <tr>
+            <td>{{ p.mode }}</td>
+            <td>
+              {% if p.affinity is defined %}{{ '%.3f'|format(p.affinity) }} kcal/mol
+              {% elif p.vina_affinity is defined %}vina {{ '%.3f'|format(p.vina_affinity) }} · CNN {{ '%.3f'|format(p.cnn_score) }}
+              {% else %}{{ p }}{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No poses yet.</p>
+      {% endif %}
+    </div>
+    <h2>Downloads</h2>
+    <p class="actions">
+      <a class="btn ghost" href="/api/job/{{ job_id }}/file/poses.pdbqt">poses.pdbqt</a>
+      <a class="btn ghost" href="/api/job/{{ job_id }}/file/ligand.pdbqt">ligand.pdbqt</a>
+      <a class="btn ghost" href="/api/job/{{ job_id }}/file/receptor.pdbqt">receptor.pdbqt</a>
+      <a class="btn ghost" href="/api/job/{{ job_id }}/file/job.log">job.log</a>
+    </p>
+    <h2>Log</h2>
+    <pre class="log" id="job-log">{{ log }}</pre>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/app.js"></script>
+<script>CrossBind.pollJob(document.getElementById('job-status').dataset.job);</script>
+{% endblock %}

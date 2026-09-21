@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+
+# Jobs / uploads / local data
+data/jobs/*/
+!data/jobs/.gitkeep
+uploads/
+*.pdbqt
+!examples/**
+
+# Binaries (user-provided docking engines)
+bin/vina
+bin/vina.exe
+bin/vina_*.exe
+bin/gnina
+bin/gnina.exe
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+.pytest_cache/
+.mypy_cache/
