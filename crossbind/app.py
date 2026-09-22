@@ -144,11 +144,9 @@ async def dock(
         rb = await reference_ligand.read()
         ref_path.write_bytes(rb)
 
-    # Always mirror receptor for viewer (even if docking fails mid-pipeline)
+    # Also keep original PDB for viewer if provided
     if rec_ext == ".pdb":
         shutil.copy(rec_path, jdir / "receptor.pdb")
-    elif rec_ext == ".pdbqt":
-        shutil.copy(rec_path, jdir / "receptor.pdbqt")
 
     meta = {
         "id": jid,
@@ -209,6 +207,39 @@ async def api_job(job_id: str):
         raise HTTPException(404, str(exc)) from exc
 
 
+def _truncate_residues_for_viewer(residues: list[dict], max_aa: int = 400, per_chain: int = 200):
+    """Keep all HETATM/ligands; cap AA residues so the DOM cannot explode the viewport."""
+    hets = [r for r in residues if not r.get("is_aa")]
+    aas = [r for r in residues if r.get("is_aa")]
+    total_aa = len(aas)
+    by_chain: dict[str, list] = {}
+    for r in aas:
+        by_chain.setdefault(r["chain"], []).append(r)
+    capped: list[dict] = []
+    for chain in sorted(by_chain.keys()):
+        capped.extend(by_chain[chain][:per_chain])
+    if len(capped) > max_aa:
+        capped = capped[:max_aa]
+    shown_aa = len(capped)
+    out = hets + capped
+
+    def sort_key(item: dict):
+        try:
+            ri = int("".join(c for c in str(item["resi"]) if c.isdigit() or c == "-") or "0")
+        except ValueError:
+            ri = 0
+        return (item["chain"], 0 if item.get("is_aa") else 1, ri, item["resn"])
+
+    out.sort(key=sort_key)
+    return out, {
+        "residue_truncated": shown_aa < total_aa,
+        "aa_shown": shown_aa,
+        "aa_total": total_aa,
+        "het_count": len(hets),
+        "total_all": len(residues),
+    }
+
+
 @app.get("/viewer/{job_id}", response_class=HTMLResponse)
 async def viewer_page(request: Request, job_id: str):
     try:
@@ -224,7 +255,8 @@ async def viewer_page(request: Request, job_id: str):
     if not rec_src.is_file():
         rec_src = jdir / "receptor.pdbqt"
 
-    residues = parse_residues(rec_src) if rec_src.is_file() else []
+    all_residues = parse_residues(rec_src) if rec_src.is_file() else []
+    residues, trunc_meta = _truncate_residues_for_viewer(all_residues)
     aa_only = [r for r in residues if r["is_aa"]]
 
     return templates.TemplateResponse(
@@ -235,6 +267,9 @@ async def viewer_page(request: Request, job_id: str):
             "result": result,
             "residues": residues,
             "aa_residues": aa_only,
+            "residue_truncated": trunc_meta["residue_truncated"],
+            "aa_shown": trunc_meta["aa_shown"],
+            "aa_total": trunc_meta["aa_total"],
             "version": __version__,
             "box": {
                 "center": result.get("center") or [0, 0, 0],
@@ -286,16 +321,31 @@ async def api_file(job_id: str, filename: str):
 
 
 @app.get("/api/job/{job_id}/structure")
-async def api_structure(job_id: str, kind: str = "receptor"):
-    """Return structure text for 3Dmol."""
+async def api_structure(job_id: str, kind: str = "receptor", prefer: str = ""):
+    """Return structure text for 3Dmol.
+
+    For receptors: if PDB is >1.5MB (or prefer=pdbqt), serve PDBQT first for faster parse.
+    """
     jdir = job_dir(job_id)
-    mapping = {
-        "receptor": ["receptor.pdb", "upload_receptor.pdb", "receptor.pdbqt", "upload_receptor.pdbqt"],
-        "poses": ["poses.pdbqt"],
-        "ligand": ["ligand.pdbqt"],
-    }
-    names = mapping.get(kind)
-    if not names:
+    pdb_names = ["receptor.pdb", "upload_receptor.pdb"]
+    pdbqt_names = ["receptor.pdbqt", "upload_receptor.pdbqt"]
+    if kind == "receptor":
+        prefer_qt = (prefer or "").lower() == "pdbqt"
+        large_pdb = False
+        for n in pdb_names:
+            p = jdir / n
+            if p.is_file() and p.stat().st_size > int(1.5 * 1024 * 1024):
+                large_pdb = True
+                break
+        if prefer_qt or large_pdb:
+            names = pdbqt_names + pdb_names
+        else:
+            names = pdb_names + pdbqt_names
+    elif kind == "poses":
+        names = ["poses.pdbqt"]
+    elif kind == "ligand":
+        names = ["ligand.pdbqt"]
+    else:
         raise HTTPException(400, "kind must be receptor|poses|ligand")
     for n in names:
         p = jdir / n

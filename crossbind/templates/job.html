@@ -17,7 +17,7 @@
       <div class="metric"><span class="k">RMSD (ref)</span><span class="v" id="m-rmsd">{% if result.rmsd_to_reference is not none %}{{ '%.3f'|format(result.rmsd_to_reference) }} Å{% else %}—{% endif %}</span></div>
     </div>
     {% if result.error %}
-    <div class="banner bad" id="job-error"><strong>Error:</strong> {{ result.error }}</div>
+    <div class="banner bad"><strong>Error:</strong> {{ result.error }}</div>
     {% endif %}
     <h2>Poses</h2>
     <div id="poses-table">
@@ -54,5 +54,6 @@
 </section>
 {% endblock %}
 {% block scripts %}
-<script>Cross Affinity.pollJob(document.getElementById('job-status').dataset.job);</script>
+<script src="/static/js/app.js"></script>
+<script>CrossAffinity.pollJob(document.getElementById('job-status').dataset.job);</script>
 {% endblock %}

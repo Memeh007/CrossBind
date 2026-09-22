@@ -2,17 +2,17 @@
 {% block title %}Cross Affinity — Dock{% endblock %}
 {% block content %}
 <section class="hero">
-  <h1>Dock locally. Trust the pose.</h1>
+  <h1>Local molecular docking</h1>
   <p class="lede">
-    Receptor in. Ligand in. Box set. Vina runs on your machine — optional GNINA scores stay labeled separate.
-    Affinities are not ICM. Validate with RMSD and wet lab.
+    Prepare ligands with RDKit + Meeko, receptors with Open Babel, dock with AutoDock Vina 1.2.x
+    (optional GNINA CNN scores). Scores are engine-specific — not interchangeable with ICM/Molsoft.
   </p>
 </section>
 
 {% if not engines.vina_ok %}
 <div class="banner warn">
   <strong>Vina binary not found.</strong>
-  Set <code>VINA_BIN</code> to your <code>vina</code> / <code>vina.exe</code> path, or place it in <code>Cross Affinity/bin/</code>.
+  Set <code>VINA_BIN</code> to your <code>vina</code> / <code>vina.exe</code> path, or place it in <code>CrossBind/bin/</code>.
   You can still browse the UI; docking jobs will fail until Vina is installed.
 </div>
 {% endif %}
@@ -90,4 +90,5 @@
 </section>
 {% endblock %}
 {% block scripts %}
+<script src="/static/js/app.js"></script>
 {% endblock %}
