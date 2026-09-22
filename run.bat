@@ -2,7 +2,7 @@
 cd /d "%~dp0"
 title ddOS
 echo.
-echo  ddOS — Drug Discovery Operating System
+echo  ddOS ? Drug Discovery Operating System
 echo  ===================================
 echo.
 
@@ -34,6 +34,16 @@ REM Optional: set VINA_BIN to your vina.exe full path, e.g.
 REM set VINA_BIN=C:\Users\alexc\Desktop\CrossBind\bin\vina.exe
 if exist "bin\vina.exe" if not defined VINA_BIN set "VINA_BIN=%~dp0bin\vina.exe"
 if exist "bin\vina_1.2.7_win.exe" if not defined VINA_BIN set "VINA_BIN=%~dp0bin\vina_1.2.7_win.exe"
+
+REM P2Rank (optional pocket finder) ? local install under bin\p2rank
+if exist "bin\p2rank\prank.bat" if not defined P2RANK_BIN set "P2RANK_BIN=%~dp0bin\p2rank\prank.bat"
+if exist "bin\p2rank\prank.bat" if not defined P2RANK_HOME set "P2RANK_HOME=%~dp0bin\p2rank"
+
+REM Java 17+ for P2Rank ? prefer Microsoft OpenJDK if installed
+if not defined JAVA_HOME (
+  for /d %%J in ("C:\Program Files\Microsoft\jdk-17*") do set "JAVA_HOME=%%~J"
+)
+if defined JAVA_HOME if exist "%JAVA_HOME%\bin\java.exe" set "PATH=%JAVA_HOME%\bin;%PATH%"
 
 set PORT=8787
 echo.

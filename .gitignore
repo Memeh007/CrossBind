@@ -36,3 +36,8 @@ data/cache/**
 !data/cache/structures/
 !data/cache/structures/.gitkeep
 
+
+# P2Rank local install (large; download from GitHub releases)
+bin/p2rank/
+bin/_downloads/
+
