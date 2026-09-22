@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}Cross Affinity{% endblock %}</title>
   <link rel="stylesheet" href="/static/css/crossbind.css" />
-  <link rel="icon" type="image/svg+xml" href="/static/img/logo-molecule.svg" />
+  <link rel="icon" href="/static/img/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16.png" />
+  <link rel="apple-touch-icon" href="/static/img/apple-touch-icon.png" />
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -13,7 +16,7 @@
     <a class="brand" href="/">
       <img class="brand-logo" src="/static/img/logo-molecule.svg" alt="" width="28" height="28" />
       <span class="brand-text">Cross Affinity</span>
-      <span class="brand-tag">biology × compute</span>
+      <span class="brand-tag">biology x compute</span>
     </a>
     <nav>
       <a href="/">Dock</a>
@@ -35,6 +38,8 @@
     <span>Cross Affinity v{{ version }} — local researchers-only docking</span>
     <span>Alexander Cecena / <a href="https://github.com/Memeh007" target="_blank" rel="noopener">Memeh007</a> · MIT</span>
   </footer>
+  <script src="/static/js/molecule-orbs.js"></script>
+  <script src="/static/js/boot.js"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

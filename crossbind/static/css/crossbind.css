@@ -246,3 +246,188 @@ table.jobs input[type="radio"] { accent-color: var(--teal); cursor: pointer; }
 }
 .badge-exp { color: var(--ok); border-color: #065f46; }
 .badge-pred { color: var(--warn); border-color: #0e7490; }
+
+/* —— Boot overlay (Cross Affinity) —— */
+html.cb-booting {
+  overflow: hidden;
+}
+
+#cb-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 35%, rgba(46, 230, 197, 0.08), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(167, 139, 250, 0.06), transparent 50%),
+    linear-gradient(180deg, #0a0e14 0%, #0c121c 55%, #070b12 100%);
+  color: var(--text);
+  opacity: 1;
+  transition: opacity 0.45s ease;
+  pointer-events: all;
+}
+
+#cb-boot.cb-boot--out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cb-boot__fall {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cb-boot__grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+.cb-boot__center {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.65rem;
+  padding: 1.5rem;
+  max-width: 36rem;
+}
+
+.cb-boot__logo {
+  margin-bottom: 0.35rem;
+}
+
+.ca-orb-wrap {
+  width: 140px;
+  height: 140px;
+  display: grid;
+  place-items: center;
+  transform-origin: center center;
+}
+
+.ca-orb-wrap svg,
+.ca-orb-wrap img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@media (min-width: 720px) {
+  .ca-orb-wrap {
+    width: 160px;
+    height: 160px;
+  }
+}
+
+.cb-boot__title {
+  margin: 0;
+  font-family: var(--font);
+  font-weight: 800;
+  font-size: clamp(1.85rem, 4.5vw, 2.75rem);
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  color: #e8eef7;
+  text-shadow: 0 0 28px rgba(46, 230, 197, 0.25);
+}
+
+.cb-boot__letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.35em) scale(0.92);
+  filter: blur(4px);
+  transition:
+    opacity 0.35s ease,
+    transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 0.35s ease,
+    color 0.35s ease,
+    text-shadow 0.35s ease;
+}
+
+.cb-boot__letter.is-on {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  color: #e8eef7;
+  text-shadow:
+    0 0 12px rgba(46, 230, 197, 0.45),
+    0 0 28px rgba(34, 211, 238, 0.25);
+}
+
+.cb-boot__letter--space {
+  width: 0.35em;
+}
+
+.cb-boot__caption {
+  margin: 0.15rem 0 0.75rem;
+  font-size: clamp(0.85rem, 2vw, 1.05rem);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(46, 230, 197, 0.72);
+}
+
+.cb-boot__bar {
+  width: min(280px, 70vw);
+  margin-top: 0.35rem;
+}
+
+.cb-boot__track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(30, 42, 61, 0.95);
+  border: 1px solid rgba(46, 230, 197, 0.18);
+  overflow: hidden;
+}
+
+.cb-boot__fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2ee6c5, #22d3ee, #a78bfa);
+  box-shadow: 0 0 12px rgba(46, 230, 197, 0.45);
+  transition: width 0.08s linear;
+}
+
+.cb-boot__status {
+  margin-top: 0.55rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  min-height: 1.1em;
+}
+
+.cb-boot__credit {
+  position: absolute;
+  right: 1.1rem;
+  bottom: 0.95rem;
+  z-index: 3;
+  font-size: 0.72rem;
+  font-family: var(--mono);
+  color: rgba(139, 155, 180, 0.85);
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cb-boot__letter {
+    transition: none;
+    filter: none;
+    transform: none;
+  }
+  #cb-boot {
+    transition: opacity 0.15s ease;
+  }
+}
