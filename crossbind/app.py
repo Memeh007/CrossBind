@@ -29,6 +29,9 @@ from crossbind.docking.pipeline import run_docking_job
 from crossbind.jobs import job_dir, list_jobs, new_job_id, read_log, read_result
 from crossbind.pubchem import name_to_smiles
 from crossbind.discovery import refresh_for_target, resolve_protein_query, run_discovery
+from crossbind.discovery.structure_convert import StructureConvertError, ensure_receptor_pdb, receptor_convert_meta
+from crossbind.discovery.pocket import auto_docking_box
+from crossbind.discovery.cache import structures_dir
 from crossbind.job_identity import identity_from_discovery, identity_from_manual
 from crossbind.residues import parse_residues
 from crossbind.security import assert_under, safe_filename
@@ -104,16 +107,26 @@ async def dock(
     jdir = job_dir(jid)
     jdir.mkdir(parents=True, exist_ok=True)
 
-    # Save receptor
+    # Save receptor (PDB / PDBQT / CIF / mmCIF)
     rec_name = safe_filename(receptor.filename or "receptor.pdb", "receptor.pdb")
     rec_ext = Path(rec_name).suffix.lower()
     if rec_ext not in ALLOWED_RECEPTOR_EXT:
         raise HTTPException(400, f"Receptor must be one of {sorted(ALLOWED_RECEPTOR_EXT)}")
-    rec_path = jdir / f"upload_receptor{rec_ext}"
+    raw_path = jdir / f"upload_receptor_raw{rec_ext}"
     rec_bytes = await receptor.read()
     if len(rec_bytes) > UPLOAD_MAX_BYTES:
         raise HTTPException(400, "Receptor file too large")
-    rec_path.write_bytes(rec_bytes)
+    raw_path.write_bytes(rec_bytes)
+    if rec_ext in {".cif", ".mmcif"}:
+        rec_path = jdir / "upload_receptor.pdb"
+        try:
+            ensure_receptor_pdb(raw_path, rec_path)
+        except StructureConvertError as exc:
+            raise HTTPException(400, str(exc)) from exc
+        rec_ext = ".pdb"
+    else:
+        rec_path = jdir / f"upload_receptor{rec_ext}"
+        shutil.copy(raw_path, rec_path)
 
     # Resolve SMILES
     smi = (smiles or "").strip()
@@ -171,6 +184,12 @@ async def dock(
         "center": [center_x, center_y, center_z],
         "size": [size_x, size_y, size_z],
         "source": "manual",
+        "vina_affinity": None,
+        "gnina_cnn_score": None,
+        "gnina_cnn_affinity": None,
+        "rmsd_to_reference": None,
+        "poses": [],
+        "error": None,
     }
     (jdir / "result.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
@@ -198,10 +217,40 @@ async def dock(
     return RedirectResponse(url=f"/job/{jid}", status_code=303)
 
 
+def _normalize_job_result(result: dict) -> dict:
+    """Ensure optional score keys exist so Jinja format filters never see Undefined."""
+    if not isinstance(result, dict):
+        return {"status": "unknown", "error": "Invalid result.json"}
+    out = dict(result)
+    for key in (
+        "vina_affinity",
+        "gnina_cnn_score",
+        "gnina_cnn_affinity",
+        "rmsd_to_reference",
+        "error",
+        "poses",
+        "ligand",
+        "protein",
+        "mechanism",
+        "job_title",
+        "compound_name",
+        "status",
+        "source",
+    ):
+        out.setdefault(key, None if key != "poses" else [])
+    if out.get("poses") is None:
+        out["poses"] = []
+    if out.get("ligand") is None:
+        out["ligand"] = {}
+    if out.get("protein") is None:
+        out["protein"] = {}
+    return out
+
+
 @app.get("/job/{job_id}", response_class=HTMLResponse)
 async def job_page(request: Request, job_id: str):
     try:
-        result = read_result(job_id)
+        result = _normalize_job_result(read_result(job_id))
     except Exception as exc:
         raise HTTPException(404, str(exc)) from exc
     return templates.TemplateResponse(
@@ -438,6 +487,90 @@ async def api_discover_select_target(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+
+@app.post("/api/discover/upload-structure")
+async def api_discover_upload_structure(
+    structure_file: UploadFile = File(...),
+    uniprot: str = Form(""),
+    gene: str = Form(""),
+    label: str = Form("uploaded"),
+):
+    """Accept AlphaFold/predicted PDB or CIF; cache it and return structure + pocket."""
+    try:
+        fname = safe_filename(structure_file.filename or "upload.pdb", "upload.pdb")
+        ext = Path(fname).suffix.lower()
+        if ext not in ALLOWED_RECEPTOR_EXT:
+            raise HTTPException(400, f"Structure must be one of {sorted(ALLOWED_RECEPTOR_EXT)}")
+        raw = await structure_file.read()
+        if len(raw) > UPLOAD_MAX_BYTES:
+            raise HTTPException(400, "Structure file too large")
+        if len(raw) < 50:
+            raise HTTPException(400, "Structure file empty or too small")
+
+        dest_dir = structures_dir() / "uploads"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        stamp = new_job_id()
+        raw_path = dest_dir / f"{stamp}_{fname}"
+        raw_path.write_bytes(raw)
+
+        if ext in {".cif", ".mmcif"}:
+            pdb_path = dest_dir / f"{stamp}_{Path(fname).stem}.pdb"
+            try:
+                ensure_receptor_pdb(
+                    raw_path,
+                    pdb_path,
+                    uniprot=(uniprot or "").strip().upper() or None,
+                )
+            except StructureConvertError as exc:
+                raise HTTPException(400, str(exc)) from exc
+            path = pdb_path
+            fmt = "pdb"
+        else:
+            path = raw_path
+            fmt = ext.lstrip(".")
+
+        pocket = auto_docking_box(path)
+        up = (uniprot or "").strip().upper() or None
+        g = (gene or "").strip() or None
+        lab = (label or "uploaded").strip() or "uploaded"
+        structure = {
+            "ok": True,
+            "provenance": "user_upload",
+            "label": "uploaded" if lab in {"uploaded", "upload", ""} else lab,
+            "pdb_id": None,
+            "uniprot": up,
+            "path": str(path),
+            "format": fmt,
+            "warning": (
+                "User-uploaded structure (e.g. AlphaFold predicted). "
+                "Not an experimental PDB — verify the docking box before interpreting scores."
+            ),
+            "method": "user upload (predicted or experimental)",
+            "resolution_A": None,
+            "plddt_mean": None,
+            "filename": fname,
+        }
+        return {
+            "ok": True,
+            "structure": structure,
+            "pocket": pocket,
+            "selected_uniprot": up,
+            "selected_protein": {
+                "gene": g,
+                "uniprot": up,
+                "protein_name": g or up or fname,
+                "organism": None,
+                "function": None,
+                "mechanism": None,
+                "method": structure["method"],
+            },
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(400, f"Upload failed: {exc}") from exc
+
+
 @app.post("/api/discover/dock")
 async def api_discover_dock(
     discovery_json: str = Form(...),
@@ -452,6 +585,17 @@ async def api_discover_dock(
     except json.JSONDecodeError as exc:
         raise HTTPException(400, f"Invalid discovery_json: {exc}") from exc
 
+    try:
+        return await _discover_dock_inner(
+            payload, engine=engine, exhaustiveness=exhaustiveness, num_modes=num_modes, cpu=cpu
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Discover dock failed: {exc}") from exc
+
+
+async def _discover_dock_inner(payload, *, engine, exhaustiveness, num_modes, cpu):
     drug = payload.get("drug") or {}
     structure = payload.get("structure") or {}
     pocket = payload.get("pocket") or {}
@@ -474,27 +618,30 @@ async def api_discover_dock(
     jdir.mkdir(parents=True, exist_ok=True)
 
     src = Path(rec_src)
-    # Copy into job dir; convert CIF→PDB if needed for existing pipeline
-    if src.suffix.lower() in {".cif", ".mmcif"}:
-        rec_path = jdir / "upload_receptor.pdb"
-        try:
-            from Bio.PDB.MMCIFParser import MMCIFParser
-            from Bio.PDB.PDBIO import PDBIO
-
-            parser = MMCIFParser(QUIET=True)
-            structure_obj = parser.get_structure("rec", str(src))
-            io = PDBIO()
-            io.set_structure(structure_obj)
-            io.save(str(rec_path))
-        except Exception as exc:
-            raise HTTPException(400, f"Could not convert mmCIF to PDB: {exc}") from exc
-    else:
-        rec_ext = src.suffix.lower() if src.suffix.lower() in ALLOWED_RECEPTOR_EXT else ".pdb"
-        rec_path = jdir / f"upload_receptor{rec_ext}"
-        shutil.copy(src, rec_path)
-
-    if rec_path.suffix.lower() == ".pdb":
-        shutil.copy(rec_path, jdir / "receptor.pdb")
+    # Copy into job dir; convert CIF/mmCIF→PDB (prefer AF PDB / gemmi / Biopython)
+    try:
+        if src.suffix.lower() in {".cif", ".mmcif"}:
+            rec_path = jdir / "upload_receptor.pdb"
+            meta_ids = receptor_convert_meta(structure)
+            ensure_receptor_pdb(
+                src,
+                rec_path,
+                uniprot=meta_ids.get("uniprot") or payload.get("selected_uniprot"),
+                entry_id=meta_ids.get("entry_id"),
+                pdb_url=meta_ids.get("pdb_url"),
+            )
+        else:
+            rec_ext = src.suffix.lower() if src.suffix.lower() in ALLOWED_RECEPTOR_EXT else ".pdb"
+            rec_path = jdir / f"upload_receptor{rec_ext}"
+            shutil.copy(src, rec_path)
+        if rec_path.suffix.lower() == ".pdb":
+            shutil.copy(rec_path, jdir / "receptor.pdb")
+    except StructureConvertError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(400, f"Receptor prepare failed: {exc}") from exc
 
     (jdir / "resolved_smiles.txt").write_text(smi, encoding="utf-8")
     (jdir / "discovery.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -518,6 +665,12 @@ async def api_discover_dock(
         "source": "discover",
         "structure_provenance": structure.get("provenance"),
         "pocket_method": pocket.get("method"),
+        "vina_affinity": None,
+        "gnina_cnn_score": None,
+        "gnina_cnn_affinity": None,
+        "rmsd_to_reference": None,
+        "poses": [],
+        "error": None,
         "docking": {
             "engine": engine,
             "scoring": "vina" if (engine or "vina").lower() == "vina" else engine,

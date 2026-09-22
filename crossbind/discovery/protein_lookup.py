@@ -30,6 +30,17 @@ _SPECIES_TAXON = {
 }
 
 
+
+# Free-text → gene / UniProt shortcuts (case-insensitive contains / exact)
+_FREE_TEXT_ALIASES = {
+    "ampk gamma": "PRKAG3",
+    "ampk gamma subunit": "PRKAG3",
+    "ampk γ": "PRKAG3",
+    "ampk-gamma": "PRKAG3",
+    "5'-amp-activated protein kinase subunit gamma": "PRKAG1",
+}
+
+
 def resolve_protein_query(q: str, *, species: str = "human") -> dict[str, Any]:
     """Detect PDB ID, UniProt accession, or gene symbol and resolve metadata + structures."""
     q = (q or "").strip()
@@ -43,6 +54,18 @@ def resolve_protein_query(q: str, *, species: str = "human") -> dict[str, Any]:
     base = q.split("-", 1)[0]
     if _UNIPROT_RE.match(q) or _UNIPROT_RE.match(base):
         return _resolve_uniprot(base.upper(), query=q)
+
+    # Gene-like tokens (PRKAG2, NDUFS1) go straight to MyGene — do not alias-substring them
+    if re.match(r"^[A-Za-z][A-Za-z0-9-]{1,14}$", q) and " " not in q:
+        return _resolve_gene(q, species=species)
+
+    key = q.lower().strip()
+    if key in _FREE_TEXT_ALIASES:
+        return _resolve_gene(_FREE_TEXT_ALIASES[key], species=species)
+    # Phrase contains (longest alias first) — e.g. "AMPK gamma subunit"
+    for alias, gene in sorted(_FREE_TEXT_ALIASES.items(), key=lambda kv: -len(kv[0])):
+        if " " in alias and alias in key:
+            return _resolve_gene(gene, species=species)
 
     return _resolve_gene(q, species=species)
 

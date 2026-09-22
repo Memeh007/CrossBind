@@ -48,7 +48,7 @@
             {% else %}—{% endif %}
           </code></dd>
           {% if result.protein and result.protein.method %}
-          <dt>Method</dt><dd><code>{{ result.protein.method }}{% if result.protein.resolution_A %} · {{ '%.2f'|format(result.protein.resolution_A) }} Å{% endif %}</code></dd>
+          <dt>Method</dt><dd><code>{{ result.protein.method }}{% if result.protein.resolution_A is defined and result.protein.resolution_A is not none %} · {{ '%.2f'|format(result.protein.resolution_A) }} Å{% endif %}</code></dd>
           {% endif %}
         </dl>
         {% if result.mechanism %}
@@ -64,9 +64,9 @@
     </div>
 
     <div class="metrics">
-      <div class="metric"><span class="k">vina_affinity</span><span class="v" id="m-vina">{% if result.vina_affinity is not none %}{{ '%.3f'|format(result.vina_affinity) }} kcal/mol{% else %}—{% endif %}</span></div>
-      <div class="metric"><span class="k">gnina_cnn_score</span><span class="v" id="m-cnn">{% if result.gnina_cnn_score is not none %}{{ '%.3f'|format(result.gnina_cnn_score) }}{% else %}—{% endif %}</span></div>
-      <div class="metric"><span class="k">RMSD (ref)</span><span class="v" id="m-rmsd">{% if result.rmsd_to_reference is not none %}{{ '%.3f'|format(result.rmsd_to_reference) }} Å{% else %}—{% endif %}</span></div>
+      <div class="metric"><span class="k">vina_affinity</span><span class="v" id="m-vina">{% if result.vina_affinity is defined and result.vina_affinity is not none %}{{ '%.3f'|format(result.vina_affinity) }} kcal/mol{% else %}—{% endif %}</span></div>
+      <div class="metric"><span class="k">gnina_cnn_score</span><span class="v" id="m-cnn">{% if result.gnina_cnn_score is defined and result.gnina_cnn_score is not none %}{{ '%.3f'|format(result.gnina_cnn_score) }}{% else %}—{% endif %}</span></div>
+      <div class="metric"><span class="k">RMSD (ref)</span><span class="v" id="m-rmsd">{% if result.rmsd_to_reference is defined and result.rmsd_to_reference is not none %}{{ '%.3f'|format(result.rmsd_to_reference) }} Å{% else %}—{% endif %}</span></div>
     </div>
     {% if result.error %}
     <div class="banner bad"><strong>Error:</strong> {{ result.error }}</div>
@@ -81,8 +81,8 @@
           <tr>
             <td>{{ p.mode }}</td>
             <td>
-              {% if p.affinity is defined %}{{ '%.3f'|format(p.affinity) }} kcal/mol
-              {% elif p.vina_affinity is defined %}vina {{ '%.3f'|format(p.vina_affinity) }} · CNN {{ '%.3f'|format(p.cnn_score) }}
+              {% if p.affinity is defined and p.affinity is not none %}{{ '%.3f'|format(p.affinity) }} kcal/mol
+              {% elif p.vina_affinity is defined and p.vina_affinity is not none %}vina {{ '%.3f'|format(p.vina_affinity) }}{% if p.cnn_score is defined and p.cnn_score is not none %} · CNN {{ '%.3f'|format(p.cnn_score) }}{% endif %}
               {% else %}{{ p }}{% endif %}
             </td>
           </tr>

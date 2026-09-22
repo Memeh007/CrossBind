@@ -34,7 +34,7 @@ def recommend_structure(
     if uniprot and not force_pdb:
         cached = get_json("structure_rec", uniprot, ttl_s=14 * 86400)
         if cached and cached.get("path") and Path(cached["path"]).is_file():
-            return cached
+            return _upgrade_cached_af_to_pdb(cached)
     elif force_pdb and uniprot:
         cached = get_json("structure_rec", cache_key, ttl_s=14 * 86400)
         if cached and cached.get("path") and Path(cached["path"]).is_file():
@@ -193,7 +193,7 @@ def fetch_pdb_entry_meta(pdb_id: str) -> dict[str, Any]:
 
 
 def download_alphafold(uniprot: str) -> dict[str, Any]:
-    """Use Biopython AlphaFold DB helpers; persist CIF locally."""
+    """Use Biopython AlphaFold DB helpers; prefer PDB (dockable), else CIF."""
     from Bio.PDB import alphafold_db
 
     preds = list(alphafold_db.get_predictions(uniprot))
@@ -201,23 +201,84 @@ def download_alphafold(uniprot: str) -> dict[str, Any]:
         raise RuntimeError(f"No AlphaFold predictions for {uniprot}")
     pred = max(preds, key=lambda p: float(p.get("globalMetricValue") or 0))
     entry = pred.get("entryId") or pred.get("modelEntityId") or f"AF-{uniprot}-F1"
-    out = structures_dir() / f"{entry}.cif"
-    if not out.is_file() or out.stat().st_size < 100:
-        try:
-            cif_path = alphafold_db.download_cif_for(pred, directory=str(structures_dir()))
-            cif_path = Path(cif_path)
-            if cif_path.resolve() != out.resolve():
-                out.write_bytes(cif_path.read_bytes())
-        except Exception:
-            cif_url = pred.get("cifUrl")
-            if not cif_url:
-                raise
-            r = httpx.get(cif_url, headers={"User-Agent": UA_NOTE}, timeout=90, follow_redirects=True)
-            r.raise_for_status()
-            out.write_bytes(r.content)
+    out_pdb = structures_dir() / f"{entry}.pdb"
+    out_cif = structures_dir() / f"{entry}.cif"
+    pdb_url = pred.get("pdbUrl")
+    cif_url = pred.get("cifUrl")
+
+    # Prefer PDB for the docking pipeline (avoids mmCIF→PDB convert failures)
+    if out_pdb.is_file() and out_pdb.stat().st_size > 100:
+        chosen = out_pdb
+    else:
+        chosen = None
+        if pdb_url:
+            try:
+                r = httpx.get(pdb_url, headers={"User-Agent": UA_NOTE}, timeout=90, follow_redirects=True)
+                r.raise_for_status()
+                if len(r.content) > 100 and b"ATOM" in r.content[:8000]:
+                    out_pdb.write_bytes(r.content)
+                    chosen = out_pdb
+            except Exception:
+                chosen = None
+        if chosen is None:
+            # Fall back to CIF (dock route converts)
+            if not out_cif.is_file() or out_cif.stat().st_size < 100:
+                try:
+                    cif_path = alphafold_db.download_cif_for(pred, directory=str(structures_dir()))
+                    cif_path = Path(cif_path)
+                    if cif_path.resolve() != out_cif.resolve():
+                        out_cif.write_bytes(cif_path.read_bytes())
+                except Exception:
+                    if not cif_url:
+                        raise
+                    r = httpx.get(cif_url, headers={"User-Agent": UA_NOTE}, timeout=90, follow_redirects=True)
+                    r.raise_for_status()
+                    out_cif.write_bytes(r.content)
+            chosen = out_cif
+
     return {
-        "path": str(out),
+        "path": str(chosen),
         "entry_id": entry,
         "plddt_mean": pred.get("globalMetricValue"),
         "version": pred.get("latestVersion"),
+        "pdb_url": pdb_url,
+        "cif_url": cif_url,
     }
+
+
+def _upgrade_cached_af_to_pdb(cached: dict[str, Any]) -> dict[str, Any]:
+    """If a cached AlphaFold hit points at CIF, prefer a PDB sibling / re-download."""
+    path = Path(cached.get("path") or "")
+    if not path.is_file():
+        return cached
+    if path.suffix.lower() not in {".cif", ".mmcif"}:
+        return cached
+    pdb_sib = path.with_suffix(".pdb")
+    if pdb_sib.is_file() and pdb_sib.stat().st_size > 100:
+        out = dict(cached)
+        out["path"] = str(pdb_sib)
+        out["format"] = "pdb"
+        return out
+    stem = path.name[:-4] if path.name.endswith(".cif") else path.stem
+    matches = sorted(path.parent.glob(f"{stem}*.pdb"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if matches:
+        out = dict(cached)
+        out["path"] = str(matches[0])
+        out["format"] = "pdb"
+        return out
+    uniprot = (cached.get("uniprot") or "").strip().upper()
+    if uniprot and cached.get("provenance") == "alphafold_db":
+        try:
+            af = download_alphafold(uniprot)
+            out = dict(cached)
+            out["path"] = af["path"]
+            out["format"] = Path(af["path"]).suffix.lstrip(".")
+            out["pdb_id"] = af.get("entry_id") or out.get("pdb_id")
+            out["plddt_mean"] = af.get("plddt_mean", out.get("plddt_mean"))
+            if af.get("pdb_url"):
+                out["pdb_url"] = af["pdb_url"]
+            set_json("structure_rec", uniprot, out)
+            return out
+        except Exception:
+            return cached
+    return cached

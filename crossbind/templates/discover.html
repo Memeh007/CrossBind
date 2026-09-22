@@ -4,49 +4,56 @@
 <section class="hero">
   <h1>Discover</h1>
   <p class="lede">
-    Drug name → <strong>choose the protein</strong> to dock to → experimental PDB or AlphaFold structure →
-    auto docking box → prepare &amp; dock. Upload your own receptor on the Dock page if needed.
+    Research triage: name a drug, pick a protein, fetch or upload a structure, then dock.
+    Scores are computational hypotheses — not clinical advice.
   </p>
+  <ol class="steps">
+    <li><span class="step-n">1</span> Drug</li>
+    <li><span class="step-n">2</span> Protein / target</li>
+    <li><span class="step-n">3</span> Structure</li>
+    <li><span class="step-n">4</span> Dock</li>
+  </ol>
 </section>
 
 <div class="banner warn">
   <strong>Not medical advice.</strong>
-  Targets, mechanisms, orthologs, and docking boxes are <em>computational hypotheses</em> for research triage —
+  Targets, mechanisms, orthologs, and docking boxes are computational hypotheses for research triage —
   not clinical claims, dosing guidance, or experimental proof.
 </div>
 
 <form class="panel dock-form" id="discover-form">
   <fieldset>
-    <legend>Compound</legend>
+    <legend>Step 1 — Drug</legend>
+    <p class="help">Type a common drug name (PubChem). Optional UniProt skips straight to that protein.</p>
     <div class="grid-2">
       <label>Drug name
-        <input type="text" name="name" id="drug-name" value="metformin" placeholder="e.g. metformin" required />
+        <input type="text" name="name" id="drug-name" value="metformin" placeholder="metformin" required />
       </label>
-      <label>Optional UniProt override (auto-select)
-        <input type="text" name="uniprot" id="uniprot-override" placeholder="e.g. P54619" />
+      <label>Optional UniProt (skip target pick)
+        <input type="text" name="uniprot" id="uniprot-override" placeholder="P54619" />
       </label>
     </div>
   </fieldset>
   <div class="actions">
-    <button type="submit" class="btn primary" id="btn-discover">Run discovery</button>
+    <button type="submit" class="btn primary" id="btn-discover">Find drug &amp; targets</button>
     <span class="hint" id="discover-status"></span>
   </div>
 </form>
 
 <section class="panel" id="panel-study">
-  <h2>Choose protein to study</h2>
-  <p class="muted">Search any studied protein by UniProt accession, gene symbol, or PDB ID — independent of the drug target table.</p>
+  <h2>Step 2 — Protein</h2>
+  <p class="help">Search by gene, UniProt, or PDB — e.g. PRKAG2, AMPK gamma, P54619. Or use Dock-to radios after Step 1.</p>
   <form class="dock-form" id="protein-search-form">
     <div class="grid-2">
-      <label>UniProt / gene / PDB
-        <input type="text" id="protein-query" placeholder="e.g. P54619, PRKAA1, or 6B1U" required />
+      <label>Gene / UniProt / PDB
+        <input type="text" id="protein-query" placeholder="PRKAG2 or AMPK gamma or P54619" required />
       </label>
       <label>Species
         <input type="text" id="protein-species" value="human" placeholder="human" />
       </label>
     </div>
     <div class="actions">
-      <button type="submit" class="btn primary" id="btn-protein-search">Search</button>
+      <button type="submit" class="btn primary" id="btn-protein-search">Search protein</button>
       <span class="hint" id="protein-search-status"></span>
     </div>
   </form>
@@ -54,7 +61,7 @@
     <dl class="kv" id="protein-kv"></dl>
     <p class="muted" id="protein-function"></p>
     <div class="grid-2" style="align-items:end">
-      <label>Structure candidate
+      <label>Structure to use
         <select id="protein-pdb-select"></select>
       </label>
       <div class="actions">
@@ -65,37 +72,62 @@
   </div>
 </section>
 
+<section class="panel" id="panel-upload">
+  <h2>Step 3 — Or upload a structure</h2>
+  <p class="help">Upload an AlphaFold (or any) PDB/CIF. Pair with the drug from Step 1. UniProt/gene labels are optional for the job title.</p>
+  <form class="dock-form" id="structure-upload-form">
+    <div class="grid-2">
+      <label>Structure file (PDB / CIF)
+        <input type="file" id="structure-file" accept=".pdb,.cif,.mmcif,.ent" required />
+      </label>
+      <label>Label (optional)
+        <input type="text" id="upload-label" placeholder="AlphaFold predicted" value="uploaded" />
+      </label>
+      <label>UniProt (optional)
+        <input type="text" id="upload-uniprot" placeholder="P54619" />
+      </label>
+      <label>Gene (optional)
+        <input type="text" id="upload-gene" placeholder="PRKAG1" />
+      </label>
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn primary" id="btn-upload-structure">Use uploaded structure</button>
+      <span class="hint" id="structure-upload-status"></span>
+    </div>
+  </form>
+</section>
+
 <section class="panel" id="panel-drug" hidden>
   <h2>Drug identity</h2>
   <dl class="kv" id="drug-kv"></dl>
 </section>
 
 <section class="panel" id="panel-mech" hidden>
-  <h2>Mechanisms &amp; targets</h2>
+  <h2>Suggested targets</h2>
   <p class="muted" id="mech-disclaimer"></p>
   <ul id="mech-list"></ul>
-  <p class="muted">Select <strong>Dock to</strong> to refetch structure, pocket, and orthologs for that protein.</p>
+  <p class="help">Pick <strong>Dock to</strong> — structure, pocket, and job title update for that protein.</p>
   <table class="jobs" id="targets-table">
-    <thead><tr><th>Dock to</th><th>Gene</th><th>UniProt</th><th>Mechanism</th><th>Source</th></tr></thead>
+    <thead><tr><th>Dock to</th><th>Gene</th><th>UniProt</th><th>Note</th><th>Source</th></tr></thead>
     <tbody></tbody>
   </table>
 </section>
 
 <section class="panel" id="panel-selected" hidden>
-  <h2>Selected protein</h2>
-  <p class="lede" id="job-title-preview" style="margin-top:0"></p>
+  <h2>Selected for docking</h2>
+  <p class="lede mono" id="job-title-preview" style="margin-top:0"></p>
   <dl class="kv" id="selected-kv"></dl>
   <p class="muted" id="selected-function"></p>
 </section>
 
 <section class="panel" id="panel-structure" hidden>
-  <h2>Recommended structure</h2>
+  <h2>Structure</h2>
   <dl class="kv" id="structure-kv"></dl>
   <p class="hint" id="structure-warn"></p>
 </section>
 
 <section class="panel" id="panel-pocket" hidden>
-  <h2>Auto docking box</h2>
+  <h2>Docking box</h2>
   <dl class="kv" id="pocket-kv"></dl>
   <p class="hint" id="pocket-warn"></p>
 </section>
@@ -110,8 +142,8 @@
 </section>
 
 <section class="panel" id="panel-dock" hidden>
-  <h2>Prepare &amp; dock</h2>
-  <p class="muted">Creates a docking job named after the ligand × protein (see title above), using the fetched receptor, resolved SMILES, and auto-box.</p>
+  <h2>Step 4 — Prepare &amp; dock</h2>
+  <p class="help">Queues a local docking job named after the ligand × protein. Review the box above first.</p>
   <form id="prepare-dock-form" class="dock-form">
     <div class="grid-3">
       <label>Engine

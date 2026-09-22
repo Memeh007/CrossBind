@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}Cross Affinity{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/css/crossbind.css" />
   <link rel="icon" href="/static/img/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32.png" />
@@ -12,32 +15,43 @@
   {% block head %}{% endblock %}
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="/">
-      <img class="brand-logo" src="/static/img/logo-molecule.svg" alt="" width="28" height="28" />
-      <span class="brand-text">Cross Affinity</span>
-      <span class="brand-tag">biology x compute</span>
-    </a>
-    <nav>
-      <a href="/">Dock</a>
-      <a href="/discover">Discover</a>
-      <a href="/jobs">Jobs</a>
-      <a href="/api/health" target="_blank" rel="noopener">Health</a>
-    </nav>
-    <div class="engine-pills">
-      {% if engines is defined %}
-        <span class="pill {% if engines.vina_ok %}ok{% else %}bad{% endif %}">Vina {% if engines.vina_ok %}ready{% else %}missing{% endif %}</span>
-        <span class="pill {% if engines.gnina_ok %}ok{% else %}muted{% endif %}">GNINA {% if engines.gnina_ok %}ready{% else %}optional{% endif %}</span>
-      {% endif %}
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Primary">
+      <a class="brand" href="/discover">
+        <img class="brand-logo" src="/static/img/logo-molecule.svg" alt="" width="28" height="28" />
+        <span class="brand-text">Cross Affinity</span>
+      </a>
+      <nav class="side-nav">
+        <a href="/discover">Discover</a>
+        <a href="/">Dock</a>
+        <a href="/jobs">Jobs</a>
+        <a href="/api/health" target="_blank" rel="noopener">Health</a>
+      </nav>
+      <div class="engine-pills side-pills">
+        {% if engines is defined %}
+          <span class="pill {% if engines.vina_ok %}ok{% else %}bad{% endif %}">Vina {% if engines.vina_ok %}ready{% else %}missing{% endif %}</span>
+          <span class="pill {% if engines.gnina_ok %}ok{% else %}muted{% endif %}">GNINA {% if engines.gnina_ok %}ready{% else %}optional{% endif %}</span>
+        {% endif %}
+      </div>
+    </aside>
+    <div class="app-main">
+      <header class="topbar topbar-compact">
+        <nav class="top-nav-mobile">
+          <a href="/discover">Discover</a>
+          <a href="/">Dock</a>
+          <a href="/jobs">Jobs</a>
+          <a href="/api/health" target="_blank" rel="noopener">Health</a>
+        </nav>
+      </header>
+      <main class="container">
+        {% block content %}{% endblock %}
+      </main>
+      <footer class="footer">
+        <span>Cross Affinity v{{ version }} — local research docking</span>
+        <span>Alexander Cecena / <a href="https://github.com/Memeh007" target="_blank" rel="noopener">Memeh007</a> · MIT</span>
+      </footer>
     </div>
-  </header>
-  <main class="container">
-    {% block content %}{% endblock %}
-  </main>
-  <footer class="footer">
-    <span>Cross Affinity v{{ version }} — local researchers-only docking</span>
-    <span>Alexander Cecena / <a href="https://github.com/Memeh007" target="_blank" rel="noopener">Memeh007</a> · MIT</span>
-  </footer>
+  </div>
   <script src="/static/js/molecule-orbs.js"></script>
   <script src="/static/js/boot.js"></script>
   {% block scripts %}{% endblock %}

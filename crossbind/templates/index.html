@@ -2,10 +2,10 @@
 {% block title %}Cross Affinity — Dock{% endblock %}
 {% block content %}
 <section class="hero">
-  <h1>Local molecular docking</h1>
+  <h1>Dock</h1>
   <p class="lede">
-    Prepare ligands with RDKit + Meeko, receptors with Open Babel, dock with AutoDock Vina 1.2.x
-    (optional GNINA CNN scores). Scores are engine-specific — not interchangeable with ICM/Molsoft.
+    Upload a receptor (PDB, PDBQT, or AlphaFold CIF), pair with a ligand name or SMILES, set the box, run Vina.
+    Prefer <a href="/discover">Discover</a> when you want drug → protein → structure first.
   </p>
 </section>
 
@@ -21,7 +21,7 @@
   <div class="grid-2">
     <fieldset>
       <legend>Receptor</legend>
-      <label>PDB or PDBQT<input type="file" name="receptor" accept=".pdb,.pdbqt" required /></label>
+      <label>Receptor (PDB / PDBQT / CIF — AlphaFold OK)<input type="file" name="receptor" accept=".pdb,.pdbqt,.cif,.mmcif,.ent" required /></label>
     </fieldset>
     <fieldset>
       <legend>Ligand</legend>
@@ -80,7 +80,7 @@
       <tr>
         <td><strong>{{ lig or "—" }}</strong><div class="muted"><code>{{ j.id }}</code></div></td>
         <td>{% if gene or up %}<strong>{{ gene or "—" }}</strong>{% if up %} <code>({{ up }})</code>{% endif %}{% elif j.job_title %}{{ j.job_title }}{% else %}—{% endif %}</td>
-        <td>{% if j.vina_affinity is not none %}{{ '%.2f'|format(j.vina_affinity) }}{% else %}—{% endif %}</td>
+        <td>{% if j.vina_affinity is defined and j.vina_affinity is not none %}{{ '%.2f'|format(j.vina_affinity) }}{% else %}—{% endif %}</td>
         <td><span class="status {{ j.status }}">{{ j.status }}</span></td>
         <td><a href="/job/{{ j.id }}">open</a> · <a href="/viewer/{{ j.id }}">3D</a></td>
       </tr>

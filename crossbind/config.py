@@ -26,7 +26,7 @@ _VINA_CANDIDATES = [
     Path("C:/Program Files/AutoDock Vina/vina.exe"),
 ]
 
-ALLOWED_RECEPTOR_EXT = {".pdb", ".pdbqt"}
+ALLOWED_RECEPTOR_EXT = {".pdb", ".pdbqt", ".cif", ".mmcif"}
 ALLOWED_LIGAND_EXT = {".pdb", ".pdbqt", ".mol", ".mol2", ".sdf", ".smi", ".smiles"}
 
 

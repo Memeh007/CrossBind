@@ -16,7 +16,7 @@
       <label>Pose
         <select id="pose-select">
           {% for p in result.poses or [] %}
-          <option value="{{ p.mode }}">mode {{ p.mode }}{% if p.affinity is defined %} ({{ '%.2f'|format(p.affinity) }}){% elif p.vina_affinity is defined %} ({{ '%.2f'|format(p.vina_affinity) }}){% endif %}</option>
+          <option value="{{ p.mode }}">mode {{ p.mode }}{% if p.affinity is defined and p.affinity is not none %} ({{ '%.2f'|format(p.affinity) }}){% elif p.vina_affinity is defined and p.vina_affinity is not none %} ({{ '%.2f'|format(p.vina_affinity) }}){% endif %}</option>
           {% else %}
           <option value="1">mode 1</option>
           {% endfor %}

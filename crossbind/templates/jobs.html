@@ -35,8 +35,8 @@
           {% else %}—{% endif %}
         </td>
         <td>
-          {% if j.vina_affinity is not none %}{{ '%.2f'|format(j.vina_affinity) }} <span class="muted">kcal/mol</span>
-          {% elif j.gnina_cnn_score is not none %}CNN {{ '%.2f'|format(j.gnina_cnn_score) }}
+          {% if j.vina_affinity is defined and j.vina_affinity is not none %}{{ '%.2f'|format(j.vina_affinity) }} <span class="muted">kcal/mol</span>
+          {% elif j.gnina_cnn_score is defined and j.gnina_cnn_score is not none %}CNN {{ '%.2f'|format(j.gnina_cnn_score) }}
           {% else %}—{% endif %}
         </td>
         <td><span class="status {{ j.status }}">{{ j.status }}</span></td>
