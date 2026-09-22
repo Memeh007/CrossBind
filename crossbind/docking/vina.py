@@ -5,8 +5,18 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+import threading
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Callable, Optional
+
+from crossbind.docking.process_registry import (
+    JobCancelled,
+    cancel_requested,
+    register,
+    unregister,
+)
 
 
 @dataclass
@@ -34,7 +44,9 @@ def run_vina(
     exhaustiveness: int = 8,
     num_modes: int = 9,
     cpu: int = 0,
-    log=None,
+    log: Optional[Callable[[str], None]] = None,
+    job_id: str | None = None,
+    job_dir: Path | None = None,
 ) -> VinaResult:
     if not Path(vina_bin).is_file() and not _on_path(vina_bin):
         raise FileNotFoundError(
@@ -78,14 +90,56 @@ def run_vina(
         "stdout": subprocess.PIPE,
         "stderr": subprocess.STDOUT,
         "text": True,
+        "bufsize": 1,
     }
     if sys.platform == "win32":
-        # Hide console flash on Windows
         kwargs["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
-    proc = subprocess.run(cmd, **kwargs)  # argv list — never shell=True
-    stdout = proc.stdout or ""
+    proc = subprocess.Popen(cmd, **kwargs)  # argv list — never shell=True
+    if job_id:
+        register(job_id, proc)
+
+    chunks: list[str] = []
+
+    def _reader() -> None:
+        try:
+            assert proc.stdout is not None
+            for line in proc.stdout:
+                chunks.append(line)
+        except Exception:
+            pass
+
+    reader = threading.Thread(target=_reader, daemon=True)
+    reader.start()
+
+    try:
+        while True:
+            if job_dir is not None and cancel_requested(job_dir):
+                try:
+                    proc.terminate()
+                except Exception:
+                    pass
+                try:
+                    proc.wait(timeout=3)
+                except Exception:
+                    try:
+                        proc.kill()
+                    except Exception:
+                        pass
+                raise JobCancelled("Cancelled by user during Vina")
+            ret = proc.poll()
+            if ret is not None:
+                break
+            time.sleep(0.35)
+        reader.join(timeout=10)
+    finally:
+        if job_id:
+            unregister(job_id, proc)
+
+    stdout = "".join(chunks)
     if proc.returncode != 0:
+        if job_dir is not None and cancel_requested(job_dir):
+            raise JobCancelled("Cancelled by user during Vina")
         raise RuntimeError(f"Vina exited with code {proc.returncode}:\n{stdout[-4000:]}")
 
     poses = []
@@ -100,7 +154,6 @@ def run_vina(
         )
     top = poses[0]["affinity"] if poses else None
     if top is None:
-        # fallback: first mode line only
         m = re.search(r"^\s*1\s+([-+]?\d*\.?\d+)", stdout, re.MULTILINE)
         top = float(m.group(1)) if m else None
 

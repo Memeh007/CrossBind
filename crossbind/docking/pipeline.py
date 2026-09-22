@@ -6,11 +6,12 @@ import json
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from crossbind.config import resolve_gnina_bin, resolve_vina_bin
 from crossbind.docking.gnina import run_gnina
 from crossbind.docking.ligand import prepare_ligand
+from crossbind.docking.process_registry import JobCancelled, check_cancel
 from crossbind.docking.receptor import prepare_receptor
 from crossbind.docking.rmsd import heavy_atom_rmsd
 from crossbind.docking.vina import run_vina
@@ -31,8 +32,15 @@ def run_docking_job(
     reference_ligand: Path | None = None,
     compound_name: str = "ligand",
     progress: Callable[[str], None] | None = None,
+    # Identity fields (Discover / manual) — persist into result.json
+    job_title: str | None = None,
+    ligand: dict[str, Any] | None = None,
+    protein: dict[str, Any] | None = None,
+    mechanism: str | None = None,
+    job_id: str | None = None,
 ) -> dict:
     log_lines: list[str] = []
+    jid = job_id or job_dir.name
 
     def log(msg: str) -> None:
         ts = datetime.now().strftime("%H:%M:%S")
@@ -42,9 +50,20 @@ def run_docking_job(
         if progress:
             progress(line)
 
+    # Preserve identity / meta already written by app (queued result.json)
+    prior: dict[str, Any] = {}
+    prior_path = job_dir / "result.json"
+    if prior_path.is_file():
+        try:
+            prior = json.loads(prior_path.read_text(encoding="utf-8"))
+        except Exception:
+            prior = {}
+
     result: dict = {
+        **prior,
         "status": "running",
-        "compound_name": compound_name,
+        "id": prior.get("id") or jid,
+        "compound_name": compound_name or prior.get("compound_name") or "ligand",
         "engine": engine,
         "center": list(center),
         "size": list(size),
@@ -57,22 +76,45 @@ def run_docking_job(
         "error": None,
         "started_at": datetime.now(timezone.utc).isoformat(),
     }
+    if job_title is not None:
+        result["job_title"] = job_title
+    elif prior.get("job_title") and "job_title" not in result:
+        result["job_title"] = prior["job_title"]
+    if ligand is not None:
+        result["ligand"] = ligand
+    elif prior.get("ligand") is not None:
+        result["ligand"] = prior["ligand"]
+    if protein is not None:
+        result["protein"] = protein
+    elif prior.get("protein") is not None:
+        result["protein"] = prior["protein"]
+    if mechanism is not None:
+        result["mechanism"] = mechanism
+    elif "mechanism" in prior:
+        result["mechanism"] = prior.get("mechanism")
+
     _write_meta(job_dir, result)
 
     try:
         job_dir.mkdir(parents=True, exist_ok=True)
+        # Clear stale cancel flag only if caller forgot — leave CANCEL if user already cancelled
+        check_cancel(job_dir)
+
         lig_pdbqt = job_dir / "ligand.pdbqt"
         rec_pdbqt = job_dir / "receptor.pdbqt"
         poses_out = job_dir / "poses.pdbqt"
 
         log("== CrossBind docking pipeline ==")
+        check_cancel(job_dir)
         prepare_ligand(
             smiles=smiles,
             ligand_path=ligand_path,
             out_pdbqt=lig_pdbqt,
             log=log,
         )
+        check_cancel(job_dir)
         prepare_receptor(receptor_path, rec_pdbqt, log)
+        check_cancel(job_dir)
 
         eng = (engine or "vina").lower().strip()
         if eng == "gnina":
@@ -93,6 +135,8 @@ def run_docking_job(
                 num_modes=num_modes,
                 cpu=cpu,
                 log=log,
+                job_id=jid,
+                job_dir=job_dir,
             )
             result["vina_affinity"] = gres.vina_affinity
             result["gnina_cnn_score"] = gres.cnn_score
@@ -123,11 +167,15 @@ def run_docking_job(
                 num_modes=num_modes,
                 cpu=cpu,
                 log=log,
+                job_id=jid,
+                job_dir=job_dir,
             )
             result["vina_affinity"] = vres.affinity_kcal
             result["poses"] = vres.poses
             (job_dir / "engine_stdout.txt").write_text(vres.stdout, encoding="utf-8")
             log(f"Top pose vina_affinity = {vres.affinity_kcal} kcal/mol")
+
+        check_cancel(job_dir)
 
         if reference_ligand and reference_ligand.is_file() and poses_out.is_file():
             log("Computing RMSD to reference ligand...")
@@ -144,6 +192,11 @@ def run_docking_job(
             "log": "job.log",
         }
         log("DONE")
+    except JobCancelled as exc:
+        result["status"] = "cancelled"
+        result["error"] = str(exc)
+        result["finished_at"] = datetime.now(timezone.utc).isoformat()
+        log(f"CANCELLED: {exc}")
     except Exception as exc:
         result["status"] = "failed"
         result["error"] = str(exc)

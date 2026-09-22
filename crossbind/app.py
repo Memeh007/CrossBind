@@ -26,6 +26,7 @@ from crossbind.config import (
     resolve_vina_bin,
 )
 from crossbind.docking.pipeline import run_docking_job
+from crossbind.docking.process_registry import kill as kill_engine_proc
 from crossbind.jobs import job_dir, list_jobs, new_job_id, read_log, read_result
 from crossbind.pubchem import name_to_smiles
 from crossbind.discovery import refresh_for_target, resolve_protein_query, run_discovery
@@ -54,6 +55,41 @@ def _engine_status() -> dict:
         "gnina_bin": g,
         "gnina_ok": bool(g and (Path(g).is_file() or shutil.which(g))),
     }
+
+
+def _fail_job_meta(jdir: Path, job_id: str, exc: BaseException) -> None:
+    """Persist a failed status when a docking thread dies unexpectedly."""
+    meta: dict = {"id": job_id, "status": "failed", "error": str(exc)}
+    rj = jdir / "result.json"
+    if rj.is_file():
+        try:
+            meta = json.loads(rj.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    meta["id"] = job_id
+    meta["status"] = "failed"
+    meta["error"] = str(exc)
+    rj.write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    try:
+        log_path = jdir / "job.log"
+        prev = log_path.read_text(encoding="utf-8") if log_path.is_file() else ""
+        log_path.write_text(prev + f"\nTHREAD ERROR: {exc}\n", encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _start_docking_thread(jdir: Path, jid: str, kwargs: dict) -> None:
+    """Run run_docking_job in a daemon thread; never leave jobs stuck in queued."""
+
+    def _thread_run():
+        try:
+            run_docking_job(jdir, job_id=jid, **kwargs)
+        except Exception as exc:
+            _fail_job_meta(jdir, jid, exc)
+
+    threading.Thread(target=_thread_run, daemon=True).start()
+
+
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -193,9 +229,10 @@ async def dock(
     }
     (jdir / "result.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
-    def _thread_run():
-        run_docking_job(
-            jdir,
+    _start_docking_thread(
+        jdir,
+        jid,
+        dict(
             receptor_path=rec_path,
             smiles=smi or None,
             ligand_path=lig_path,
@@ -211,9 +248,8 @@ async def dock(
             ligand=ident["ligand"],
             protein=ident["protein"],
             mechanism=None,
-        )
-
-    threading.Thread(target=_thread_run, daemon=True).start()
+        ),
+    )
     return RedirectResponse(url=f"/job/{jid}", status_code=303)
 
 
@@ -685,9 +721,10 @@ async def _discover_dock_inner(payload, *, engine, exhaustiveness, num_modes, cp
     }
     (jdir / "result.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
-    def _thread_run():
-        run_docking_job(
-            jdir,
+    _start_docking_thread(
+        jdir,
+        jid,
+        dict(
             receptor_path=rec_path,
             smiles=smi,
             ligand_path=None,
@@ -703,15 +740,121 @@ async def _discover_dock_inner(payload, *, engine, exhaustiveness, num_modes, cp
             ligand=ident.get("ligand"),
             protein=ident.get("protein"),
             mechanism=ident.get("mechanism"),
-        )
-
-    threading.Thread(target=_thread_run, daemon=True).start()
+        ),
+    )
     return JSONResponse({
         "ok": True,
         "job_id": jid,
         "job_title": ident.get("job_title"),
         "redirect": f"/job/{jid}",
     })
+
+
+
+@app.post("/api/job/{job_id}/cancel")
+async def api_cancel_job(job_id: str, note: Optional[str] = None):
+    """Cancel a queued or running docking job."""
+    jdir = job_dir(job_id)
+    if not jdir.is_dir():
+        raise HTTPException(404, "Job not found")
+    meta = read_result(job_id)
+    status = (meta.get("status") or "").lower()
+    err_note = (note or "").strip() or "Cancelled by user"
+    if status in ("completed", "failed", "cancelled", "missing"):
+        return JSONResponse({"ok": True, "job_id": job_id, "status": status, "noop": True})
+
+    # Flag file — pipeline checks between steps / while vina runs
+    (jdir / "CANCEL").write_text("cancel\n", encoding="utf-8")
+    kill_engine_proc(job_id)
+
+    meta = read_result(job_id)
+    # If still queued (thread never started) or running, stamp cancelled now.
+    # Running jobs may also be finalized by pipeline as cancelled when they see the flag.
+    cur = (meta.get("status") or "").lower()
+    if cur in ("queued", "running", "unknown", ""):
+        meta["status"] = "cancelled"
+        meta["error"] = err_note
+        (jdir / "result.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        try:
+            log_path = jdir / "job.log"
+            prev = log_path.read_text(encoding="utf-8") if log_path.is_file() else ""
+            log_path.write_text(prev + f"\n{err_note}\n", encoding="utf-8")
+        except Exception:
+            pass
+    return JSONResponse({"ok": True, "job_id": job_id, "status": "cancelled"})
+
+
+@app.post("/api/job/{job_id}/restart")
+async def api_restart_job(job_id: str):
+    """Re-kick a queued/failed/cancelled job that still has receptor + SMILES on disk."""
+    jdir = job_dir(job_id)
+    if not jdir.is_dir():
+        raise HTTPException(404, "Job not found")
+    meta = read_result(job_id)
+    status = (meta.get("status") or "").lower()
+    if status == "running":
+        raise HTTPException(409, "Job is already running")
+    if status == "completed":
+        raise HTTPException(409, "Job already completed")
+
+    # Clear cancel flag
+    cancel_flag = jdir / "CANCEL"
+    if cancel_flag.is_file():
+        cancel_flag.unlink()
+
+    smi_path = jdir / "resolved_smiles.txt"
+    smi = smi_path.read_text(encoding="utf-8").strip() if smi_path.is_file() else None
+    if not smi and isinstance(meta.get("ligand"), dict):
+        smi = (meta["ligand"].get("smiles") or "").strip() or None
+    if not smi:
+        raise HTTPException(400, "No SMILES found to restart this job")
+
+    rec_path = None
+    for name in ("upload_receptor.pdb", "receptor.pdb", "receptor.pdbqt"):
+        cand = jdir / name
+        if cand.is_file():
+            rec_path = cand
+            break
+    if rec_path is None:
+        raise HTTPException(400, "No receptor file found to restart this job")
+
+    center = meta.get("center") or [0.0, 0.0, 0.0]
+    size = meta.get("size") or [22.0, 22.0, 22.0]
+    docking = meta.get("docking") or {}
+    engine = meta.get("engine") or docking.get("engine") or "vina"
+    exhaustiveness = int(docking.get("exhaustiveness") or meta.get("exhaustiveness") or 8)
+    num_modes = int(docking.get("num_modes") or meta.get("num_modes") or 9)
+    cpu = int(docking.get("cpu") or meta.get("cpu") or 0)
+
+    meta["status"] = "queued"
+    meta["error"] = None
+    meta["poses"] = []
+    meta["vina_affinity"] = None
+    (jdir / "result.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+    _start_docking_thread(
+        jdir,
+        job_id,
+        dict(
+            receptor_path=rec_path,
+            smiles=smi,
+            ligand_path=None,
+            center=(float(center[0]), float(center[1]), float(center[2])),
+            size=(float(size[0]), float(size[1]), float(size[2])),
+            exhaustiveness=exhaustiveness,
+            num_modes=num_modes,
+            cpu=cpu,
+            engine=engine,
+            reference_ligand=None,
+            compound_name=meta.get("compound_name") or "ligand",
+            job_title=meta.get("job_title"),
+            ligand=meta.get("ligand"),
+            protein=meta.get("protein"),
+            mechanism=meta.get("mechanism"),
+        ),
+    )
+    return JSONResponse({"ok": True, "job_id": job_id, "status": "queued", "restarted": True})
+
 
 
 @app.get("/jobs", response_class=HTMLResponse)

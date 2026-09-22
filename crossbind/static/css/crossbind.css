@@ -161,6 +161,25 @@ table.jobs th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-
 .status.completed { color: var(--teal); border-color: rgba(46,230,197,0.35); }
 .status.failed { color: var(--bad); border-color: rgba(240,113,120,0.4); }
 .status.running, .status.queued { color: var(--muted); border-color: var(--line); background: var(--elev2); }
+.status.cancelled { color: var(--warn); border-color: rgba(245,165,36,0.4); }
+.btn.danger {
+  background: transparent;
+  color: var(--bad);
+  border: 1px solid rgba(240,113,120,0.45);
+  cursor: pointer;
+  font: inherit;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+}
+.btn.danger:hover { background: rgba(240,113,120,0.12); }
+button.linkish {
+  background: none; border: none; padding: 0; margin: 0;
+  font: inherit; color: var(--text); cursor: pointer;
+  border-bottom: 1px solid var(--line);
+}
+button.linkish.danger { color: var(--bad); border-bottom-color: rgba(240,113,120,0.4); }
+button.linkish:hover { color: var(--teal); border-bottom-color: var(--teal); }
+button.linkish.danger:hover { color: var(--bad); border-bottom-color: var(--bad); }
 
 .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0; }
 .metric { background: var(--elev2); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px; }

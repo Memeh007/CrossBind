@@ -9,6 +9,9 @@
     </div>
     <div class="actions">
       <a class="btn primary" href="/viewer/{{ job_id }}">Open 3D viewer</a>
+      {% if result.status in ("queued", "running") %}
+      <button type="button" class="btn danger" id="btn-cancel-job" data-job="{{ job_id }}">Cancel</button>
+      {% endif %}
       <a class="btn ghost" href="/discover">Discover</a>
       <a class="btn ghost" href="/">New dock</a>
     </div>
@@ -108,5 +111,8 @@
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/app.js"></script>
-<script>CrossAffinity.pollJob(document.getElementById('job-status').dataset.job);</script>
+<script>
+  CrossAffinity.pollJob(document.getElementById('job-status').dataset.job);
+  CrossAffinity.wireCancelButton(document.getElementById('btn-cancel-job'));
+</script>
 {% endblock %}

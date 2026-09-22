@@ -40,10 +40,20 @@
           {% else %}—{% endif %}
         </td>
         <td><span class="status {{ j.status }}">{{ j.status }}</span></td>
-        <td><a href="/job/{{ j.id }}">details</a> · <a href="/viewer/{{ j.id }}">3D</a></td>
+        <td>
+          <a href="/job/{{ j.id }}">details</a> · <a href="/viewer/{{ j.id }}">3D</a>
+          {% if j.status in ("queued", "running") %}
+          · <button type="button" class="linkish danger cancel-job-btn" data-job="{{ j.id }}">Cancel</button>
+          {% endif %}
+        </td>
       </tr>
     {% endfor %}
     </tbody>
   </table>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/app.js"></script>
+<script>CrossAffinity.wireCancelButtons(document.querySelectorAll(".cancel-job-btn"));</script>
 {% endblock %}
