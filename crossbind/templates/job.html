@@ -103,6 +103,14 @@
       Drug-likeness filters and interaction annotations are research heuristics for triage â€”
       not clinical ADMET, measured affinity, or experimental contact proof.
       {% if result.honesty and result.honesty.message %} {{ result.honesty.message }}{% endif %}
+      {% if result.pocket_method %}
+        <br/><span class="muted">Pocket method: <code>{{ result.pocket_method }}</code>
+        {% if result.pocket_rank_label %} — {{ result.pocket_rank_label }}{% endif %}
+        {% if result.pocket_method == "ligand_aware_vina" %}
+          (best-ranked pocket for this ligand under Vina — not Kd, not the true site)
+        {% endif %}
+        </span>
+      {% endif %}
     </div>
     {% endif %}
 

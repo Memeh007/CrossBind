@@ -70,3 +70,39 @@ def ensure_dirs() -> None:
 # Bundling weights in-repo is intentionally unsupported — LLMs can invent biology.
 OLLAMA_HOST = (os.environ.get("OLLAMA_HOST") or "http://127.0.0.1:11434").rstrip("/")
 OLLAMA_MODEL = (os.environ.get("OLLAMA_MODEL") or "llama3.2").strip() or "llama3.2"
+
+P2RANK_BIN = os.environ.get("P2RANK_BIN", "").strip() or None
+P2RANK_HOME = os.environ.get("P2RANK_HOME", "").strip() or None
+
+_P2RANK_CANDIDATES = [
+    ROOT / "bin" / "p2rank" / "prank",
+    ROOT / "bin" / "p2rank" / "prank.bat",
+    ROOT / "bin" / "prank",
+    ROOT / "bin" / "prank.bat",
+    ROOT / "bin" / "p2rank.bat",
+]
+
+
+def resolve_p2rank_bin() -> str | None:
+    """Locate P2Rank CLI (prank / prank.bat). Optional — Discover falls back without it."""
+    import shutil
+
+    if P2RANK_BIN:
+        p = Path(P2RANK_BIN)
+        if p.is_file() or shutil.which(P2RANK_BIN):
+            return str(P2RANK_BIN)
+        return P2RANK_BIN  # set but missing — caller surfaces a clear error
+    if P2RANK_HOME:
+        home = Path(P2RANK_HOME)
+        for name in ("prank.bat", "prank", "prank.sh"):
+            cand = home / name
+            if cand.is_file():
+                return str(cand)
+    for p in _P2RANK_CANDIDATES:
+        if p.is_file():
+            return str(p)
+    for name in ("prank", "prank.bat"):
+        found = shutil.which(name)
+        if found:
+            return found
+    return None

@@ -127,9 +127,36 @@
 </section>
 
 <section class="panel" id="panel-pocket" hidden>
-  <h2>Docking box</h2>
+  <h2>Pockets / docking box</h2>
+  <div class="banner warn" id="af-pocket-banner" hidden>
+    <strong>AlphaFold / predicted structure.</strong>
+    Pose success on AF models is often much lower than on crystal structures.
+    P2Rank uses <code>-c alphafold</code> when available. Pockets are hypotheses —
+    never “the true site.”
+  </div>
+  <div class="banner" id="holo-pocket-banner" hidden>
+    <strong>Holo ligand preferred.</strong>
+    A co-crystallized ligand site was found and preferred over apo P2Rank proposals.
+    For a <em>different</em> query ligand this is still a hypothesis.
+  </div>
+  <p class="help" id="pocket-honesty">
+    Ranked pocket hypotheses for research triage. After ligand-aware docking, the
+    winner is labeled <strong>best-ranked pocket for this ligand under Vina</strong>
+    (not Kd, not the true site).
+  </p>
   <dl class="kv" id="pocket-kv"></dl>
   <p class="hint" id="pocket-warn"></p>
+  <p class="hint" id="p2rank-status"></p>
+  <div id="pocket-list-wrap" hidden>
+    <table class="jobs" id="pocket-table">
+      <thead>
+        <tr>
+          <th>Use</th><th>ID</th><th>Method</th><th>Score</th><th>Center</th><th>Residues</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </section>
 
 <section class="panel" id="panel-ortho" hidden>
@@ -143,8 +170,9 @@
 
 <section class="panel" id="panel-dock" hidden>
   <h2>Step 4 — Prepare &amp; dock</h2>
-  <p class="help">Queues a local docking job named after the ligand × protein. Review the box above first.</p>
+  <p class="help">Queues a local docking job named after the ligand × protein. Review pockets above first.</p>
   <form id="prepare-dock-form" class="dock-form">
+    <input type="hidden" name="pocket_id" id="dock-pocket-id" value="" />
     <div class="grid-3">
       <label>Engine
         <select name="engine" id="dock-engine">
@@ -155,6 +183,16 @@
       <label>Exhaustiveness<input type="number" name="exhaustiveness" value="8" min="1" max="64" /></label>
       <label>Modes<input type="number" name="num_modes" value="9" min="1" max="20" /></label>
     </div>
+    <div class="grid-2">
+      <label>Pocket ranking
+        <select name="pocket_rank_mode" id="pocket-rank-mode">
+          <option value="auto" selected>Auto (ligand-aware top-K when multiple)</option>
+          <option value="ligand_aware">Force ligand-aware (dock top-K, pick best Vina)</option>
+          <option value="selected">Use selected pocket only</option>
+        </select>
+      </label>
+      <label>Top-K pockets<input type="number" name="top_k_pockets" id="top-k-pockets" value="3" min="1" max="10" /></label>
+    </div>
     <div class="actions">
       <button type="submit" class="btn primary" id="btn-prepare-dock">Prepare &amp; dock</button>
       <span class="hint" id="dock-status"></span>
@@ -163,5 +201,5 @@
 </section>
 {% endblock %}
 {% block scripts %}
-<script src="/static/js/discover.js?v=select-target-ux1"></script>
+<script src="/static/js/discover.js?v=ligand-aware-pockets1"></script>
 {% endblock %}

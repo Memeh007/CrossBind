@@ -391,6 +391,62 @@
     });
   }
 
+
+  function renderPocketTable(pk) {
+    const wrap = document.getElementById("pocket-list-wrap");
+    const tb = document.querySelector("#pocket-table tbody");
+    if (!wrap || !tb) return;
+    const pockets = (pk && pk.pockets) || [];
+    if (!pockets.length) {
+      wrap.hidden = true;
+      tb.innerHTML = "";
+      return;
+    }
+    wrap.hidden = false;
+    const selectedId = ((pk.selected_pocket || {}).id) || pockets[0].id;
+    const dockPocket = document.getElementById("dock-pocket-id");
+    if (dockPocket && selectedId) dockPocket.value = selectedId;
+    tb.innerHTML = pockets
+      .map((p) => {
+        const id = p.id || "";
+        const checked = id && id === selectedId ? "checked" : "";
+        const center = (p.center || []).map((n) => Number(n).toFixed(1)).join(", ");
+        const residues = (p.residues || []).slice(0, 8).join(" ");
+        const score = p.docked_score != null ? p.docked_score : p.score;
+        return `<tr data-pocket-id="${escapeHtml(id)}">
+          <td><input type="radio" name="pocket-pick" value="${escapeHtml(id)}" ${checked} /></td>
+          <td>${escapeHtml(id)}</td>
+          <td>${escapeHtml(p.method || p.source || "")}</td>
+          <td>${score == null ? "—" : escapeHtml(String(score))}</td>
+          <td class="mono">${escapeHtml(center || "—")}</td>
+          <td class="muted">${escapeHtml(residues || "—")}</td>
+        </tr>`;
+      })
+      .join("");
+    tb.querySelectorAll('input[name="pocket-pick"]').forEach((radio) => {
+      radio.addEventListener("change", () => {
+        if (!radio.checked || !lastPayload) return;
+        const pid = radio.value;
+        if (dockPocket) dockPocket.value = pid;
+        // Optimistic local select
+        if (lastPayload.pocket) {
+          const list = lastPayload.pocket.pockets || [];
+          const hit = list.find((x) => String(x.id) === String(pid));
+          if (hit) {
+            lastPayload.pocket.selected_pocket = hit;
+            lastPayload.pocket.center = hit.center;
+            lastPayload.pocket.size = hit.size;
+            lastPayload.pocket.method = hit.method || hit.source;
+            lastPayload.pocket.pocket_method = hit.method || hit.source;
+            const modeEl = document.getElementById("pocket-rank-mode");
+            if (modeEl) modeEl.value = "selected";
+            render(lastPayload);
+          }
+        }
+      });
+    });
+  }
+
   function renderSelected(data) {
     const sp = data.selected_protein || {};
     const st = data.structure || {};
@@ -483,14 +539,35 @@
 
     const pk = data.pocket || {};
     show("panel-pocket");
+    const selPk = pk.selected_pocket || pk;
+    const method = pk.pocket_method || pk.method || (selPk && selPk.method);
     setKV("pocket-kv", [
-      ["Method", pk.method],
-      ["Center", pk.center ? pk.center.join(", ") : "—"],
-      ["Size", pk.size ? pk.size.join(", ") : "—"],
-      ["Ligand", pk.ligand_resn || "—"],
+      ["Method", method],
+      ["Selected", (selPk && (selPk.id || selPk.label)) || "—"],
+      ["Center", (selPk && selPk.center) ? selPk.center.join(", ") : (pk.center ? pk.center.join(", ") : "—")],
+      ["Size", (selPk && selPk.size) ? selPk.size.join(", ") : (pk.size ? pk.size.join(", ") : "—")],
+      ["Holo ligand", pk.ligand_resn || (selPk && selPk.ligand_resn) || "—"],
+      ["P2Rank", pk.p2rank_available == null ? "—" : (pk.p2rank_available ? ("yes (" + (pk.p2rank_config || "default") + ")") : "not installed — centroid fallback")],
       ["Non-zero", pk.nonzero],
     ]);
     document.getElementById("pocket-warn").textContent = pk.warning || "";
+    const afBanner = document.getElementById("af-pocket-banner");
+    const holoBanner = document.getElementById("holo-pocket-banner");
+    const stLab = ((data.structure || {}).label || (data.structure || {}).provenance || "").toString();
+    const isAF = stLab === "predicted" || stLab === "alphafold_db" || stLab === "uploaded" || stLab === "user_upload";
+    if (afBanner) afBanner.hidden = !isAF;
+    if (holoBanner) holoBanner.hidden = !(method === "holo_ligand" || (selPk && selPk.method === "holo_ligand"));
+    const p2s = document.getElementById("p2rank-status");
+    if (p2s) {
+      if (pk.p2rank_available === false) {
+        p2s.textContent = "P2Rank not found on this machine. Install Java 17+ and P2Rank (see README / docs/ligand_aware_pockets.md). Using holo or centroid fallback.";
+      } else if (pk.p2rank_available) {
+        p2s.textContent = "P2Rank available. Apo/AF sites use P2Rank; holo crystal sites are preferred when present.";
+      } else {
+        p2s.textContent = "";
+      }
+    }
+    renderPocketTable(pk);
 
     const ortho = data.orthologs || {};
     if (ortho.species || ortho.disclaimer) {

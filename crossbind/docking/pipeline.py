@@ -41,6 +41,10 @@ def run_docking_job(
     protein: dict[str, Any] | None = None,
     mechanism: str | None = None,
     job_id: str | None = None,
+    pockets: list | None = None,
+    pocket_rank_mode: str | None = None,
+    top_k_pockets: int = 3,
+    pocket_method: str | None = None,
 ) -> dict:
     log_lines: list[str] = []
     jid = job_id or job_dir.name
@@ -96,6 +100,18 @@ def run_docking_job(
     elif "mechanism" in prior:
         result["mechanism"] = prior.get("mechanism")
 
+    # Pocket provenance (Discover ligand-aware / P2Rank / holo)
+    if pockets is not None:
+        result["pockets"] = pockets
+    elif prior.get("pockets") is not None:
+        result["pockets"] = prior.get("pockets")
+    if pocket_method is not None:
+        result["pocket_method"] = pocket_method
+    elif prior.get("pocket_method") is not None:
+        result["pocket_method"] = prior.get("pocket_method")
+    if prior.get("selected_pocket") is not None and "selected_pocket" not in result:
+        result["selected_pocket"] = prior.get("selected_pocket")
+
     _write_meta(job_dir, result)
 
     try:
@@ -109,6 +125,50 @@ def run_docking_job(
 
         log("== CrossBind docking pipeline ==")
         check_cancel(job_dir)
+
+        rank_mode = (pocket_rank_mode or prior.get("pocket_rank_mode") or "").lower().strip()
+        pocket_list = pockets if pockets is not None else (prior.get("pockets") or [])
+
+        if rank_mode in {"ligand_aware", "ligand_aware_vina", "auto"} and len(pocket_list) >= 1:
+            from crossbind.discovery.ligand_aware import rank_pockets_for_ligand
+
+            # Screen top-K pockets (lower exhaustiveness), then full dock on winner.
+            screen_ex = min(max(int(exhaustiveness), 1), 4)
+            screen_modes = min(max(int(num_modes), 1), 3)
+            rank_res = rank_pockets_for_ligand(
+                job_dir=job_dir,
+                receptor_path=receptor_path,
+                smiles=smiles,
+                ligand_path=ligand_path,
+                pockets=pocket_list,
+                top_k=int(top_k_pockets or prior.get("top_k_pockets") or 3),
+                exhaustiveness=screen_ex,
+                num_modes=screen_modes,
+                cpu=cpu,
+                log=log,
+                job_id=jid,
+            )
+            best = rank_res["selected_pocket"]
+            center = tuple(float(x) for x in (best.get("center") or list(center)))
+            size = tuple(float(x) for x in (best.get("size") or list(size)))
+            result["center"] = list(center)
+            result["size"] = list(size)
+            result["pockets"] = rank_res["pockets"]
+            result["selected_pocket"] = best
+            result["pocket_method"] = "ligand_aware_vina"
+            result["pocket_rank_label"] = rank_res.get("label")
+            if isinstance(result.get("docking"), dict):
+                result["docking"]["center"] = list(center)
+                result["docking"]["size"] = list(size)
+                result["docking"]["pocket_method"] = "ligand_aware_vina"
+            _write_meta(job_dir, result)
+            log(
+                f"Ligand-aware screen picked {best.get('id')} "
+                f"(screen affinity={best.get('docked_score')}). "
+                "Running full dock on that box — label: best-ranked pocket "
+                "for this ligand under Vina (not the true site, not Kd)."
+            )
+
         prepare_ligand(
             smiles=smiles,
             ligand_path=ligand_path,

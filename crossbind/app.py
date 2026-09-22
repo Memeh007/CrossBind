@@ -23,6 +23,7 @@ from crossbind.config import (
     UPLOAD_MAX_BYTES,
     ensure_dirs,
     resolve_gnina_bin,
+    resolve_p2rank_bin,
     resolve_vina_bin,
 )
 from crossbind.docking.pipeline import run_docking_job
@@ -31,7 +32,7 @@ from crossbind.jobs import job_dir, list_jobs, new_job_id, read_log, read_result
 from crossbind.pubchem import name_to_smiles
 from crossbind.discovery import refresh_for_target, resolve_protein_query, run_discovery
 from crossbind.discovery.structure_convert import StructureConvertError, ensure_receptor_pdb, receptor_convert_meta
-from crossbind.discovery.pocket import auto_docking_box
+from crossbind.discovery.pocket import auto_docking_box, resolve_pockets, select_pocket_by_id
 from crossbind.discovery.cache import structures_dir
 from crossbind.job_identity import identity_from_discovery, identity_from_manual
 from crossbind.residues import parse_residues
@@ -57,11 +58,14 @@ ensure_dirs()
 def _engine_status() -> dict:
     v = resolve_vina_bin()
     g = resolve_gnina_bin()
+    p = resolve_p2rank_bin()
     return {
         "vina_bin": v,
         "vina_ok": bool(v and (Path(v).is_file() or shutil.which(v))),
         "gnina_bin": g,
         "gnina_ok": bool(g and (Path(g).is_file() or shutil.which(g))),
+        "p2rank_bin": p,
+        "p2rank_ok": bool(p and (Path(p).is_file() or shutil.which(p))),
     }
 
 
@@ -594,6 +598,44 @@ async def api_discover_select_target(
 
 
 
+@app.post("/api/discover/pockets")
+async def api_discover_pockets(
+    discovery_json: str = Form(...),
+    pocket_id: str = Form(""),
+):
+    """List or select pockets for the current Discover structure.
+
+    Re-runs resolve_pockets when the payload lacks a pockets[] list.
+    Selecting pocket_id updates selected_pocket / center / size (no docking).
+    """
+    try:
+        payload = json.loads(discovery_json)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(400, f"Invalid discovery_json: {exc}") from exc
+    structure = payload.get("structure") or {}
+    path = structure.get("path")
+    pocket = payload.get("pocket") or {}
+    if path and Path(path).is_file() and not (pocket.get("pockets")):
+        try:
+            pocket = resolve_pockets(path, structure=structure)
+        except Exception as exc:
+            raise HTTPException(400, f"Pocket resolve failed: {exc}") from exc
+    pid = (pocket_id or "").strip()
+    if pid:
+        pocket = select_pocket_by_id(pocket, pid)
+    payload["pocket"] = pocket
+    return {
+        "ok": True,
+        "pocket": pocket,
+        "pockets": pocket.get("pockets") or [],
+        "selected_pocket": pocket.get("selected_pocket"),
+        "pocket_method": pocket.get("pocket_method") or pocket.get("method"),
+        "p2rank_ok": _engine_status().get("p2rank_ok"),
+        "honesty": pocket.get("honesty"),
+        "warning": pocket.get("warning"),
+    }
+
+
 @app.post("/api/discover/upload-structure")
 async def api_discover_upload_structure(
     structure_file: UploadFile = File(...),
@@ -635,10 +677,13 @@ async def api_discover_upload_structure(
             path = raw_path
             fmt = ext.lstrip(".")
 
-        pocket = auto_docking_box(path)
         up = (uniprot or "").strip().upper() or None
         g = (gene or "").strip() or None
         lab = (label or "uploaded").strip() or "uploaded"
+        pocket = resolve_pockets(
+            path,
+            structure={"label": lab, "provenance": "user_upload", "method": "user upload"},
+        )
         structure = {
             "ok": True,
             "provenance": "user_upload",
@@ -684,8 +729,11 @@ async def api_discover_dock(
     exhaustiveness: int = Form(8),
     num_modes: int = Form(9),
     cpu: int = Form(0),
+    pocket_id: str = Form(""),
+    pocket_rank_mode: str = Form("auto"),
+    top_k_pockets: int = Form(3),
 ):
-    """Create a docking job from a Discover payload (receptor path + SMILES + auto-box)."""
+    """Create a docking job from a Discover payload (receptor path + SMILES + pocket)."""
     try:
         payload = json.loads(discovery_json)
     except json.JSONDecodeError as exc:
@@ -693,7 +741,14 @@ async def api_discover_dock(
 
     try:
         return await _discover_dock_inner(
-            payload, engine=engine, exhaustiveness=exhaustiveness, num_modes=num_modes, cpu=cpu
+            payload,
+            engine=engine,
+            exhaustiveness=exhaustiveness,
+            num_modes=num_modes,
+            cpu=cpu,
+            pocket_id=(pocket_id or "").strip() or None,
+            pocket_rank_mode=(pocket_rank_mode or "auto").strip() or "auto",
+            top_k_pockets=int(top_k_pockets or 3),
         )
     except HTTPException:
         raise
@@ -701,10 +756,23 @@ async def api_discover_dock(
         raise HTTPException(status_code=500, detail=f"Discover dock failed: {exc}") from exc
 
 
-async def _discover_dock_inner(payload, *, engine, exhaustiveness, num_modes, cpu):
+async def _discover_dock_inner(
+    payload,
+    *,
+    engine,
+    exhaustiveness,
+    num_modes,
+    cpu,
+    pocket_id=None,
+    pocket_rank_mode="auto",
+    top_k_pockets=3,
+):
     drug = payload.get("drug") or {}
     structure = payload.get("structure") or {}
     pocket = payload.get("pocket") or {}
+    if pocket_id:
+        pocket = select_pocket_by_id(pocket, pocket_id)
+        payload["pocket"] = pocket
     smi = (drug.get("smiles") or "").strip()
     rec_src = structure.get("path")
     if not smi:
@@ -716,6 +784,27 @@ async def _discover_dock_inner(payload, *, engine, exhaustiveness, num_modes, cp
     size = pocket.get("size") or [22.0, 22.0, 22.0]
     if len(center) != 3 or len(size) != 3:
         raise HTTPException(400, "Invalid pocket center/size")
+
+    pockets_list = list(pocket.get("pockets") or [])
+    if not pockets_list and pocket.get("center"):
+        pockets_list = [{
+            "id": pocket.get("id") or "selected",
+            "center": center,
+            "size": size,
+            "score": pocket.get("score"),
+            "method": pocket.get("method") or pocket.get("pocket_method"),
+            "residues": pocket.get("residues") or [],
+        }]
+
+    # auto → ligand-aware when multiple hypotheses; selected → single pocket
+    mode = (pocket_rank_mode or "auto").lower().strip()
+    if mode == "auto":
+        if pocket_id:
+            mode = "selected"
+        elif len(pockets_list) > 1:
+            mode = "ligand_aware"
+        else:
+            mode = "selected"
 
     ident = identity_from_discovery(payload)
 
@@ -756,6 +845,11 @@ async def _discover_dock_inner(payload, *, engine, exhaustiveness, num_modes, cp
     cx, cy, cz = float(center[0]), float(center[1]), float(center[2])
     sx, sy, sz = float(size[0]), float(size[1]), float(size[2])
 
+    pocket_method_val = (
+        "ligand_aware_vina" if mode == "ligand_aware"
+        else (pocket.get("pocket_method") or pocket.get("method"))
+    )
+
     meta = {
         "id": jid,
         "status": "queued",
@@ -770,7 +864,14 @@ async def _discover_dock_inner(payload, *, engine, exhaustiveness, num_modes, cp
         "size": [sx, sy, sz],
         "source": "discover",
         "structure_provenance": structure.get("provenance"),
-        "pocket_method": pocket.get("method"),
+        "pocket_method": pocket_method_val,
+        "pockets": pockets_list,
+        "selected_pocket": pocket.get("selected_pocket") or (
+            next((p for p in pockets_list if str(p.get("id")) == str(pocket_id)), None)
+            if pocket_id else (pockets_list[0] if pockets_list else None)
+        ),
+        "pocket_rank_mode": mode,
+        "top_k_pockets": int(top_k_pockets or 3),
         "vina_affinity": None,
         "gnina_cnn_score": None,
         "gnina_cnn_affinity": None,
@@ -785,7 +886,7 @@ async def _discover_dock_inner(payload, *, engine, exhaustiveness, num_modes, cp
             "exhaustiveness": int(exhaustiveness),
             "num_modes": int(num_modes),
             "cpu": int(cpu),
-            "pocket_method": pocket.get("method"),
+            "pocket_method": pocket_method_val,
             "ligand_prep": "meeko",
         },
     }
@@ -810,6 +911,10 @@ async def _discover_dock_inner(payload, *, engine, exhaustiveness, num_modes, cp
             ligand=ident.get("ligand"),
             protein=ident.get("protein"),
             mechanism=ident.get("mechanism"),
+            pockets=pockets_list,
+            pocket_rank_mode=mode,
+            top_k_pockets=int(top_k_pockets or 3),
+            pocket_method=pocket_method_val,
         ),
     )
     return JSONResponse({

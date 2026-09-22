@@ -7,7 +7,7 @@ from typing import Any
 from crossbind.discovery.drug import resolve_drug
 from crossbind.discovery.orthologs import ortholog_panel
 from crossbind.discovery.pharmacology import mechanism_summary
-from crossbind.discovery.pocket import auto_docking_box
+from crossbind.discovery.pocket import auto_docking_box, resolve_pockets
 from crossbind.discovery.protein_lookup import (
     fetch_uniprot_meta,
     resolve_protein_query,
@@ -22,6 +22,7 @@ __all__ = [
     "resolve_targets",
     "recommend_structure",
     "auto_docking_box",
+    "resolve_pockets",
     "mechanism_summary",
     "ortholog_panel",
     "run_discovery",
@@ -108,7 +109,7 @@ def run_discovery(name: str, *, uniprot: str | None = None) -> dict:
     }
     pocket = None
     if structure.get("ok") and structure.get("path"):
-        pocket = auto_docking_box(structure["path"])
+        pocket = resolve_pockets(structure["path"], structure=structure)
     pharm = mechanism_summary(drug, targets)
     gene = _gene_for_uniprot(targets, preferred)
     if not gene:
@@ -196,9 +197,9 @@ def refresh_for_target(
     pocket = None
     if structure.get("ok") and structure.get("path"):
         try:
-            pocket = auto_docking_box(structure["path"])
+            pocket = resolve_pockets(structure["path"], structure=structure)
         except Exception as exc:
-            pocket = {"ok": False, "warning": f"Pocket failed: {exc}", "center": None, "size": None}
+            pocket = {"ok": False, "warning": f"Pocket failed: {exc}", "center": None, "size": None, "pockets": []}
 
     try:
         selected_protein = _selected_protein_card(

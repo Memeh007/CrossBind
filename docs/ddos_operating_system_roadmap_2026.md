@@ -117,7 +117,7 @@ Library-first: wrap CLIs/containers; record tool versions; do not reimplement po
 
 | Slice | Tool-to-wrap | Outcome |
 |-------|--------------|---------|
-| P2Rank pockets | `rdk/p2rank` CLI; `-c alphafold` for AF | Ranked pocket hypotheses → docking boxes |
+| P2Rank pockets + ligand-aware Vina | `rdk/p2rank` CLI; `-c alphafold` for AF; Vina top-K | **Shipped v1.3.1** — holo prefer / P2Rank / centroid fallback; ligand-aware best-ranked under Vina |
 | Multi-PDB ensemble picker | RCSB search + metadata | Prefer holo / resolution / organism-matched |
 | Redock RMSD when holo | Existing `rmsd.py` + crystal ligand | Pass/fail vs ~2 Å heuristic (benchmark, not guarantee) |
 | Batch ligands → study table | Job batch + CSV/HTML study view | Ligand × structure scores matrix |

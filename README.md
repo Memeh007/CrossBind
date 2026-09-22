@@ -32,9 +32,10 @@ Vertical slice for research triage (demo drug: **metformin**):
 1. Drug name → **PubChemPy** CID / SMILES / InChIKey (RDKit sanitize)
 2. **ChEMBL** mechanisms/targets (Open Targets GraphQL fallback when ChEMBL is down)
 3. Best structure: **rcsb-api** PDB by UniProt, else **Biopython** AlphaFold DB CIF
-4. Auto docking box (crystal ligand centroid + padding, else protein centroid with warning)
-5. **Prepare & dock** reuses the existing Meeko / Vina pipeline
-6. Ortholog panel stubs: human, mouse, fly, dog, rabbit, cat, planaria (**honest miss** if unmapped)
+4. Pocket hypotheses: prefer **holo crystal ligand** site; else **P2Rank** (optional CLI, `-c alphafold` for AF); else centroid fallback
+5. Optional **ligand-aware** ranking: dock query ligand into top-K pockets with Vina; pick best affinity (not Kd)
+6. **Prepare & dock** reuses the existing Meeko / Vina pipeline
+7. Ortholog panel stubs: human, mouse, fly, dog, rabbit, cat, planaria (**honest miss** if unmapped)
 
 ```bash
 # after venv + requirements
@@ -70,7 +71,12 @@ Absolute kcal/mol values are **not interchangeable** across engines or with comm
    set VINA_BIN=C:\path\to\vina.exe
    ```
 3. Install [Open Babel](https://openbabel.org/) and ensure `obabel.exe` is on PATH, **or** convert receptors to PDBQT ahead of time.
-4. Double-click `run.bat`.
+4. Optional — **P2Rank** for pocket proposals ([releases](https://github.com/rdk/p2rank/releases)):
+   - Install **Java 17+**.
+   - Extract P2Rank under `CrossBind\bin\p2rank\` (so `prank.bat` is found), **or** set `P2RANK_HOME` / `P2RANK_BIN`.
+   - Without P2Rank, Discover falls back to holo / protein-centroid boxes (clear UI note).
+   - Details: `docs/ligand_aware_pockets.md`.
+5. Double-click `run.bat`.
 
 ### Linux notes
 

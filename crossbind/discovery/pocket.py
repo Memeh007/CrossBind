@@ -188,3 +188,195 @@ def _protein_coords(path: Path) -> list[tuple[float, float, float, str, str]]:
         chain = line[21].strip() or "_"
         coords.append((x, y, z, resn, chain))
     return coords
+
+
+def holo_ligand_pocket(
+    structure_path: str | Path,
+    *,
+    padding: float = 8.0,
+    min_size: float = 12.0,
+    max_size: float = 40.0,
+) -> dict[str, Any] | None:
+    """Return a pocket from co-crystallized HETATM ligand, or None if apo/unknown."""
+    path = Path(structure_path)
+    coords = _ligand_coords(path)
+    if not coords:
+        return None
+    cx, cy, cz, sx, sy, sz, resn, chain = _box_from_coords(coords, padding, min_size, max_size)
+    return {
+        "id": f"holo_{resn}_{chain}",
+        "rank": 0,
+        "score": None,
+        "probability": None,
+        "center": [round(cx, 3), round(cy, 3), round(cz, 3)],
+        "size": [round(sx, 3), round(sy, 3), round(sz, 3)],
+        "residues": [],
+        "method": "holo_ligand",
+        "source": "holo_ligand",
+        "ligand_resn": resn,
+        "ligand_chain": chain,
+        "nonzero": True,
+        "label": f"Holo crystal ligand {resn} (chain {chain})",
+    }
+
+
+def resolve_pockets(
+    structure_path: str | Path,
+    *,
+    structure: dict | None = None,
+    prefer_holo: bool = True,
+    run_p2rank_when_holo: bool = False,
+    top_k: int = 5,
+    default_size: float = 22.0,
+) -> dict[str, Any]:
+    """Propose docking pockets with honesty about method.
+
+    Preference order:
+    1. Co-crystallized (holo) ligand site when present in the PDB.
+    2. P2Rank hypotheses (``-c alphafold`` for AF/predicted structures).
+    3. Centroid / existing auto-box fallback when P2Rank is missing.
+
+    Never labeled as “the true site” — callers should present
+    “best-ranked pocket for this ligand under Vina” after ligand-aware ranking.
+    """
+    from crossbind.discovery.p2rank import (
+        is_alphafold_provenance,
+        p2rank_available,
+        run_p2rank,
+    )
+
+    path = Path(structure_path)
+    pockets: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    p2rank_ok = p2rank_available()
+    af = is_alphafold_provenance(structure)
+    p2rank_config = "alphafold" if af else "default"
+
+    holo = holo_ligand_pocket(path) if prefer_holo else None
+    if holo:
+        pockets.append(holo)
+        warnings.append(
+            "Preferring co-crystallized (holo) ligand site when present. "
+            "This is still a hypothesis for a *different* query ligand — "
+            "not proof of the true binding site."
+        )
+
+    should_run_p2rank = p2rank_ok and (not holo or run_p2rank_when_holo or af)
+    # For apo / AF / unknown: P2Rank is the primary proposer
+    if not holo and p2rank_ok:
+        should_run_p2rank = True
+    if holo and not run_p2rank_when_holo and not af:
+        should_run_p2rank = False
+
+    if should_run_p2rank:
+        try:
+            predicted = run_p2rank(path, alphafold=af, visualizations=False)
+            for p in predicted[: max(top_k, 1)]:
+                p = dict(p)
+                p["label"] = (
+                    f"P2Rank {p.get('id')} (score={p.get('score')}, "
+                    f"config={p.get('p2rank_config') or p2rank_config})"
+                )
+                pockets.append(p)
+        except Exception as exc:
+            warnings.append(f"P2Rank failed — using fallback. ({exc})")
+            p2rank_ok = False
+
+    if not pockets:
+        # Graceful fallback to existing auto-box
+        fb = auto_docking_box(path, default_size=default_size)
+        method = fb.get("method") or "centroid_fallback"
+        if method == "ligand_centroid":
+            # Should have been caught as holo; treat as holo for consistency
+            pocket_method = "holo_ligand"
+        elif method == "protein_centroid":
+            pocket_method = "centroid_fallback"
+        else:
+            pocket_method = "centroid_fallback"
+        selected = {
+            "id": "fallback",
+            "rank": 1,
+            "score": None,
+            "probability": None,
+            "center": fb.get("center"),
+            "size": fb.get("size"),
+            "residues": [],
+            "method": pocket_method,
+            "source": method,
+            "ligand_resn": fb.get("ligand_resn"),
+            "ligand_chain": fb.get("ligand_chain"),
+            "nonzero": fb.get("nonzero"),
+            "label": f"Fallback ({method})",
+            "warning": fb.get("warning"),
+        }
+        if not p2rank_available():
+            warnings.append(
+                "P2Rank not installed — using centroid / crystal-ligand auto-box. "
+                "Install P2Rank (Java 17+): https://github.com/rdk/p2rank — "
+                "see README Windows notes or docs/ligand_aware_pockets.md."
+            )
+        if fb.get("warning"):
+            warnings.append(fb["warning"])
+        return {
+            "ok": True,
+            "pockets": [selected],
+            "selected_pocket": selected,
+            "pocket_method": pocket_method,
+            "p2rank_available": p2rank_available(),
+            "p2rank_config": None,
+            "warning": " ".join(warnings) if warnings else None,
+            # Backward-compatible flat fields (Discover UI / dock):
+            "method": pocket_method,
+            "center": selected.get("center"),
+            "size": selected.get("size"),
+            "ligand_resn": selected.get("ligand_resn"),
+            "ligand_chain": selected.get("ligand_chain"),
+            "nonzero": selected.get("nonzero", True),
+        }
+
+    # Default selection: holo if present, else top P2Rank
+    selected = pockets[0]
+    pocket_method = selected.get("method") or selected.get("source") or "p2rank"
+    if pocket_method == "ligand_centroid":
+        pocket_method = "holo_ligand"
+
+    flat = {
+        "ok": True,
+        "pockets": pockets,
+        "selected_pocket": selected,
+        "pocket_method": pocket_method,
+        "p2rank_available": p2rank_available(),
+        "p2rank_config": p2rank_config if any(p.get("source") == "p2rank" for p in pockets) else None,
+        "warning": " ".join(warnings) if warnings else None,
+        "method": pocket_method,
+        "center": selected.get("center"),
+        "size": selected.get("size"),
+        "ligand_resn": selected.get("ligand_resn"),
+        "ligand_chain": selected.get("ligand_chain"),
+        "nonzero": selected.get("nonzero", True),
+        "honesty": (
+            "Pockets are ranked hypotheses — never “the true site”. "
+            "After ligand-aware docking, the UI labels the winner as "
+            "best-ranked pocket for this ligand under Vina (not Kd)."
+        ),
+    }
+    return flat
+
+
+def select_pocket_by_id(pocket_payload: dict[str, Any], pocket_id: str | None) -> dict[str, Any]:
+    """Return pocket_payload with selected_pocket updated to pocket_id (if found)."""
+    out = dict(pocket_payload or {})
+    pockets = list(out.get("pockets") or [])
+    if not pocket_id or not pockets:
+        return out
+    for p in pockets:
+        if str(p.get("id")) == str(pocket_id):
+            out["selected_pocket"] = p
+            out["method"] = p.get("method") or p.get("source")
+            out["pocket_method"] = out["method"]
+            out["center"] = p.get("center")
+            out["size"] = p.get("size")
+            out["ligand_resn"] = p.get("ligand_resn")
+            out["ligand_chain"] = p.get("ligand_chain")
+            return out
+    return out
