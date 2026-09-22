@@ -541,3 +541,78 @@ code.contact-res {
   background: var(--elev2);
 }
 table.jobs td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); }
+
+/* Residue binding proof + evidence summary */
+.ix-meta { align-items: center; gap: 12px; margin: 6px 0 10px; }
+.pose-pick { font-size: 0.85rem; color: var(--muted); }
+.pose-pick select {
+  margin-left: 6px;
+  background: var(--elev2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.contact-chips { margin: 8px 0 12px; }
+.contact-chips > .k {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+a.contact-chip, .contact-chip {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(46,230,197,0.35);
+  color: var(--teal);
+  background: rgba(46,230,197,0.08);
+  text-decoration: none;
+}
+a.contact-chip:hover { background: rgba(46,230,197,0.18); }
+.ix-proof-table table th { white-space: nowrap; }
+.explain-label {
+  display: block;
+  margin: 10px 0 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.explain-box, pre.explain-box {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 8rem;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--elev2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  resize: vertical;
+  white-space: pre-wrap;
+}
+.explain-box.llm-box { border-color: rgba(46,230,197,0.25); }
+.explain-actions { margin: 6px 0 8px; align-items: center; gap: 8px; }
+.explain-actions .spinner {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border: 2px solid var(--line);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: cb-spin 0.7s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+@keyframes cb-spin { to { transform: rotate(360deg); } }
+.viewer-contact-note {
+  font-size: 0.78rem;
+  color: var(--teal);
+  margin: 4px 0 0;
+}

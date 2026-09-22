@@ -48,6 +48,55 @@
   let posesData = null;
   let highlight = null;
   let poseModelIndex = null; // 3Dmol model index for ligand frames
+  let contactHighlights = []; // [{chain, resi, label}]
+  let contactLabels = [];
+
+  function parseResLabel(label) {
+    const s = String(label || "").trim();
+    let m = s.match(/^([A-Za-z]{1,4})\s*(-?\d+)(?:\.([A-Za-z0-9]))?$/);
+    if (m) return { resn: m[1].toUpperCase(), resi: m[2], chain: (m[3] || "").toUpperCase(), label: s };
+    m = s.match(/^([A-Za-z0-9])[.:]([A-Za-z]{1,4})\s*(-?\d+)$/);
+    if (m) return { chain: m[1].toUpperCase(), resn: m[2].toUpperCase(), resi: m[3], label: s };
+    return null;
+  }
+
+  function loadContactsFromPage() {
+    const el = document.getElementById("viewer-contacts-json");
+    let labels = [];
+    if (el) {
+      try { labels = JSON.parse(el.textContent || "[]"); } catch (e) { labels = []; }
+    }
+    const params = new URLSearchParams(window.location.search);
+    const highlightMode = (params.get("highlight") || "").toLowerCase();
+    const qResi = params.get("resi");
+    const qChain = params.get("chain");
+    contactHighlights = [];
+    if (highlightMode === "contacts" || highlightMode === "1" || highlightMode === "true") {
+      (labels || []).forEach(function (lab) {
+        const p = parseResLabel(lab);
+        if (p && p.resi) contactHighlights.push(p);
+      });
+    }
+    if (qResi) {
+      highlight = { chain: qChain || "A", resi: String(qResi) };
+      // ensure focus residue is in contact set styling
+      const exists = contactHighlights.some(function (c) {
+        return String(c.resi) === String(qResi) && String(c.chain || "") === String(qChain || c.chain || "");
+      });
+      if (!exists) {
+        contactHighlights.push({ chain: qChain || "A", resi: String(qResi), label: (qChain || "A") + "/" + qResi });
+      }
+    }
+    const note = document.getElementById("viewer-contact-note");
+    if (note && contactHighlights.length) {
+      note.hidden = false;
+      note.textContent =
+        "Highlighting " +
+        contactHighlights.length +
+        " contact residue(s) from docking interactions (stick + label). Ligand remains ball-and-stick.";
+    }
+  }
+
 
   // Jmol / CPK-ish element colors (hex strings for 3Dmol)
   const ELEM_COLORS = {
@@ -149,6 +198,16 @@
           { stick: { radius: 0.11, colorscheme: "default", opacity: 0.8 } }
         );
       }
+      if (contactHighlights && contactHighlights.length) {
+        contactHighlights.forEach(function (c) {
+          const sel = { model: 0, resi: c.resi };
+          if (c.chain) sel.chain = c.chain;
+          viewer.addStyle(sel, {
+            stick: { radius: 0.2, color: "0xfbbf24" },
+            sphere: { scale: 0.22, color: "0xfbbf24" },
+          });
+        });
+      }
       if (highlight) {
         viewer.addStyle(
           { model: 0, chain: highlight.chain, resi: highlight.resi },
@@ -159,6 +218,28 @@
         );
       }
     }
+  }
+
+  function applyContactLabels() {
+    // Remove prior labels by full rebuild path; add residue labels for contacts
+    if (!contactHighlights || !contactHighlights.length) return;
+    contactHighlights.forEach(function (c) {
+      try {
+        viewer.addResLabels(
+          { model: 0, resi: c.resi, chain: c.chain || undefined },
+          {
+            font: "sans-serif",
+            fontSize: 12,
+            fontColor: "0xfbbf24",
+            showBackground: true,
+            backgroundColor: "0x0b1220",
+            backgroundOpacity: 0.65,
+          }
+        );
+      } catch (e) {
+        /* older 3Dmol */
+      }
+    });
   }
 
   function applyElementColors(sel, stickRadius, sphereScale, opacity) {
@@ -271,13 +352,30 @@
 
     styleReceptor();
     stylePoses();
+    applyContactLabels();
     drawBox();
-    zoomToLigand();
+    if (highlight) {
+      try {
+        viewer.zoomTo({ chain: highlight.chain, resi: highlight.resi }, 400);
+      } catch (e) {
+        zoomToLigand();
+      }
+    } else if (contactHighlights.length) {
+      try {
+        const c0 = contactHighlights[0];
+        viewer.zoomTo({ chain: c0.chain, resi: c0.resi }, 400);
+      } catch (e) {
+        zoomToLigand();
+      }
+    } else {
+      zoomToLigand();
+    }
     viewer.render();
     afterRender();
   }
 
   async function init() {
+    loadContactsFromPage();
     setStatus("loading…", "loading");
     try {
       let rec = await fetchStructure("receptor", "pdbqt");

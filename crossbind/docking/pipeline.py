@@ -16,6 +16,7 @@ from crossbind.docking.receptor import prepare_receptor
 from crossbind.docking.rmsd import heavy_atom_rmsd
 from crossbind.docking.vina import run_vina
 from crossbind.analysis.admet import compute_admet
+from crossbind.analysis.explain import build_explanation
 from crossbind.analysis.interactions import annotate_interactions
 
 
@@ -257,6 +258,16 @@ def run_docking_job(
                 "top_pose": [],
                 "by_pose": {},
             }
+
+        try:
+            result["explanation"] = build_explanation(result)
+            log("Evidence summary generated (deterministic).")
+        except Exception as expl_exc:
+            log(f"Explanation warning (non-fatal): {expl_exc}")
+            result["explanation"] = (
+                "Evidence summary unavailable. Docking score ≠ Kd; contacts are "
+                "pose hypotheses; not medical advice."
+            )
 
         result["status"] = "completed"
         result["finished_at"] = datetime.now(timezone.utc).isoformat()

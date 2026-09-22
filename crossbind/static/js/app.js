@@ -117,3 +117,158 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+CrossAffinity._parseResLabel = function (label) {
+  const s = String(label || "").trim();
+  let m = s.match(/^([A-Za-z]{1,4})\s*(-?\d+)(?:\.([A-Za-z0-9]))?$/);
+  if (m) return { resn: m[1].toUpperCase(), resi: m[2], chain: (m[3] || "").toUpperCase(), label: s };
+  m = s.match(/^([A-Za-z0-9])[.:]([A-Za-z]{1,4})\s*(-?\d+)$/);
+  if (m) return { chain: m[1].toUpperCase(), resn: m[2].toUpperCase(), resi: m[3], label: s };
+  return { resn: s, resi: "", chain: "", label: s };
+};
+
+CrossAffinity._renderIxRows = function (rows, jobId, method) {
+  const tbody = document.getElementById("ix-tbody");
+  const table = document.getElementById("ix-table");
+  if (!tbody) return;
+  const meth = method || "geometry";
+  if (!rows || !rows.length) {
+    tbody.innerHTML = "";
+    return;
+  }
+  tbody.innerHTML = rows
+    .map(function (row) {
+      const parsed = CrossAffinity._parseResLabel(row.residue);
+      const resn = row.resn || parsed.resn || row.residue || "—";
+      const chain = row.chain || parsed.chain || "";
+      const resi = row.resi != null && row.resi !== "" ? String(row.resi) : parsed.resi;
+      const dist =
+        row.distance_A != null && row.distance_A !== ""
+          ? Number(row.distance_A).toFixed(2)
+          : "—";
+      const link =
+        chain || resi
+          ? '<a href="/viewer/' +
+            encodeURIComponent(jobId) +
+            "?resi=" +
+            encodeURIComponent(resi) +
+            "&chain=" +
+            encodeURIComponent(chain) +
+            '&highlight=contacts">' +
+            (chain || "—") +
+            " / " +
+            (resi || "—") +
+            "</a>"
+          : "<code>" + (row.residue || "") + "</code>";
+      return (
+        "<tr>" +
+        "<td><code>" +
+        resn +
+        "</code></td>" +
+        '<td class="num">' +
+        link +
+        "</td>" +
+        "<td>" +
+        (row.type || "") +
+        "</td>" +
+        '<td class="num">' +
+        dist +
+        "</td>" +
+        '<td class="muted">' +
+        (row.detail || "") +
+        "</td>" +
+        '<td class="muted">' +
+        (row.method || meth) +
+        "</td>" +
+        "</tr>"
+      );
+    })
+    .join("");
+  if (table) table.style.display = "";
+};
+
+CrossAffinity.wireInteractionsPoseSelect = function () {
+  const sel = document.getElementById("ix-pose-select");
+  const wrap = document.getElementById("interactions-table");
+  const jsonEl = document.getElementById("ix-by-pose-json");
+  if (!sel || !wrap || !jsonEl) return;
+  let byPose = {};
+  try {
+    byPose = JSON.parse(jsonEl.textContent || "{}");
+  } catch (e) {
+    byPose = {};
+  }
+  const jobId = wrap.dataset.job;
+  const method = wrap.dataset.method || "geometry";
+  sel.addEventListener("change", function () {
+    const mode = String(sel.value || "1");
+    CrossAffinity._renderIxRows(byPose[mode] || [], jobId, method);
+  });
+};
+
+CrossAffinity.wireExplainPanel = function (jobId) {
+  if (!jobId) return;
+  const statusEl = document.getElementById("explain-status");
+  const summaryEl = document.getElementById("evidence-summary");
+  const llmEl = document.getElementById("llm-narration");
+  const btnExplain = document.getElementById("btn-rebuild-explain");
+  const btnNarrate = document.getElementById("btn-narrate-llm");
+
+  function setStatus(msg, spinning) {
+    if (!statusEl) return;
+    if (spinning) {
+      statusEl.innerHTML = '<span class="spinner"></span>' + (msg || "");
+    } else {
+      statusEl.textContent = msg || "";
+    }
+  }
+
+  if (btnExplain) {
+    btnExplain.addEventListener("click", async function () {
+      btnExplain.disabled = true;
+      setStatus("Rebuilding summary…", true);
+      try {
+        const r = await fetch("/api/job/" + encodeURIComponent(jobId) + "/explain", {
+          method: "POST",
+        });
+        const data = await r.json().catch(function () {
+          return {};
+        });
+        if (!r.ok) throw new Error(data.detail || "explain failed");
+        if (summaryEl) summaryEl.value = data.explanation || "";
+        setStatus("Summary rebuilt from result.json");
+      } catch (err) {
+        setStatus("Failed: " + (err && err.message ? err.message : err));
+      } finally {
+        btnExplain.disabled = false;
+      }
+    });
+  }
+
+  if (btnNarrate) {
+    btnNarrate.addEventListener("click", async function () {
+      btnNarrate.disabled = true;
+      setStatus("Calling local Ollama…", true);
+      try {
+        const r = await fetch("/api/job/" + encodeURIComponent(jobId) + "/narrate", {
+          method: "POST",
+        });
+        const data = await r.json().catch(function () {
+          return {};
+        });
+        if (!r.ok) throw new Error(data.detail || "narrate failed");
+        if (summaryEl && data.explanation) summaryEl.value = data.explanation;
+        if (llmEl) llmEl.value = data.narration || data.message || "";
+        if (data.ok) {
+          setStatus("Narration from " + (data.model || "ollama") + " (evidence-bound)");
+        } else {
+          setStatus(data.message || "Local LLM not available — showing evidence summary only.");
+        }
+      } catch (err) {
+        setStatus("Failed: " + (err && err.message ? err.message : err));
+      } finally {
+        btnNarrate.disabled = false;
+      }
+    });
+  }
+};

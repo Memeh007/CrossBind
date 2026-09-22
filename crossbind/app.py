@@ -36,6 +36,14 @@ from crossbind.discovery.cache import structures_dir
 from crossbind.job_identity import identity_from_discovery, identity_from_manual
 from crossbind.residues import parse_residues
 from crossbind.security import assert_under, safe_filename
+from crossbind.analysis.explain import (
+    build_explanation,
+    compact_evidence,
+    enrich_interactions,
+    narrate_with_ollama,
+    ollama_host,
+    ollama_model,
+)
 
 PKG = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PKG / "templates"))
@@ -280,6 +288,10 @@ def _normalize_job_result(result: dict) -> dict:
         out["ligand"] = {}
     if out.get("protein") is None:
         out["protein"] = {}
+    if out.get("interactions"):
+        out["interactions"] = enrich_interactions(out["interactions"])
+    out.setdefault("explanation", None)
+    out.setdefault("llm_narration", None)
     return out
 
 
@@ -310,6 +322,63 @@ async def api_job(job_id: str):
         return result
     except Exception as exc:
         raise HTTPException(404, str(exc)) from exc
+
+
+@app.post("/api/job/{job_id}/explain")
+async def api_job_explain(job_id: str):
+    """Rebuild deterministic evidence summary from current result.json."""
+    try:
+        jdir = job_dir(job_id)
+        result = read_result(job_id)
+    except Exception as exc:
+        raise HTTPException(404, str(exc)) from exc
+    if result.get("status") == "missing":
+        raise HTTPException(404, "job not found")
+    if result.get("interactions"):
+        result["interactions"] = enrich_interactions(result["interactions"])
+    explanation = build_explanation(result)
+    result["explanation"] = explanation
+    # Drop log if present before write
+    to_store = {k: v for k, v in result.items() if k != "log"}
+    (jdir / "result.json").write_text(json.dumps(to_store, indent=2), encoding="utf-8")
+    return {
+        "ok": True,
+        "job_id": job_id,
+        "explanation": explanation,
+        "evidence": compact_evidence(result),
+    }
+
+
+@app.post("/api/job/{job_id}/narrate")
+async def api_job_narrate(job_id: str):
+    """Optional local Ollama narration bound to structured evidence JSON."""
+    try:
+        jdir = job_dir(job_id)
+        result = read_result(job_id)
+    except Exception as exc:
+        raise HTTPException(404, str(exc)) from exc
+    if result.get("status") == "missing":
+        raise HTTPException(404, "job not found")
+    if result.get("interactions"):
+        result["interactions"] = enrich_interactions(result["interactions"])
+    if not result.get("explanation"):
+        result["explanation"] = build_explanation(result)
+    out = narrate_with_ollama(result)
+    result["explanation"] = out.get("explanation") or result["explanation"]
+    if out.get("ok"):
+        result["llm_narration"] = out.get("narration")
+    to_store = {k: v for k, v in result.items() if k != "log"}
+    (jdir / "result.json").write_text(json.dumps(to_store, indent=2), encoding="utf-8")
+    return {
+        "ok": bool(out.get("ok")),
+        "job_id": job_id,
+        "narration": out.get("narration"),
+        "explanation": out.get("explanation") or result.get("explanation"),
+        "source": out.get("source"),
+        "message": out.get("message"),
+        "model": out.get("model") or ollama_model(),
+        "host": out.get("host") or ollama_host(),
+    }
 
 
 def _truncate_residues_for_viewer(residues: list[dict], max_aa: int = 400, per_chain: int = 200):
@@ -380,6 +449,7 @@ async def viewer_page(request: Request, job_id: str):
                 "center": result.get("center") or [0, 0, 0],
                 "size": result.get("size") or [20, 20, 20],
             },
+            "contact_residues": (result.get("interactions") or {}).get("contact_residues") or [],
             "engines": _engine_status(),
         },
     )

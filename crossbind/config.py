@@ -64,3 +64,9 @@ def ensure_dirs() -> None:
     JOBS_DIR.mkdir(parents=True, exist_ok=True)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     (CACHE_DIR / "structures").mkdir(parents=True, exist_ok=True)
+
+
+# Optional local LLM (Ollama). Never used for cloud calls by default.
+# Bundling weights in-repo is intentionally unsupported — LLMs can invent biology.
+OLLAMA_HOST = (os.environ.get("OLLAMA_HOST") or "http://127.0.0.1:11434").rstrip("/")
+OLLAMA_MODEL = (os.environ.get("OLLAMA_MODEL") or "llama3.2").strip() or "llama3.2"

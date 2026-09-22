@@ -29,3 +29,11 @@ CrossBind is a **local-first, researchers-only** molecular docking UI. It is **n
 ## Reporting
 
 Portfolio / research software. Report issues on your GitHub fork. Do not include confidential structures or credentials in tickets.
+
+
+## Local LLM narration (optional)
+
+- CrossBind does **not** ship multi-GB model weights and does **not** call cloud LLMs by default.
+- Optional `POST /api/job/{id}/narrate` talks only to a local Ollama HTTP endpoint (`OLLAMA_HOST`, default `http://127.0.0.1:11434`) with model `OLLAMA_MODEL` (default `llama3.2`).
+- System prompt requires evidence-bound output; unconstrained LLMs still can hallucinate biology — treat narration as a research hypothesis, never as experimental proof or medical advice.
+- If Ollama is unreachable, the API returns the deterministic evidence summary plus an honest unavailable message.

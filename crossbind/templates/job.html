@@ -137,53 +137,134 @@
     <p class="muted">ADMET runs after docking completes.</p>
     {% endif %}
 
-    <h2>Pose–protein interactions</h2>
+    <h2>Residue binding proof</h2>
+    <div class="banner warn honesty-banner" id="contact-honesty">
+      <strong>Computational contacts from docked pose geometry; not crystallographic density or experimental binding assay.</strong>
+      Distances below use geometric cutoffs (e.g. hbond ≤3.5 Å) as the proof basis — triage evidence only.
+    </div>
     {% if result.interactions and result.interactions.ok %}
-    <p class="muted">
-      Tool: <code>{{ result.interactions.tool }}</code>
-      {% if result.interactions.tool_version %} v{{ result.interactions.tool_version }}{% endif %}
-      · top pose contacts
-      {% if result.interactions.contact_residues %}
-      · residues:
-        {% for res in result.interactions.contact_residues[:24] %}
-          <code class="contact-res">{{ res }}</code>{% if not loop.last %} {% endif %}
-        {% endfor %}
-        {% if result.interactions.contact_residues|length > 24 %}…{% endif %}
+    {% set ix = result.interactions %}
+    {% set cut = ix.cutoffs_A or {} %}
+    <div class="ix-meta row-between wrap">
+      <p class="muted" style="margin:0">
+        Method: <code>{{ ix.tool or "geometry" }}</code>
+        {% if ix.tool_version %} v{{ ix.tool_version }}{% endif %}
+        · cutoffs:
+        {% if cut %}
+          hbond {{ cut.hbond or "—" }} Å · hydrophobic {{ cut.hydrophobic or "—" }} Å ·
+          salt {{ cut.salt or "—" }} Å · π {{ cut.pi or "—" }} Å
+        {% elif ix.vicinity_cutoff_A is defined and ix.vicinity_cutoff_A is not none %}
+          vicinity ≤ {{ ix.vicinity_cutoff_A }} Å
+        {% else %}
+          tool defaults
+        {% endif %}
+      </p>
+      {% if ix.by_pose and ix.by_pose|length > 1 %}
+      <label class="pose-pick">Pose
+        <select id="ix-pose-select" data-job="{{ job_id }}">
+          {% for mode, _rows in ix.by_pose.items() %}
+          <option value="{{ mode }}" {% if mode|string == "1" %}selected{% endif %}>mode {{ mode }}</option>
+          {% endfor %}
+        </select>
+      </label>
       {% endif %}
-    </p>
-    {% if result.interactions.summary %}
+    </div>
+
+    <div class="contact-chips" id="contact-residues-panel">
+      <span class="k">Unique contact residues</span>
+      <div class="chip-row" id="contact-chip-row">
+        {% if ix.contact_residues %}
+          {% for res in ix.contact_residues %}
+          {% set bits = res.split('.') %}
+          {% set chain = bits[1] if bits|length > 1 else '' %}
+          {% set head = bits[0] %}
+          {% set resi = head[3:] if head|length > 3 else head %}
+          {% set resn = head[:3] if head|length >= 3 else head %}
+          <a class="contact-chip" href="/viewer/{{ job_id }}?resi={{ resi }}&amp;chain={{ chain }}&amp;highlight=contacts"
+             title="Open viewer centered on {{ res }}">{{ res }}</a>
+          {% endfor %}
+        {% else %}
+          <span class="muted">No unique residues listed.</span>
+        {% endif %}
+      </div>
+      <p class="hint">Click a residue to open the 3D viewer (highlights contact set). Or open
+        <a href="/viewer/{{ job_id }}?highlight=contacts">viewer with all contacts highlighted</a>.</p>
+    </div>
+
+    {% if ix.summary %}
     <div class="ix-summary">
-      {% for s in result.interactions.summary[:5] %}
+      {% for s in ix.summary[:9] %}
       <span class="pill">mode {{ s.mode }}: {{ s.n_interactions }} ix</span>
       {% endfor %}
     </div>
     {% endif %}
-    <div id="interactions-table">
-      {% set rows = result.interactions.top_pose or [] %}
+
+    <script type="application/json" id="ix-by-pose-json">{{ ix.by_pose | tojson }}</script>
+    <div id="interactions-table" class="ix-proof-table"
+         data-job="{{ job_id }}"
+         data-method="{{ ix.tool or 'geometry' }}">
+      {% set rows = ix.top_pose or [] %}
       {% if rows %}
-      <table class="jobs">
-        <thead><tr><th>Residue</th><th>Type</th><th>Distance</th><th>Detail</th></tr></thead>
-        <tbody>
+      <table class="jobs" id="ix-table">
+        <thead>
+          <tr>
+            <th>Residue</th>
+            <th>Chain / res</th>
+            <th>Interaction type</th>
+            <th>Distance (Å)</th>
+            <th>Atom detail</th>
+            <th>Method</th>
+          </tr>
+        </thead>
+        <tbody id="ix-tbody">
         {% for row in rows %}
           <tr>
-            <td><code>{{ row.residue }}</code></td>
+            <td><code>{{ row.resn or row.residue }}</code></td>
+            <td class="num">
+              {% if row.chain or row.resi %}
+                <a href="/viewer/{{ job_id }}?resi={{ row.resi }}&amp;chain={{ row.chain }}&amp;highlight=contacts">{{ row.chain or "—" }} / {{ row.resi or "—" }}</a>
+              {% else %}
+                <code>{{ row.residue }}</code>
+              {% endif %}
+            </td>
             <td>{{ row.type }}</td>
-            <td class="num">{% if row.distance_A is not none %}{{ '%.2f'|format(row.distance_A) }} Å{% else %}—{% endif %}</td>
+            <td class="num">{% if row.distance_A is not none %}{{ '%.2f'|format(row.distance_A) }}{% else %}—{% endif %}</td>
             <td class="muted">{{ row.detail or "" }}</td>
+            <td class="muted">{{ row.method or ix.tool or "geometry" }}</td>
           </tr>
         {% endfor %}
         </tbody>
       </table>
       {% else %}
-      <p class="muted">No contacts annotated for top pose.</p>
+      <p class="muted" id="ix-empty">No contacts annotated for top pose.</p>
       {% endif %}
     </div>
-    {% if result.interactions.note %}<p class="hint">{{ result.interactions.note }}</p>{% endif %}
+    {% if ix.note %}<p class="hint">{{ ix.note }}</p>{% endif %}
     {% elif result.interactions and result.interactions.error %}
     <p class="muted">Interactions unavailable: {{ result.interactions.error }}</p>
     {% else %}
     <p class="muted">Interactions run after docking completes.</p>
     {% endif %}
+
+    <h2>Evidence summary</h2>
+    <p class="muted helpText" id="explain-help">
+      Deterministic plain-English built only from structured result fields (scores, contacts, ADMET).
+      Optional local LLM narration uses <code>OLLAMA_HOST</code> (default <code>http://127.0.0.1:11434</code>)
+      and <code>OLLAMA_MODEL</code> (default <code>llama3.2</code>). CrossBind never calls cloud LLMs by default.
+      Bundling an LLM inside the app does not guarantee non-fiction — unconstrained models hallucinate biology.
+    </p>
+    <div class="explain-actions actions wrap">
+      <button type="button" class="btn ghost" id="btn-rebuild-explain" data-job="{{ job_id }}">Rebuild summary</button>
+      <button type="button" class="btn primary" id="btn-narrate-llm" data-job="{{ job_id }}">Narrate (local LLM)</button>
+      <span class="muted" id="explain-status" aria-live="polite"></span>
+    </div>
+    <label class="explain-label" for="evidence-summary">Evidence summary</label>
+    <textarea id="evidence-summary" class="explain-box" readonly rows="10"
+      placeholder="Evidence summary appears after docking completes…">{{ result.explanation or "" }}</textarea>
+    <label class="explain-label" for="llm-narration">LLM narration (evidence-bound)</label>
+    <p class="hint">Research hypothesis only — must stay within the JSON evidence. Not experimental proof or medical advice.</p>
+    <textarea id="llm-narration" class="explain-box llm-box" readonly rows="8"
+      placeholder="Click “Narrate (local LLM)” if Ollama is running locally…">{{ result.llm_narration or "" }}</textarea>
 
     <h2>Downloads</h2>
     <p class="actions">
@@ -199,9 +280,11 @@
 </section>
 {% endblock %}
 {% block scripts %}
-<script src="/static/js/app.js"></script>
+<script src="/static/js/app.js?v=20260922-explain"></script>
 <script>
   CrossAffinity.pollJob(document.getElementById('job-status').dataset.job);
   CrossAffinity.wireCancelButton(document.getElementById('btn-cancel-job'));
+  CrossAffinity.wireExplainPanel(document.getElementById('job-status').dataset.job);
+  CrossAffinity.wireInteractionsPoseSelect();
 </script>
 {% endblock %}

@@ -16,6 +16,7 @@ Author: **Alexander Cecena** ([Memeh007](https://github.com/Memeh007)) · Licens
 - Optional **GNINA** engine (`GNINA_BIN`) with `vina_affinity` vs `gnina_cnn_score` / `gnina_cnn_affinity`
 - Docking box controls, exhaustiveness, CPU threads, job log, results table, pose downloads
 - **Signature GUI:** 3Dmol.js viewer — cartoon + all amino-acid sidechains toggle, searchable residue list (chain/resi/resn) with click-to-highlight, docking box overlay, ranked poses
+- **Residue binding proof** on the job page: contact table (residue, chain/res, type, distance, atom detail, method), geometric cutoffs, honesty banner, deterministic evidence summary, optional local Ollama narration (`OLLAMA_HOST` / `OLLAMA_MODEL`; no cloud LLMs by default)
 - Redock **RMSD** helper when a reference ligand is provided
 - Binds **127.0.0.1** by default (port **8787**)
 

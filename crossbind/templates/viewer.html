@@ -49,6 +49,7 @@
         {% endfor %}
       </div>
     </aside>
+    <script type="application/json" id="viewer-contacts-json">{{ contact_residues | default([]) | tojson }}</script>
     <div id="viewport" class="viewport"
          data-job="{{ job_id }}"
          data-cx="{{ box.center[0] }}" data-cy="{{ box.center[1] }}" data-cz="{{ box.center[2] }}"
@@ -57,8 +58,9 @@
     </div>
   </div>
   <p class="hint">Ligand: ball-and-stick with CPK/Jmol colors (H hidden). Protein cartoon stays softer; enable sidechains for thin sticks. Click a residue to highlight and center. Docking box edges are dashed/subtle.</p>
+  <p class="viewer-contact-note" id="viewer-contact-note" hidden></p>
 </section>
 {% endblock %}
 {% block scripts %}
-<script src="/static/js/viewer.js?v=20260922-admet-viewer"></script>
+<script src="/static/js/viewer.js?v=20260922-contacts"></script>
 {% endblock %}
