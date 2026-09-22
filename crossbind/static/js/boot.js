@@ -2,17 +2,17 @@
 (function () {
   "use strict";
 
-  var STORAGE_KEY = "cross_affinity_booted";
+  var STORAGE_KEY = "ddos_booted";
   var DURATION_MS = 5000;
   var REDUCED_MS = 400;
   var TITLE = "ddOS";
   var CAPTION = "Drug Discovery Operating System";
   var CREDIT = "Developed by Alexander Cecena & Grok Bot";
   /* Prefer large PNG favicon as the centered brand mark */
-  var LOGO_URL = "/static/img/favicon-512.png";
+  var LOGO_URL = "/static/img/boot-logo.png";
 
   var STAGES = [
-    { at: 0.0, text: "Initializing affinity engine…" },
+    { at: 0.0, text: "Initializing discovery engine…" },
     { at: 0.22, text: "Warming ligand prep…" },
     { at: 0.48, text: "Seeding structure cache…" },
     { at: 0.72, text: "Calibrating docking grid…" },
