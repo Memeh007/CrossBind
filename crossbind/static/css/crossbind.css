@@ -303,7 +303,7 @@ table.jobs input[type="radio"] { accent-color: var(--teal); cursor: pointer; }
 .badge-exp { color: var(--ok); border-color: #065f46; }
 .badge-pred { color: var(--warn); border-color: #0e7490; }
 
-/* —— Boot overlay (Cross Affinity) —— */
+/* —— Boot overlay (ddOS) —— */
 html.cb-booting {
   overflow: hidden;
 }
@@ -316,9 +316,9 @@ html.cb-booting {
   align-items: center;
   justify-content: center;
   background:
-    radial-gradient(ellipse 80% 60% at 50% 35%, rgba(46, 230, 197, 0.08), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(167, 139, 250, 0.06), transparent 50%),
-    linear-gradient(180deg, #0a0e14 0%, #0c121c 55%, #070b12 100%);
+    radial-gradient(ellipse 70% 55% at 50% 38%, rgba(46, 230, 197, 0.10), transparent 58%),
+    radial-gradient(ellipse 40% 35% at 50% 70%, rgba(34, 211, 238, 0.04), transparent 55%),
+    linear-gradient(180deg, #070b10 0%, #0a0e14 50%, #06090e 100%);
   color: var(--text);
   opacity: 1;
   transition: opacity 0.45s ease;
@@ -330,14 +330,17 @@ html.cb-booting {
   pointer-events: none;
 }
 
-.cb-boot__fall {
+.cb-boot__glow {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  pointer-events: none;
+  left: 50%;
+  top: 38%;
+  width: min(420px, 70vw);
+  height: min(420px, 70vw);
+  transform: translate(-50%, -50%);
   z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(46, 230, 197, 0.14) 0%, rgba(46, 230, 197, 0.04) 42%, transparent 70%);
+  filter: blur(2px);
 }
 
 .cb-boot__grain {
@@ -345,7 +348,7 @@ html.cb-booting {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.07;
+  opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
   mix-blend-mode: overlay;
 }
@@ -363,28 +366,26 @@ html.cb-booting {
 }
 
 .cb-boot__logo {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.55rem;
 }
 
-.ca-orb-wrap {
+.cb-boot__mark {
   width: 140px;
   height: 140px;
-  display: grid;
-  place-items: center;
-  transform-origin: center center;
-}
-
-.ca-orb-wrap svg,
-.ca-orb-wrap img {
-  width: 100%;
-  height: 100%;
   display: block;
+  object-fit: contain;
+  border-radius: 28px;
+  box-shadow:
+    0 0 0 1px rgba(46, 230, 197, 0.18),
+    0 0 36px rgba(46, 230, 197, 0.28),
+    0 12px 40px rgba(0, 0, 0, 0.45);
 }
 
 @media (min-width: 720px) {
-  .ca-orb-wrap {
-    width: 160px;
-    height: 160px;
+  .cb-boot__mark {
+    width: 168px;
+    height: 168px;
+    border-radius: 32px;
   }
 }
 
@@ -452,7 +453,7 @@ html.cb-booting {
   height: 100%;
   width: 0%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #2ee6c5, #22d3ee, #a78bfa);
+  background: linear-gradient(90deg, #2ee6c5, #22d3ee);
   box-shadow: 0 0 12px rgba(46, 230, 197, 0.45);
   transition: width 0.08s linear;
 }
