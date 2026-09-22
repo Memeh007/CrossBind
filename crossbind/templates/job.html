@@ -1,11 +1,11 @@
-{% extends "base.html" %}
-{% block title %}{{ result.job_title or result.compound_name or job_id }} — Cross Affinity{% endblock %}
+﻿{% extends "base.html" %}
+{% block title %}{{ result.job_title or result.compound_name or job_id }} â€” Cross Affinity{% endblock %}
 {% block content %}
 <section class="panel">
   <div class="row-between">
     <div>
       <h1>{{ result.job_title or result.compound_name or ("Job " ~ job_id) }}</h1>
-      <p class="muted">Job id <code>{{ job_id }}</code>{% if result.source %} · source <code>{{ result.source }}</code>{% endif %}</p>
+      <p class="muted">Job id <code>{{ job_id }}</code>{% if result.source %} Â· source <code>{{ result.source }}</code>{% endif %}</p>
     </div>
     <div class="actions">
       <a class="btn primary" href="/viewer/{{ job_id }}">Open 3D viewer</a>
@@ -23,35 +23,35 @@
       <div class="id-card">
         <h2>Ligand</h2>
         <dl class="kv">
-          <dt>Name</dt><dd><code>{{ (result.ligand.compound_name if result.ligand else result.compound_name) or "—" }}</code></dd>
-          <dt>CID</dt><dd><code>{{ (result.ligand.cid if result.ligand else none) or "—" }}</code></dd>
-          <dt>ChEMBL</dt><dd><code>{{ (result.ligand.chembl_id if result.ligand else none) or "—" }}</code></dd>
-          <dt>SMILES</dt><dd><code class="wrap">{{ (result.ligand.smiles if result.ligand else none) or "—" }}</code></dd>
-          <dt>InChIKey</dt><dd><code>{{ (result.ligand.inchikey if result.ligand else none) or "—" }}</code></dd>
+          <dt>Name</dt><dd><code>{{ (result.ligand.compound_name if result.ligand else result.compound_name) or "â€”" }}</code></dd>
+          <dt>CID</dt><dd><code>{{ (result.ligand.cid if result.ligand else none) or "â€”" }}</code></dd>
+          <dt>ChEMBL</dt><dd><code>{{ (result.ligand.chembl_id if result.ligand else none) or "â€”" }}</code></dd>
+          <dt>SMILES</dt><dd><code class="wrap">{{ (result.ligand.smiles if result.ligand else none) or "â€”" }}</code></dd>
+          <dt>InChIKey</dt><dd><code>{{ (result.ligand.inchikey if result.ligand else none) or "â€”" }}</code></dd>
         </dl>
       </div>
       <div class="id-card">
         <h2>Protein</h2>
         <dl class="kv">
-          <dt>Gene</dt><dd><code>{{ (result.protein.gene if result.protein else none) or "—" }}</code></dd>
-          <dt>UniProt</dt><dd><code>{{ (result.protein.uniprot if result.protein else none) or "—" }}</code></dd>
-          <dt>Name</dt><dd><code>{{ (result.protein.protein_name if result.protein else none) or "—" }}</code></dd>
-          <dt>Organism</dt><dd><code>{{ (result.protein.organism if result.protein else none) or "—" }}</code></dd>
+          <dt>Gene</dt><dd><code>{{ (result.protein.gene if result.protein else none) or "â€”" }}</code></dd>
+          <dt>UniProt</dt><dd><code>{{ (result.protein.uniprot if result.protein else none) or "â€”" }}</code></dd>
+          <dt>Name</dt><dd><code>{{ (result.protein.protein_name if result.protein else none) or "â€”" }}</code></dd>
+          <dt>Organism</dt><dd><code>{{ (result.protein.organism if result.protein else none) or "â€”" }}</code></dd>
           <dt>Structure</dt><dd><code>
             {% if result.protein %}
               {% if result.protein.label == "experimental" or result.protein.provenance == "experimental_pdb" %}
-                experimental · PDB {{ result.protein.pdb_id or result.protein.structure_id or "—" }}
+                experimental Â· PDB {{ result.protein.pdb_id or result.protein.structure_id or "â€”" }}
               {% elif result.protein.label == "predicted" or result.protein.provenance == "alphafold_db" %}
-                predicted · {{ result.protein.alphafold_id or result.protein.structure_id or "—" }}
+                predicted Â· {{ result.protein.alphafold_id or result.protein.structure_id or "â€”" }}
               {% elif result.protein.label == "uploaded" %}
                 uploaded receptor
               {% else %}
-                {{ result.protein.label or result.protein.provenance or "—" }}
+                {{ result.protein.label or result.protein.provenance or "â€”" }}
               {% endif %}
-            {% else %}—{% endif %}
+            {% else %}â€”{% endif %}
           </code></dd>
           {% if result.protein and result.protein.method %}
-          <dt>Method</dt><dd><code>{{ result.protein.method }}{% if result.protein.resolution_A is defined and result.protein.resolution_A is not none %} · {{ '%.2f'|format(result.protein.resolution_A) }} Å{% endif %}</code></dd>
+          <dt>Method</dt><dd><code>{{ result.protein.method }}{% if result.protein.resolution_A is defined and result.protein.resolution_A is not none %} Â· {{ '%.2f'|format(result.protein.resolution_A) }} Ã…{% endif %}</code></dd>
           {% endif %}
         </dl>
         {% if result.mechanism %}
@@ -67,9 +67,9 @@
     </div>
 
     <div class="metrics">
-      <div class="metric"><span class="k">vina_affinity</span><span class="v" id="m-vina">{% if result.vina_affinity is defined and result.vina_affinity is not none %}{{ '%.3f'|format(result.vina_affinity) }} kcal/mol{% else %}—{% endif %}</span></div>
-      <div class="metric"><span class="k">gnina_cnn_score</span><span class="v" id="m-cnn">{% if result.gnina_cnn_score is defined and result.gnina_cnn_score is not none %}{{ '%.3f'|format(result.gnina_cnn_score) }}{% else %}—{% endif %}</span></div>
-      <div class="metric"><span class="k">RMSD (ref)</span><span class="v" id="m-rmsd">{% if result.rmsd_to_reference is defined and result.rmsd_to_reference is not none %}{{ '%.3f'|format(result.rmsd_to_reference) }} Å{% else %}—{% endif %}</span></div>
+      <div class="metric"><span class="k">vina_affinity</span><span class="v" id="m-vina">{% if result.vina_affinity is defined and result.vina_affinity is not none %}{{ '%.3f'|format(result.vina_affinity) }} kcal/mol{% else %}â€”{% endif %}</span></div>
+      <div class="metric"><span class="k">gnina_cnn_score</span><span class="v" id="m-cnn">{% if result.gnina_cnn_score is defined and result.gnina_cnn_score is not none %}{{ '%.3f'|format(result.gnina_cnn_score) }}{% else %}â€”{% endif %}</span></div>
+      <div class="metric"><span class="k">RMSD (ref)</span><span class="v" id="m-rmsd">{% if result.rmsd_to_reference is defined and result.rmsd_to_reference is not none %}{{ '%.3f'|format(result.rmsd_to_reference) }} Ã…{% else %}â€”{% endif %}</span></div>
     </div>
     {% if result.error %}
     <div class="banner bad"><strong>Error:</strong> {{ result.error }}</div>
@@ -85,7 +85,7 @@
             <td>{{ p.mode }}</td>
             <td>
               {% if p.affinity is defined and p.affinity is not none %}{{ '%.3f'|format(p.affinity) }} kcal/mol
-              {% elif p.vina_affinity is defined and p.vina_affinity is not none %}vina {{ '%.3f'|format(p.vina_affinity) }}{% if p.cnn_score is defined and p.cnn_score is not none %} · CNN {{ '%.3f'|format(p.cnn_score) }}{% endif %}
+              {% elif p.vina_affinity is defined and p.vina_affinity is not none %}vina {{ '%.3f'|format(p.vina_affinity) }}{% if p.cnn_score is defined and p.cnn_score is not none %} Â· CNN {{ '%.3f'|format(p.cnn_score) }}{% endif %}
               {% else %}{{ p }}{% endif %}
             </td>
           </tr>
@@ -100,7 +100,7 @@
     {% if result.admet or result.interactions %}
     <div class="banner warn honesty-banner">
       <strong>Honesty:</strong>
-      Drug-likeness filters and interaction annotations are research heuristics for triage —
+      Drug-likeness filters and interaction annotations are research heuristics for triage â€”
       not clinical ADMET, measured affinity, or experimental contact proof.
       {% if result.honesty and result.honesty.message %} {{ result.honesty.message }}{% endif %}
     </div>
@@ -115,7 +115,7 @@
         <div class="admet-metric">
           <span class="k">{{ d[key].label or key }}</span>
           <span class="v">
-            {% if d[key].value is not none %}{{ d[key].value }}{% if d[key].unit %}<span class="u"> {{ d[key].unit }}</span>{% endif %}{% else %}—{% endif %}
+            {% if d[key].value is not none %}{{ d[key].value }}{% if d[key].unit %}<span class="u"> {{ d[key].unit }}</span>{% endif %}{% else %}â€”{% endif %}
           </span>
         </div>
         {% endif %}
@@ -140,7 +140,7 @@
     <h2>Residue binding proof</h2>
     <div class="banner warn honesty-banner" id="contact-honesty">
       <strong>Computational contacts from docked pose geometry; not crystallographic density or experimental binding assay.</strong>
-      Distances below use geometric cutoffs (e.g. hbond ≤3.5 Å) as the proof basis — triage evidence only.
+      Distances below use geometric cutoffs (e.g. hbond â‰¤3.5 Ã…) as the proof basis â€” triage evidence only.
     </div>
     {% if result.interactions and result.interactions.ok %}
     {% set ix = result.interactions %}
@@ -149,12 +149,12 @@
       <p class="muted" style="margin:0">
         Method: <code>{{ ix.tool or "geometry" }}</code>
         {% if ix.tool_version %} v{{ ix.tool_version }}{% endif %}
-        · cutoffs:
+        Â· cutoffs:
         {% if cut %}
-          hbond {{ cut.hbond or "—" }} Å · hydrophobic {{ cut.hydrophobic or "—" }} Å ·
-          salt {{ cut.salt or "—" }} Å · π {{ cut.pi or "—" }} Å
+          hbond {{ cut.hbond or "â€”" }} Ã… Â· hydrophobic {{ cut.hydrophobic or "â€”" }} Ã… Â·
+          salt {{ cut.salt or "â€”" }} Ã… Â· Ï€ {{ cut.pi or "â€”" }} Ã…
         {% elif ix.vicinity_cutoff_A is defined and ix.vicinity_cutoff_A is not none %}
-          vicinity ≤ {{ ix.vicinity_cutoff_A }} Å
+          vicinity â‰¤ {{ ix.vicinity_cutoff_A }} Ã…
         {% else %}
           tool defaults
         {% endif %}
@@ -211,7 +211,7 @@
             <th>Residue</th>
             <th>Chain / res</th>
             <th>Interaction type</th>
-            <th>Distance (Å)</th>
+            <th>Distance (Ã…)</th>
             <th>Atom detail</th>
             <th>Method</th>
           </tr>
@@ -222,13 +222,13 @@
             <td><code>{{ row.resn or row.residue }}</code></td>
             <td class="num">
               {% if row.chain or row.resi %}
-                <a href="/viewer/{{ job_id }}?resi={{ row.resi }}&amp;chain={{ row.chain }}&amp;highlight=contacts">{{ row.chain or "—" }} / {{ row.resi or "—" }}</a>
+                <a href="/viewer/{{ job_id }}?resi={{ row.resi }}&amp;chain={{ row.chain }}&amp;highlight=contacts">{{ row.chain or "â€”" }} / {{ row.resi or "â€”" }}</a>
               {% else %}
                 <code>{{ row.residue }}</code>
               {% endif %}
             </td>
             <td>{{ row.type }}</td>
-            <td class="num">{% if row.distance_A is not none %}{{ '%.2f'|format(row.distance_A) }}{% else %}—{% endif %}</td>
+            <td class="num">{% if row.distance_A is not none %}{{ '%.2f'|format(row.distance_A) }}{% else %}â€”{% endif %}</td>
             <td class="muted">{{ row.detail or "" }}</td>
             <td class="muted">{{ row.method or ix.tool or "geometry" }}</td>
           </tr>
@@ -251,7 +251,7 @@
       Deterministic plain-English built only from structured result fields (scores, contacts, ADMET).
       Optional local LLM narration uses <code>OLLAMA_HOST</code> (default <code>http://127.0.0.1:11434</code>)
       and <code>OLLAMA_MODEL</code> (default <code>llama3.2</code>). CrossBind never calls cloud LLMs by default.
-      Bundling an LLM inside the app does not guarantee non-fiction — unconstrained models hallucinate biology.
+      Bundling an LLM inside the app does not guarantee non-fiction â€” unconstrained models hallucinate biology.
     </p>
     <div class="explain-actions actions wrap">
       <button type="button" class="btn ghost" id="btn-rebuild-explain" data-job="{{ job_id }}">Rebuild summary</button>
@@ -260,11 +260,11 @@
     </div>
     <label class="explain-label" for="evidence-summary">Evidence summary</label>
     <textarea id="evidence-summary" class="explain-box" readonly rows="10"
-      placeholder="Evidence summary appears after docking completes…">{{ result.explanation or "" }}</textarea>
+      placeholder="Evidence summary appears after docking completesâ€¦">{{ result.explanation or "" }}</textarea>
     <label class="explain-label" for="llm-narration">LLM narration (evidence-bound)</label>
-    <p class="hint">Research hypothesis only — must stay within the JSON evidence. Not experimental proof or medical advice.</p>
+    <p class="hint">Research hypothesis only â€” must stay within the JSON evidence. Not experimental proof or medical advice.</p>
     <textarea id="llm-narration" class="explain-box llm-box" readonly rows="8"
-      placeholder="Click “Narrate (local LLM)” if Ollama is running locally…">{{ result.llm_narration or "" }}</textarea>
+      placeholder="Click â€œNarrate (local LLM)â€ if Ollama is running locallyâ€¦">{{ result.llm_narration or "" }}</textarea>
 
     <h2>Downloads</h2>
     <p class="actions">
@@ -280,7 +280,7 @@
 </section>
 {% endblock %}
 {% block scripts %}
-<script src="/static/js/app.js?v=20260922-explain"></script>
+<script src="/static/js/app.js?v=20260922-poll-fix"></script>
 <script>
   CrossAffinity.pollJob(document.getElementById('job-status').dataset.job);
   CrossAffinity.wireCancelButton(document.getElementById('btn-cancel-job'));

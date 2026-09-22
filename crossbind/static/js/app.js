@@ -11,6 +11,12 @@ CrossAffinity.pollJob = function (jobId) {
   const vinaEl = document.getElementById("m-vina");
   const cnnEl = document.getElementById("m-cnn");
   const rmsdEl = document.getElementById("m-rmsd");
+  const statusSpan0 = document.querySelector("#job-status .status");
+  const initial = ((statusSpan0 && statusSpan0.textContent) || "").trim().toLowerCase();
+  /* Already terminal on first paint — do not poll (avoids reload storms). */
+  if (CrossAffinity._TERMINAL[initial]) return;
+
+  const reloadKey = "ca_job_hydrated_" + jobId;
   let timer = null;
 
   async function tick() {
@@ -29,19 +35,20 @@ CrossAffinity.pollJob = function (jobId) {
       if (cnnEl && data.gnina_cnn_score != null)
         cnnEl.textContent = Number(data.gnina_cnn_score).toFixed(3);
       if (rmsdEl && data.rmsd_to_reference != null)
-        rmsdEl.textContent = Number(data.rmsd_to_reference).toFixed(3) + " Å";
-      const st = data.status || "";
-      if (CrossAffinity._TERMINAL[st]) {
-        clearInterval(timer);
-        const btn = document.getElementById("btn-cancel-job");
-        if (btn) btn.remove();
-        if (st === "completed" && data.poses && data.poses.length) location.reload();
-        if (st === "cancelled" || st === "failed") {
-          /* soft refresh so error banner / badge update */
-          if (!document.querySelector(".banner.bad") || st === "cancelled") {
-            setTimeout(function () { location.reload(); }, 400);
-          }
-        }
+        rmsdEl.textContent = Number(data.rmsd_to_reference).toFixed(3) + " A.";
+      const st = (data.status || "").toLowerCase();
+      if (!CrossAffinity._TERMINAL[st]) return;
+
+      clearInterval(timer);
+      timer = null;
+      const btn = document.getElementById("btn-cancel-job");
+      if (btn) btn.remove();
+
+      /* One-shot reload so ADMET / IFP / evidence panels hydrate from the server.
+         Never reload again for this job in this tab (was infinite GET /job + /api/job). */
+      if (!sessionStorage.getItem(reloadKey)) {
+        sessionStorage.setItem(reloadKey, "1");
+        location.reload();
       }
     } catch (e) {
       /* ignore transient */
