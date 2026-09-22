@@ -487,3 +487,57 @@ html.cb-booting {
     transition: opacity 0.15s ease;
   }
 }
+
+
+/* ADMET + interactions (job page) */
+.honesty-banner { font-size: 0.8rem; line-height: 1.4; }
+.admet-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 8px 0;
+}
+@media (max-width: 900px) { .admet-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .admet-grid { grid-template-columns: 1fr; } }
+.admet-metric {
+  background: var(--elev2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+}
+.admet-metric .k {
+  display: block;
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+.admet-metric .v {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+.admet-metric .u { color: var(--muted); font-size: 0.72rem; margin-left: 2px; }
+.rules-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
+.rule-pill {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--elev2);
+}
+.rule-pill.ok { color: var(--teal); border-color: rgba(46,230,197,0.35); }
+.rule-pill.bad { color: var(--bad); border-color: rgba(240,113,120,0.4); }
+.ix-summary { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+code.contact-res {
+  font-size: 0.72rem;
+  padding: 1px 4px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--elev2);
+}
+table.jobs td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); }

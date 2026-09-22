@@ -96,6 +96,95 @@
       <p class="muted">No poses yet.</p>
       {% endif %}
     </div>
+
+    {% if result.admet or result.interactions %}
+    <div class="banner warn honesty-banner">
+      <strong>Honesty:</strong>
+      Drug-likeness filters and interaction annotations are research heuristics for triage —
+      not clinical ADMET, measured affinity, or experimental contact proof.
+      {% if result.honesty and result.honesty.message %} {{ result.honesty.message }}{% endif %}
+    </div>
+    {% endif %}
+
+    <h2>ADMET / drug-likeness</h2>
+    {% if result.admet and result.admet.ok %}
+    <div class="admet-grid" id="admet-panel">
+      {% set d = result.admet.descriptors %}
+      {% for key in ['mw','logp','tpsa','hbd','hba','rotb','qed','heavy_atoms'] %}
+        {% if d.get(key) %}
+        <div class="admet-metric">
+          <span class="k">{{ d[key].label or key }}</span>
+          <span class="v">
+            {% if d[key].value is not none %}{{ d[key].value }}{% if d[key].unit %}<span class="u"> {{ d[key].unit }}</span>{% endif %}{% else %}—{% endif %}
+          </span>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <div class="rules-row">
+      {% set rules = result.admet.rules or {} %}
+      {% for rname, r in rules.items() %}
+      <span class="rule-pill {% if r.pass %}ok{% else %}bad{% endif %}">
+        {{ rname }}{% if r.optional %}*{% endif %}:
+        {% if r.pass %}pass{% else %}fail{% if r.fails %} ({{ r.fails|join(', ') }}){% endif %}{% endif %}
+      </span>
+      {% endfor %}
+    </div>
+    <p class="hint">{{ result.admet.disclaimer }}</p>
+    {% elif result.admet and result.admet.error %}
+    <p class="muted">ADMET unavailable: {{ result.admet.error }}</p>
+    {% else %}
+    <p class="muted">ADMET runs after docking completes.</p>
+    {% endif %}
+
+    <h2>Pose–protein interactions</h2>
+    {% if result.interactions and result.interactions.ok %}
+    <p class="muted">
+      Tool: <code>{{ result.interactions.tool }}</code>
+      {% if result.interactions.tool_version %} v{{ result.interactions.tool_version }}{% endif %}
+      · top pose contacts
+      {% if result.interactions.contact_residues %}
+      · residues:
+        {% for res in result.interactions.contact_residues[:24] %}
+          <code class="contact-res">{{ res }}</code>{% if not loop.last %} {% endif %}
+        {% endfor %}
+        {% if result.interactions.contact_residues|length > 24 %}…{% endif %}
+      {% endif %}
+    </p>
+    {% if result.interactions.summary %}
+    <div class="ix-summary">
+      {% for s in result.interactions.summary[:5] %}
+      <span class="pill">mode {{ s.mode }}: {{ s.n_interactions }} ix</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div id="interactions-table">
+      {% set rows = result.interactions.top_pose or [] %}
+      {% if rows %}
+      <table class="jobs">
+        <thead><tr><th>Residue</th><th>Type</th><th>Distance</th><th>Detail</th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+          <tr>
+            <td><code>{{ row.residue }}</code></td>
+            <td>{{ row.type }}</td>
+            <td class="num">{% if row.distance_A is not none %}{{ '%.2f'|format(row.distance_A) }} Å{% else %}—{% endif %}</td>
+            <td class="muted">{{ row.detail or "" }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="muted">No contacts annotated for top pose.</p>
+      {% endif %}
+    </div>
+    {% if result.interactions.note %}<p class="hint">{{ result.interactions.note }}</p>{% endif %}
+    {% elif result.interactions and result.interactions.error %}
+    <p class="muted">Interactions unavailable: {{ result.interactions.error }}</p>
+    {% else %}
+    <p class="muted">Interactions run after docking completes.</p>
+    {% endif %}
+
     <h2>Downloads</h2>
     <p class="actions">
       <a class="btn ghost" href="/api/job/{{ job_id }}/file/poses.pdbqt">poses.pdbqt</a>

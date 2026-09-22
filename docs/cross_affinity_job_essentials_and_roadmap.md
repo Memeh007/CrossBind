@@ -555,3 +555,36 @@ Below is a **forward-compatible** schema. Fields marked ★ are required for the
 ## One-line product principle
 
 **If a LinkedIn biotech reader cannot tell which ligand, which gene/UniProt, which PDB/AF model, which engine, and which disclaimer apply to a job card in under five seconds, the metadata schema is not done.**
+
+
+---
+
+## 2026-09-22 competitive scan (PocketDock / DockSuiteX / NatDock / ProteinIQ)
+
+**Peers researched:** PocketDock-style local docking UIs, DockSuiteX, NatDock / screening tool patterns, ProteinIQ DiffDock+GNINA stacks.
+
+### Feature parity notes (what peers ship that we lacked)
+
+| Layer | Peer pattern | Cross Affinity before this cut |
+|-------|--------------|--------------------------------|
+| Post-dock ADMET | PocketDock: RDKit MW/LogP/TPSA/HBD/HBA/rotB/QED + Lipinski/Veber on every job | Missing from `result.json` / job page |
+| Pose–protein IFP | PocketDock / ProLIF-style H-bonds, hydrophobic, salt/π | Missing (schema placeholder only) |
+| Pocket ranking | P2Rank binary in heavier installs | Deferred (centroid / crystal ligand today) |
+| Batch screening | NatDock / suite hitlists | Later (`study_id` schema reserved) |
+| Blind / physics | DiffDock + MM-GBSA / GNINA-first-class | Later; Vina primary, GNINA optional |
+
+### What we shipped (2026-09-22)
+
+1. **`crossbind/analysis/admet.py`** — RDKit descriptors + Lipinski / Veber / optional Ghose with units, pass/fail, honesty disclaimer. Hooked into `run_docking_job` → `result.admet`.
+2. **`crossbind/analysis/interactions.py`** — ProLIF+MDAnalysis when installed; else solid RDKit/geometry fallback (H-bond, hydrophobic, salt, π cutoffs). Stores `result.interactions` (per-pose summary + top-pose detail + `contact_residues`). Analysis failures are **non-fatal**.
+3. **Job page UI** — dense ADMET metric grid (tabular-nums, instrument theme) + interactions table + honesty banner.
+4. **3D viewer polish** — ligand ball-and-stick / licorice+sphere with Jmol/CPK element colors; thicker than protein; H hidden; sidechains default off / thin; subtler dashed docking box; zoom-to-ligand; `viewer.js?v=…` cache-bust. Residue click + viewport height lock preserved.
+
+### Next
+
+- P2Rank pocket ranking (binary optional).
+- Batch ligands vs one target (`study_id`).
+- GNINA first-class install path + CNN columns always surfaced.
+- ProLIF 2D/3D interaction viz (lignetwork) on the job / viewer page.
+- DiffDock blind docking / MM-GBSA (heavy; later).
+

@@ -15,6 +15,8 @@ from crossbind.docking.process_registry import JobCancelled, check_cancel
 from crossbind.docking.receptor import prepare_receptor
 from crossbind.docking.rmsd import heavy_atom_rmsd
 from crossbind.docking.vina import run_vina
+from crossbind.analysis.admet import compute_admet
+from crossbind.analysis.interactions import annotate_interactions
 
 
 def run_docking_job(
@@ -182,6 +184,79 @@ def run_docking_job(
             rms = heavy_atom_rmsd(reference_ligand, poses_out)
             result["rmsd_to_reference"] = rms
             log(f"RMSD to reference (Å) = {rms}")
+
+
+        # Post-dock results science (ADMET + interactions) — never fail the job
+        try:
+            check_cancel(job_dir)
+            log("Computing ADMET / drug-likeness (RDKit)...")
+            smi = smiles
+            if not smi:
+                lig_meta = result.get("ligand") or prior.get("ligand") or {}
+                smi = lig_meta.get("smiles") if isinstance(lig_meta, dict) else None
+            if not smi and (job_dir / "resolved_smiles.txt").is_file():
+                smi = (job_dir / "resolved_smiles.txt").read_text(encoding="utf-8").strip().split()[0]
+            admet = compute_admet(
+                smi,
+                ligand_pdbqt=lig_pdbqt if lig_pdbqt.is_file() else None,
+            )
+            result["admet"] = admet
+            if admet.get("ok"):
+                log(
+                    f"ADMET ok: MW={admet['descriptors'].get('mw', {}).get('value')} "
+                    f"QED={admet['descriptors'].get('qed', {}).get('value')} "
+                    f"Lipinski={'pass' if admet.get('rules', {}).get('lipinski', {}).get('pass') else 'fail'}"
+                )
+            else:
+                log(f"ADMET warning: {admet.get('error')}")
+        except Exception as admet_exc:
+            log(f"ADMET warning (non-fatal): {admet_exc}")
+            result["admet"] = {
+                "ok": False,
+                "error": str(admet_exc),
+                "disclaimer": (
+                    "Drug-likeness filters are research heuristics — not clinical ADMET."
+                ),
+            }
+
+        try:
+            check_cancel(job_dir)
+            if poses_out.is_file() and rec_pdbqt.is_file():
+                log("Annotating pose–protein interactions...")
+                smi2 = smiles
+                if not smi2:
+                    lig_meta = result.get("ligand") or {}
+                    smi2 = lig_meta.get("smiles") if isinstance(lig_meta, dict) else None
+                interactions = annotate_interactions(
+                    rec_pdbqt,
+                    poses_out,
+                    smiles=smi2,
+                    top_n=num_modes or 9,
+                )
+                result["interactions"] = interactions
+                if interactions.get("ok"):
+                    n = len(interactions.get("top_pose") or [])
+                    log(
+                        f"Interactions ok via {interactions.get('tool')}: "
+                        f"{n} contacts on top pose"
+                    )
+                else:
+                    log(f"Interactions warning: {interactions.get('error')}")
+            else:
+                result["interactions"] = {
+                    "ok": False,
+                    "error": "poses or receptor missing",
+                    "top_pose": [],
+                    "by_pose": {},
+                }
+        except Exception as ix_exc:
+            log(f"Interactions warning (non-fatal): {ix_exc}")
+            result["interactions"] = {
+                "ok": False,
+                "error": str(ix_exc),
+                "top_pose": [],
+                "by_pose": {},
+            }
 
         result["status"] = "completed"
         result["finished_at"] = datetime.now(timezone.utc).isoformat()

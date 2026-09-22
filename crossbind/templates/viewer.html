@@ -10,7 +10,7 @@
     <p class="muted">Job <code>{{ job_id }}</code>{% if result.protein and result.protein.gene %} · {{ result.protein.gene }}{% if result.protein.uniprot %} ({{ result.protein.uniprot }}){% endif %}{% endif %}{% if result.ligand and result.ligand.compound_name %} · {{ result.ligand.compound_name }}{% endif %}</p>
     <div class="actions wrap">
       <label class="chk"><input type="checkbox" id="tog-cartoon" checked /> Cartoon</label>
-      <label class="chk"><input type="checkbox" id="tog-sidechains" checked /> All AA sidechains</label>
+      <label class="chk"><input type="checkbox" id="tog-sidechains" /> AA sidechains</label>
       <label class="chk"><input type="checkbox" id="tog-box" checked /> Docking box</label>
       <label class="chk"><input type="checkbox" id="tog-poses" checked /> Poses</label>
       <label>Pose
@@ -56,9 +56,9 @@
       <div id="viewer-status" class="viewer-status loading">loading…</div>
     </div>
   </div>
-  <p class="hint">Click a residue to highlight and center. Sidechain toggle shows every amino-acid side chain as sticks.</p>
+  <p class="hint">Ligand: ball-and-stick with CPK/Jmol colors (H hidden). Protein cartoon stays softer; enable sidechains for thin sticks. Click a residue to highlight and center. Docking box edges are dashed/subtle.</p>
 </section>
 {% endblock %}
 {% block scripts %}
-<script src="/static/js/viewer.js"></script>
+<script src="/static/js/viewer.js?v=20260922-admet-viewer"></script>
 {% endblock %}

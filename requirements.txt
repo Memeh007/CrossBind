@@ -21,3 +21,9 @@ ensembl-rest>=0.3.3
 # Open Babel is optional as a pip package (often hard on Windows).
 # Prefer system Open Babel / obabel CLI, or upload receptor as .pdbqt.
 # openbabel-wheel  # optional; may not install on all platforms
+
+# Optional post-dock IFP (ProLIF). Install when the platform wheel builds cleanly:
+#   pip install prolif mdanalysis
+# Cross Affinity falls back to RDKit/geometry contacts if these are missing.
+# prolif>=2.0
+# mdanalysis>=2.4
