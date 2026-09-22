@@ -1,4 +1,4 @@
-/* Cross Affinity front-end helpers */
+﻿/* Cross Affinity front-end helpers */
 window.CrossAffinity = window.CrossAffinity || {};
 /* Compat alias for older markup */
 window.CrossBind = window.CrossAffinity;
@@ -8,11 +8,71 @@ CrossAffinity.pollJob = function (jobId) {
   const vinaEl = document.getElementById("m-vina");
   const cnnEl = document.getElementById("m-cnn");
   const rmsdEl = document.getElementById("m-rmsd");
+  const statusRoot = document.getElementById("job-status");
   let timer = null;
+  let terminalHandled = false;
+
+  // If the server already rendered a terminal status, do not poll / reload.
+  const initial = (statusRoot && statusRoot.querySelector(".status")
+    ? statusRoot.querySelector(".status").textContent
+    : ""
+  ).trim();
+  if (initial === "completed" || initial === "failed") {
+    return;
+  }
+
+  function ensureErrorBanner(msg) {
+    let banner = document.getElementById("job-error");
+    if (!msg) {
+      if (banner) banner.remove();
+      return;
+    }
+    if (!banner) {
+      banner = document.createElement("div");
+      banner.id = "job-error";
+      banner.className = "banner bad";
+      const metrics = statusRoot && statusRoot.querySelector(".metrics");
+      if (metrics && metrics.parentNode) {
+        metrics.insertAdjacentElement("afterend", banner);
+      } else if (statusRoot) {
+        statusRoot.prepend(banner);
+      }
+    }
+    banner.innerHTML = "<strong>Error:</strong> " + String(msg);
+  }
+
+  function refreshPoses(poses) {
+    const box = document.getElementById("poses-table");
+    if (!box || !poses || !poses.length) return;
+    let html =
+      '<table class="jobs"><thead><tr><th>Mode</th><th>Affinity / scores</th></tr></thead><tbody>';
+    poses.forEach(function (p) {
+      let score = "";
+      if (p.affinity != null) score = Number(p.affinity).toFixed(3) + " kcal/mol";
+      else if (p.vina_affinity != null)
+        score =
+          "vina " +
+          Number(p.vina_affinity).toFixed(3) +
+          " · CNN " +
+          Number(p.cnn_score || 0).toFixed(3);
+      else score = JSON.stringify(p);
+      html +=
+        "<tr><td>" +
+        (p.mode != null ? p.mode : "?") +
+        "</td><td>" +
+        score +
+        "</td></tr>";
+    });
+    html += "</tbody></table>";
+    box.innerHTML = html;
+  }
 
   async function tick() {
     try {
-      const r = await fetch("/api/job/" + encodeURIComponent(jobId));
+      const r = await fetch(
+        "/api/job/" + encodeURIComponent(jobId) + "?_=" + Date.now(),
+        { cache: "no-store" }
+      );
       if (!r.ok) return;
       const data = await r.json();
       const statusSpan = document.querySelector("#job-status .status");
@@ -26,16 +86,25 @@ CrossAffinity.pollJob = function (jobId) {
       if (cnnEl && data.gnina_cnn_score != null)
         cnnEl.textContent = Number(data.gnina_cnn_score).toFixed(3);
       if (rmsdEl && data.rmsd_to_reference != null)
-        rmsdEl.textContent = Number(data.rmsd_to_reference).toFixed(3) + " Å";
+        rmsdEl.textContent = Number(data.rmsd_to_reference).toFixed(3) + " A";
+      if (data.error) ensureErrorBanner(data.error);
+      if (data.poses && data.poses.length) refreshPoses(data.poses);
+
       if (data.status === "completed" || data.status === "failed") {
         clearInterval(timer);
-        if (data.poses && data.poses.length) location.reload();
+        if (terminalHandled) return;
+        terminalHandled = true;
+        const key = "ca_job_reloaded_" + jobId + "_" + data.status;
+        if (!sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, "1");
+          location.reload();
+        }
       }
     } catch (e) {
       /* ignore transient */
     }
   }
-  timer = setInterval(tick, 1500);
+  timer = setInterval(tick, 1200);
   tick();
 };
 
@@ -49,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
       status.textContent = "Enter a PubChem name first.";
       return;
     }
-    status.textContent = "Resolving…";
+    status.textContent = "Resolving...";
     const fd = new FormData();
     fd.append("name", name);
     try {
@@ -57,7 +126,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await r.json();
       if (!r.ok) throw new Error(data.detail || "lookup failed");
       document.querySelector('[name="smiles"]').value = data.smiles;
-      status.textContent = "Resolved: " + data.smiles;
+      status.textContent =
+        "Resolved: " + data.smiles + " (salts stripped at dock time if needed)";
     } catch (err) {
       status.textContent = "Failed: " + err.message;
     }

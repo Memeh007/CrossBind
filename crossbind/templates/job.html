@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Job {{ job_id }} — Cross Affinity{% endblock %}
+{% block title %}Job {{ job_id }} â€” Cross Affinity{% endblock %}
 {% block content %}
 <section class="panel">
   <div class="row-between">
@@ -12,9 +12,9 @@
   <div id="job-status" data-job="{{ job_id }}">
     <p>Status: <span class="status {{ result.status }}">{{ result.status }}</span></p>
     <div class="metrics">
-      <div class="metric"><span class="k">vina_affinity</span><span class="v" id="m-vina">{% if result.vina_affinity is not none %}{{ '%.3f'|format(result.vina_affinity) }} kcal/mol{% else %}—{% endif %}</span></div>
-      <div class="metric"><span class="k">gnina_cnn_score</span><span class="v" id="m-cnn">{% if result.gnina_cnn_score is not none %}{{ '%.3f'|format(result.gnina_cnn_score) }}{% else %}—{% endif %}</span></div>
-      <div class="metric"><span class="k">RMSD (ref)</span><span class="v" id="m-rmsd">{% if result.rmsd_to_reference is not none %}{{ '%.3f'|format(result.rmsd_to_reference) }} Å{% else %}—{% endif %}</span></div>
+      <div class="metric"><span class="k">vina_affinity</span><span class="v" id="m-vina">{% if result.vina_affinity is not none %}{{ '%.3f'|format(result.vina_affinity) }} kcal/mol{% else %}â€”{% endif %}</span></div>
+      <div class="metric"><span class="k">gnina_cnn_score</span><span class="v" id="m-cnn">{% if result.gnina_cnn_score is not none %}{{ '%.3f'|format(result.gnina_cnn_score) }}{% else %}â€”{% endif %}</span></div>
+      <div class="metric"><span class="k">RMSD (ref)</span><span class="v" id="m-rmsd">{% if result.rmsd_to_reference is not none %}{{ '%.3f'|format(result.rmsd_to_reference) }} Ã…{% else %}â€”{% endif %}</span></div>
     </div>
     {% if result.error %}
     <div class="banner bad"><strong>Error:</strong> {{ result.error }}</div>
@@ -30,7 +30,7 @@
             <td>{{ p.mode }}</td>
             <td>
               {% if p.affinity is defined %}{{ '%.3f'|format(p.affinity) }} kcal/mol
-              {% elif p.vina_affinity is defined %}vina {{ '%.3f'|format(p.vina_affinity) }} · CNN {{ '%.3f'|format(p.cnn_score) }}
+              {% elif p.vina_affinity is defined %}vina {{ '%.3f'|format(p.vina_affinity) }} Â· CNN {{ '%.3f'|format(p.cnn_score) }}
               {% else %}{{ p }}{% endif %}
             </td>
           </tr>
@@ -55,5 +55,7 @@
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/app.js"></script>
+{% if result.status not in ['completed', 'failed'] %}
 <script>CrossAffinity.pollJob(document.getElementById('job-status').dataset.job);</script>
+{% endif %}
 {% endblock %}
