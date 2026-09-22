@@ -1,4 +1,4 @@
-"""Cross Affinity — local molecular docking + discovery (biology × compute)."""
+"""ddOS — Drug Discovery Operating System (package folder: crossbind)."""
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 __author__ = "Alexander Cecena"

@@ -1,4 +1,4 @@
-<svg id="ca-molecule" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Cross Affinity">
+<svg id="ca-molecule" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="ddOS">
   <defs>
     <filter id="ca-glow" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="b"/>

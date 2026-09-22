@@ -1,4 +1,4 @@
-"""Cross Affinity FastAPI application — local molecular docking."""
+"""ddOS FastAPI application — Drug Discovery Operating System (local docking)."""
 
 from __future__ import annotations
 
@@ -48,7 +48,7 @@ from crossbind.analysis.explain import (
 PKG = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(PKG / "templates"))
 
-app = FastAPI(title="Cross Affinity", version=__version__, docs_url=None, redoc_url=None)
+app = FastAPI(title="ddOS", version=__version__, docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=str(PKG / "static")), name="static")
 
 ensure_dirs()
@@ -115,7 +115,7 @@ async def home(request: Request):
 
 @app.get("/api/health")
 async def health():
-    return {"ok": True, "app": "Cross Affinity", "version": __version__, **_engine_status()}
+    return {"ok": True, "app": "ddOS", "version": __version__, **_engine_status()}
 
 
 @app.post("/api/pubchem")

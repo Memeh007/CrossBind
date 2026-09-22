@@ -1,8 +1,12 @@
-# CrossBind
+# ddOS (Drug Discovery Operating System)
 
-**Local molecular docking for researchers** — *biology × compute*.
+**Repository / folder:** CrossBind · **Python package:** `crossbind` (import path unchanged)
 
-**Cross Affinity** (package folder `crossbind`) is a standalone open-source web app (FastAPI + Jinja2) that prepares ligands and receptors and runs **AutoDock Vina 1.2.x** on your machine. Slice 1 adds a **Discover** flow (drug → targets → structure → auto-box → dock). Optional **GNINA** CNN scores are supported as separate fields. It is **not** Munroe Lab software and does **not** claim equivalence to ICM (Molsoft) affinities.
+**Local drug-discovery workbench for researchers** — *biology × compute*.
+
+**ddOS** is a standalone open-source web app (FastAPI + Jinja2) that prepares ligands and receptors and runs **AutoDock Vina 1.2.x** on your machine. Slice 1 adds a **Discover** flow (drug → targets → structure → auto-box → dock). Optional **GNINA** CNN scores are supported as separate fields. It is **not** Munroe Lab software and does **not** claim equivalence to ICM (Molsoft) affinities.
+
+Product name is **ddOS**; the package folder remains `crossbind` for now. See `docs/ddos_operating_system_roadmap_2026.md`.
 
 Author: **Alexander Cecena** ([Memeh007](https://github.com/Memeh007)) · License: **MIT**
 
@@ -40,7 +44,7 @@ uvicorn crossbind.app:app --host 127.0.0.1 --port 8787
 # open http://127.0.0.1:8787/discover
 ```
 
-Docs: `docs/cross_affinity_discovery_os_blueprint.md`, `docs/cross_affinity_library_first.md`.
+Docs: `docs/ddos_operating_system_roadmap_2026.md`, `docs/cross_affinity_discovery_os_blueprint.md`, `docs/cross_affinity_library_first.md`.
 
 ## Scoring honesty
 
@@ -114,12 +118,12 @@ Open **http://127.0.0.1:8787**
 
 ```
 CrossBind/
-  crossbind/             # Python package (UI product name: Cross Affinity)
+  crossbind/             # Python package (UI product name: ddOS; folder still crossbind)
     discovery/           # Slice 1 adapters (drug, targets, structures, pocket, …)
     docking/             # Meeko / Vina / GNINA pipeline
   data/jobs/             # Job storage (gitignored)
   data/cache/            # SQLite + structure cache (gitignored blobs)
-  docs/                  # Discovery OS blueprint + library-first catalog
+  docs/                  # ddOS roadmap + discovery blueprint + library-first catalog
   scripts/               # Smoke scripts
   tests/
   bin/                   # Optional local vina/gnina binaries (gitignored)

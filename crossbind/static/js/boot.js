@@ -1,12 +1,12 @@
-/* Cross Affinity — one-shot boot overlay (teal ink, ~5s) */
+/* ddOS — one-shot boot overlay (teal ink, ~5s) */
 (function () {
   "use strict";
 
   var STORAGE_KEY = "cross_affinity_booted";
   var DURATION_MS = 5000;
   var REDUCED_MS = 400;
-  var TITLE = "Cross Affinity";
-  var CAPTION = "The Drug Discovery Operating System";
+  var TITLE = "ddOS";
+  var CAPTION = "Drug Discovery Operating System";
   var CREDIT = "Developed by Alexander Cecena & Grok Bot";
   var LOGO_URL = "/static/img/logo-molecule.svg";
 
@@ -217,7 +217,7 @@
     var el = document.createElement("div");
     el.id = "cb-boot";
     el.setAttribute("role", "dialog");
-    el.setAttribute("aria-label", "Cross Affinity loading");
+    el.setAttribute("aria-label", "ddOS loading");
     el.innerHTML =
       '<canvas class="cb-boot__fall" aria-hidden="true"></canvas>' +
       '<div class="cb-boot__grain" aria-hidden="true"></div>' +

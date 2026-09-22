@@ -1,8 +1,8 @@
 @echo off
 cd /d "%~dp0"
-title Cross Affinity
+title ddOS
 echo.
-echo  Cross Affinity — local molecular docking
+echo  ddOS — Drug Discovery Operating System
 echo  ===================================
 echo.
 
@@ -37,7 +37,7 @@ if exist "bin\vina_1.2.7_win.exe" if not defined VINA_BIN set "VINA_BIN=%~dp0bin
 
 set PORT=8787
 echo.
-echo Starting Cross Affinity on http://127.0.0.1:%PORT%
+echo Starting ddOS on http://127.0.0.1:%PORT%
 echo Leave this window open. Press Ctrl+C to stop.
 echo.
 start "" "http://127.0.0.1:%PORT%/"
