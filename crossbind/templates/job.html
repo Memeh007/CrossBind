@@ -1,20 +1,72 @@
 {% extends "base.html" %}
-{% block title %}Job {{ job_id }} â€” Cross Affinity{% endblock %}
+{% block title %}{{ result.job_title or result.compound_name or job_id }} — Cross Affinity{% endblock %}
 {% block content %}
 <section class="panel">
   <div class="row-between">
-    <h1>Job <code>{{ job_id }}</code></h1>
+    <div>
+      <h1>{{ result.job_title or result.compound_name or ("Job " ~ job_id) }}</h1>
+      <p class="muted">Job id <code>{{ job_id }}</code>{% if result.source %} · source <code>{{ result.source }}</code>{% endif %}</p>
+    </div>
     <div class="actions">
       <a class="btn primary" href="/viewer/{{ job_id }}">Open 3D viewer</a>
+      <a class="btn ghost" href="/discover">Discover</a>
       <a class="btn ghost" href="/">New dock</a>
     </div>
   </div>
   <div id="job-status" data-job="{{ job_id }}">
     <p>Status: <span class="status {{ result.status }}">{{ result.status }}</span></p>
+
+    <div class="grid-2 identity-cards">
+      <div class="id-card">
+        <h2>Ligand</h2>
+        <dl class="kv">
+          <dt>Name</dt><dd><code>{{ (result.ligand.compound_name if result.ligand else result.compound_name) or "—" }}</code></dd>
+          <dt>CID</dt><dd><code>{{ (result.ligand.cid if result.ligand else none) or "—" }}</code></dd>
+          <dt>ChEMBL</dt><dd><code>{{ (result.ligand.chembl_id if result.ligand else none) or "—" }}</code></dd>
+          <dt>SMILES</dt><dd><code class="wrap">{{ (result.ligand.smiles if result.ligand else none) or "—" }}</code></dd>
+          <dt>InChIKey</dt><dd><code>{{ (result.ligand.inchikey if result.ligand else none) or "—" }}</code></dd>
+        </dl>
+      </div>
+      <div class="id-card">
+        <h2>Protein</h2>
+        <dl class="kv">
+          <dt>Gene</dt><dd><code>{{ (result.protein.gene if result.protein else none) or "—" }}</code></dd>
+          <dt>UniProt</dt><dd><code>{{ (result.protein.uniprot if result.protein else none) or "—" }}</code></dd>
+          <dt>Name</dt><dd><code>{{ (result.protein.protein_name if result.protein else none) or "—" }}</code></dd>
+          <dt>Organism</dt><dd><code>{{ (result.protein.organism if result.protein else none) or "—" }}</code></dd>
+          <dt>Structure</dt><dd><code>
+            {% if result.protein %}
+              {% if result.protein.label == "experimental" or result.protein.provenance == "experimental_pdb" %}
+                experimental · PDB {{ result.protein.pdb_id or result.protein.structure_id or "—" }}
+              {% elif result.protein.label == "predicted" or result.protein.provenance == "alphafold_db" %}
+                predicted · {{ result.protein.alphafold_id or result.protein.structure_id or "—" }}
+              {% elif result.protein.label == "uploaded" %}
+                uploaded receptor
+              {% else %}
+                {{ result.protein.label or result.protein.provenance or "—" }}
+              {% endif %}
+            {% else %}—{% endif %}
+          </code></dd>
+          {% if result.protein and result.protein.method %}
+          <dt>Method</dt><dd><code>{{ result.protein.method }}{% if result.protein.resolution_A %} · {{ '%.2f'|format(result.protein.resolution_A) }} Å{% endif %}</code></dd>
+          {% endif %}
+        </dl>
+        {% if result.mechanism %}
+        <p class="muted"><strong>Mechanism:</strong> {{ result.mechanism }}</p>
+        {% endif %}
+        {% if result.protein and result.protein.function %}
+        <p class="muted"><strong>Function:</strong> {{ result.protein.function }}</p>
+        {% endif %}
+        {% if result.protein and result.protein.warning %}
+        <p class="hint">{{ result.protein.warning }}</p>
+        {% endif %}
+      </div>
+    </div>
+
     <div class="metrics">
-      <div class="metric"><span class="k">vina_affinity</span><span class="v" id="m-vina">{% if result.vina_affinity is not none %}{{ '%.3f'|format(result.vina_affinity) }} kcal/mol{% else %}â€”{% endif %}</span></div>
-      <div class="metric"><span class="k">gnina_cnn_score</span><span class="v" id="m-cnn">{% if result.gnina_cnn_score is not none %}{{ '%.3f'|format(result.gnina_cnn_score) }}{% else %}â€”{% endif %}</span></div>
-      <div class="metric"><span class="k">RMSD (ref)</span><span class="v" id="m-rmsd">{% if result.rmsd_to_reference is not none %}{{ '%.3f'|format(result.rmsd_to_reference) }} Ã…{% else %}â€”{% endif %}</span></div>
+      <div class="metric"><span class="k">vina_affinity</span><span class="v" id="m-vina">{% if result.vina_affinity is not none %}{{ '%.3f'|format(result.vina_affinity) }} kcal/mol{% else %}—{% endif %}</span></div>
+      <div class="metric"><span class="k">gnina_cnn_score</span><span class="v" id="m-cnn">{% if result.gnina_cnn_score is not none %}{{ '%.3f'|format(result.gnina_cnn_score) }}{% else %}—{% endif %}</span></div>
+      <div class="metric"><span class="k">RMSD (ref)</span><span class="v" id="m-rmsd">{% if result.rmsd_to_reference is not none %}{{ '%.3f'|format(result.rmsd_to_reference) }} Å{% else %}—{% endif %}</span></div>
     </div>
     {% if result.error %}
     <div class="banner bad"><strong>Error:</strong> {{ result.error }}</div>
@@ -30,7 +82,7 @@
             <td>{{ p.mode }}</td>
             <td>
               {% if p.affinity is defined %}{{ '%.3f'|format(p.affinity) }} kcal/mol
-              {% elif p.vina_affinity is defined %}vina {{ '%.3f'|format(p.vina_affinity) }} Â· CNN {{ '%.3f'|format(p.cnn_score) }}
+              {% elif p.vina_affinity is defined %}vina {{ '%.3f'|format(p.vina_affinity) }} · CNN {{ '%.3f'|format(p.cnn_score) }}
               {% else %}{{ p }}{% endif %}
             </td>
           </tr>
@@ -47,6 +99,7 @@
       <a class="btn ghost" href="/api/job/{{ job_id }}/file/ligand.pdbqt">ligand.pdbqt</a>
       <a class="btn ghost" href="/api/job/{{ job_id }}/file/receptor.pdbqt">receptor.pdbqt</a>
       <a class="btn ghost" href="/api/job/{{ job_id }}/file/job.log">job.log</a>
+      <a class="btn ghost" href="/api/job/{{ job_id }}/file/result.json">result.json</a>
     </p>
     <h2>Log</h2>
     <pre class="log" id="job-log">{{ log }}</pre>
@@ -55,7 +108,5 @@
 {% endblock %}
 {% block scripts %}
 <script src="/static/js/app.js"></script>
-{% if result.status not in ['completed', 'failed'] %}
 <script>CrossAffinity.pollJob(document.getElementById('job-status').dataset.job);</script>
-{% endif %}
 {% endblock %}

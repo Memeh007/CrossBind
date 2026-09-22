@@ -1,12 +1,13 @@
 {% extends "base.html" %}
-{% block title %}3D Viewer — {{ job_id }} — Cross Affinity{% endblock %}
+{% block title %}{{ result.job_title or result.compound_name or job_id }} — 3D — Cross Affinity{% endblock %}
 {% block head %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.4.2/3Dmol-min.js"></script>
 {% endblock %}
 {% block content %}
 <section class="viewer-layout panel">
   <div class="viewer-toolbar">
-    <h1>Structure · <code>{{ job_id }}</code></h1>
+    <h1>{{ result.job_title or result.compound_name or ('Structure · ' ~ job_id) }}</h1>
+    <p class="muted">Job <code>{{ job_id }}</code>{% if result.protein and result.protein.gene %} · {{ result.protein.gene }}{% if result.protein.uniprot %} ({{ result.protein.uniprot }}){% endif %}{% endif %}{% if result.ligand and result.ligand.compound_name %} · {{ result.ligand.compound_name }}{% endif %}</p>
     <div class="actions wrap">
       <label class="chk"><input type="checkbox" id="tog-cartoon" checked /> Cartoon</label>
       <label class="chk"><input type="checkbox" id="tog-sidechains" checked /> All AA sidechains</label>

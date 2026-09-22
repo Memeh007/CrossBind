@@ -28,7 +28,8 @@ from crossbind.config import (
 from crossbind.docking.pipeline import run_docking_job
 from crossbind.jobs import job_dir, list_jobs, new_job_id, read_log, read_result
 from crossbind.pubchem import name_to_smiles
-from crossbind.discovery import run_discovery
+from crossbind.discovery import refresh_for_target, resolve_protein_query, run_discovery
+from crossbind.job_identity import identity_from_discovery, identity_from_manual
 from crossbind.residues import parse_residues
 from crossbind.security import assert_under, safe_filename
 
@@ -149,13 +150,27 @@ async def dock(
     if rec_ext == ".pdb":
         shutil.copy(rec_path, jdir / "receptor.pdb")
 
+    cname = compound_name.strip() or "ligand"
+    ident = identity_from_manual(
+        compound_name=cname,
+        smiles=smi or None,
+        receptor_filename=rec_name,
+    )
+    # If PubChem resolved, stash SMILES on ligand block
+    if smi:
+        ident["ligand"]["smiles"] = smi
     meta = {
         "id": jid,
         "status": "queued",
-        "compound_name": compound_name.strip() or "ligand",
+        "compound_name": cname,
+        "job_title": ident["job_title"],
+        "ligand": ident["ligand"],
+        "protein": ident["protein"],
+        "mechanism": None,
         "engine": engine,
         "center": [center_x, center_y, center_z],
         "size": [size_x, size_y, size_z],
+        "source": "manual",
     }
     (jdir / "result.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
@@ -172,7 +187,11 @@ async def dock(
             cpu=int(cpu),
             engine=engine,
             reference_ligand=ref_path,
-            compound_name=compound_name.strip() or "ligand",
+            compound_name=cname,
+            job_title=ident["job_title"],
+            ligand=ident["ligand"],
+            protein=ident["protein"],
+            mechanism=None,
         )
 
     threading.Thread(target=_thread_run, daemon=True).start()
@@ -383,6 +402,42 @@ async def api_discover(name: str = Form(...), uniprot: str = Form("")):
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@app.post("/api/discover/protein")
+async def api_discover_protein(query: str = Form(...), species: str = Form("human")):
+    """Resolve UniProt / gene / PDB ID into a study-protein card + structure candidates."""
+    try:
+        result = resolve_protein_query(query.strip(), species=(species or "human").strip() or "human")
+        if not result.get("ok"):
+            raise HTTPException(status_code=404, detail=result.get("error") or "Not found")
+        return result
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/discover/select-target")
+async def api_discover_select_target(
+    discovery_json: str = Form(...),
+    uniprot: str = Form(""),
+    pdb_id: str = Form(""),
+):
+    """Re-fetch structure + pocket + orthologs for a chosen protein / PDB."""
+    try:
+        payload = json.loads(discovery_json)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(400, f"Invalid discovery_json: {exc}") from exc
+    up = (uniprot or "").strip() or None
+    pid = (pdb_id or "").strip() or None
+    if not up and not pid:
+        raise HTTPException(400, "Provide uniprot or pdb_id")
+    try:
+        updated = refresh_for_target(payload, uniprot=up, pdb_id=pid)
+        return updated
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.post("/api/discover/dock")
 async def api_discover_dock(
     discovery_json: str = Form(...),
@@ -411,6 +466,8 @@ async def api_discover_dock(
     size = pocket.get("size") or [22.0, 22.0, 22.0]
     if len(center) != 3 or len(size) != 3:
         raise HTTPException(400, "Invalid pocket center/size")
+
+    ident = identity_from_discovery(payload)
 
     jid = new_job_id()
     jdir = job_dir(jid)
@@ -442,7 +499,7 @@ async def api_discover_dock(
     (jdir / "resolved_smiles.txt").write_text(smi, encoding="utf-8")
     (jdir / "discovery.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
-    compound = (drug.get("input") or "ligand").strip() or "ligand"
+    compound = ident.get("compound_name") or (drug.get("input") or "ligand").strip() or "ligand"
     cx, cy, cz = float(center[0]), float(center[1]), float(center[2])
     sx, sy, sz = float(size[0]), float(size[1]), float(size[2])
 
@@ -450,12 +507,28 @@ async def api_discover_dock(
         "id": jid,
         "status": "queued",
         "compound_name": compound,
+        "job_title": ident.get("job_title"),
+        "ligand": ident.get("ligand"),
+        "protein": ident.get("protein"),
+        "mechanism": ident.get("mechanism"),
+        "honesty": ident.get("honesty") or (payload.get("honesty")),
         "engine": engine,
         "center": [cx, cy, cz],
         "size": [sx, sy, sz],
         "source": "discover",
         "structure_provenance": structure.get("provenance"),
         "pocket_method": pocket.get("method"),
+        "docking": {
+            "engine": engine,
+            "scoring": "vina" if (engine or "vina").lower() == "vina" else engine,
+            "center": [cx, cy, cz],
+            "size": [sx, sy, sz],
+            "exhaustiveness": int(exhaustiveness),
+            "num_modes": int(num_modes),
+            "cpu": int(cpu),
+            "pocket_method": pocket.get("method"),
+            "ligand_prep": "meeko",
+        },
     }
     (jdir / "result.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
@@ -473,10 +546,19 @@ async def api_discover_dock(
             engine=engine,
             reference_ligand=None,
             compound_name=compound,
+            job_title=ident.get("job_title"),
+            ligand=ident.get("ligand"),
+            protein=ident.get("protein"),
+            mechanism=ident.get("mechanism"),
         )
 
     threading.Thread(target=_thread_run, daemon=True).start()
-    return JSONResponse({"ok": True, "job_id": jid, "redirect": f"/job/{jid}"})
+    return JSONResponse({
+        "ok": True,
+        "job_id": jid,
+        "job_title": ident.get("job_title"),
+        "redirect": f"/job/{jid}",
+    })
 
 
 @app.get("/jobs", response_class=HTMLResponse)

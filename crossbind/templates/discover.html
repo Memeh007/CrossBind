@@ -4,8 +4,8 @@
 <section class="hero">
   <h1>Discover</h1>
   <p class="lede">
-    Drug name → PubChem SMILES → ChEMBL / Open Targets mechanisms → PDB or AlphaFold structure →
-    auto docking box → prepare &amp; dock with the existing Meeko/Vina pipeline.
+    Drug name → <strong>choose the protein</strong> to dock to → experimental PDB or AlphaFold structure →
+    auto docking box → prepare &amp; dock. Upload your own receptor on the Dock page if needed.
   </p>
 </section>
 
@@ -22,7 +22,7 @@
       <label>Drug name
         <input type="text" name="name" id="drug-name" value="metformin" placeholder="e.g. metformin" required />
       </label>
-      <label>Optional UniProt override
+      <label>Optional UniProt override (auto-select)
         <input type="text" name="uniprot" id="uniprot-override" placeholder="e.g. P54619" />
       </label>
     </div>
@@ -33,6 +33,38 @@
   </div>
 </form>
 
+<section class="panel" id="panel-study">
+  <h2>Choose protein to study</h2>
+  <p class="muted">Search any studied protein by UniProt accession, gene symbol, or PDB ID — independent of the drug target table.</p>
+  <form class="dock-form" id="protein-search-form">
+    <div class="grid-2">
+      <label>UniProt / gene / PDB
+        <input type="text" id="protein-query" placeholder="e.g. P54619, PRKAA1, or 6B1U" required />
+      </label>
+      <label>Species
+        <input type="text" id="protein-species" value="human" placeholder="human" />
+      </label>
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn primary" id="btn-protein-search">Search</button>
+      <span class="hint" id="protein-search-status"></span>
+    </div>
+  </form>
+  <div id="protein-result" hidden>
+    <dl class="kv" id="protein-kv"></dl>
+    <p class="muted" id="protein-function"></p>
+    <div class="grid-2" style="align-items:end">
+      <label>Structure candidate
+        <select id="protein-pdb-select"></select>
+      </label>
+      <div class="actions">
+        <button type="button" class="btn primary" id="btn-select-protein">Select for docking</button>
+      </div>
+    </div>
+    <p class="hint" id="protein-select-status"></p>
+  </div>
+</section>
+
 <section class="panel" id="panel-drug" hidden>
   <h2>Drug identity</h2>
   <dl class="kv" id="drug-kv"></dl>
@@ -42,10 +74,18 @@
   <h2>Mechanisms &amp; targets</h2>
   <p class="muted" id="mech-disclaimer"></p>
   <ul id="mech-list"></ul>
+  <p class="muted">Select <strong>Dock to</strong> to refetch structure, pocket, and orthologs for that protein.</p>
   <table class="jobs" id="targets-table">
-    <thead><tr><th>Gene</th><th>UniProt</th><th>Mechanism</th><th>Source</th></tr></thead>
+    <thead><tr><th>Dock to</th><th>Gene</th><th>UniProt</th><th>Mechanism</th><th>Source</th></tr></thead>
     <tbody></tbody>
   </table>
+</section>
+
+<section class="panel" id="panel-selected" hidden>
+  <h2>Selected protein</h2>
+  <p class="lede" id="job-title-preview" style="margin-top:0"></p>
+  <dl class="kv" id="selected-kv"></dl>
+  <p class="muted" id="selected-function"></p>
 </section>
 
 <section class="panel" id="panel-structure" hidden>
@@ -71,7 +111,7 @@
 
 <section class="panel" id="panel-dock" hidden>
   <h2>Prepare &amp; dock</h2>
-  <p class="muted">Creates a docking job using the fetched receptor, resolved SMILES, and auto-box center/size.</p>
+  <p class="muted">Creates a docking job named after the ligand × protein (see title above), using the fetched receptor, resolved SMILES, and auto-box.</p>
   <form id="prepare-dock-form" class="dock-form">
     <div class="grid-3">
       <label>Engine

@@ -229,3 +229,20 @@ pre.log {
 .status.unmapped, .status.stub { color: var(--warn); }
 .status.pending { color: var(--muted); }
 #mech-list { padding-left: 1.2rem; line-height: 1.5; }
+
+/* Job identity cards + Discover target selection */
+.identity-cards { margin: 1rem 0; }
+.id-card {
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+.id-card h2 { margin: 0 0 0.55rem; font-size: 1rem; color: var(--teal); }
+code.wrap { white-space: pre-wrap; word-break: break-all; }
+table.jobs tr.row-selected { background: rgba(46, 230, 197, 0.08); }
+table.jobs input[type="radio"] { accent-color: var(--teal); cursor: pointer; }
+.badge-exp, .badge-pred {
+  font-size: 0.72rem; padding: 0.1rem 0.45rem; border-radius: 999px;
+  border: 1px solid var(--line); font-family: var(--mono);
+}
+.badge-exp { color: var(--ok); border-color: #065f46; }
+.badge-pred { color: var(--warn); border-color: #0e7490; }

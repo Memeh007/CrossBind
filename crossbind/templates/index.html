@@ -71,14 +71,17 @@
   <h2>Recent jobs</h2>
   {% if jobs %}
   <table class="jobs">
-    <thead><tr><th>ID</th><th>Compound</th><th>Status</th><th>Vina affinity</th><th></th></tr></thead>
+    <thead><tr><th>Ligand</th><th>Protein</th><th>Affinity</th><th>Status</th><th></th></tr></thead>
     <tbody>
     {% for j in jobs %}
+      {% set lig = j.ligand.compound_name if j.ligand else j.compound_name %}
+      {% set gene = j.protein.gene if j.protein else none %}
+      {% set up = j.protein.uniprot if j.protein else none %}
       <tr>
-        <td><code>{{ j.id }}</code></td>
-        <td>{{ j.compound_name or "—" }}</td>
-        <td><span class="status {{ j.status }}">{{ j.status }}</span></td>
+        <td><strong>{{ lig or "—" }}</strong><div class="muted"><code>{{ j.id }}</code></div></td>
+        <td>{% if gene or up %}<strong>{{ gene or "—" }}</strong>{% if up %} <code>({{ up }})</code>{% endif %}{% elif j.job_title %}{{ j.job_title }}{% else %}—{% endif %}</td>
         <td>{% if j.vina_affinity is not none %}{{ '%.2f'|format(j.vina_affinity) }}{% else %}—{% endif %}</td>
+        <td><span class="status {{ j.status }}">{{ j.status }}</span></td>
         <td><a href="/job/{{ j.id }}">open</a> · <a href="/viewer/{{ j.id }}">3D</a></td>
       </tr>
     {% endfor %}

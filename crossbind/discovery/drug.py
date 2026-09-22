@@ -1,22 +1,16 @@
-﻿"""Drug name → CID / SMILES / InChIKey via PubChemPy + RDKit sanitize."""
+"""Drug name → CID / SMILES / InChIKey via PubChemPy + RDKit sanitize."""
 
 from __future__ import annotations
 
 import time
 from typing import Any
 
+import pubchempy as pcp
 from rdkit import Chem
 
 from crossbind.discovery.cache import get_json, set_json
 
 UA_NOTE = "CrossAffinity/1.x (local research; Alexander Cecena)"
-
-# Seed CIDs for common compounds when PubChem is busy
-_KNOWN_CID = {
-    "metformin": 4091,
-    "aspirin": 2244,
-    "ibuprofen": 3672,
-}
 
 
 def resolve_drug(name: str, *, retries: int = 3) -> dict[str, Any]:
@@ -31,113 +25,67 @@ def resolve_drug(name: str, *, retries: int = 3) -> dict[str, Any]:
 
     last_err: Exception | None = None
     compounds = []
-    try:
-        import pubchempy as pcp
-    except ImportError as exc:
-        pcp = None
-        last_err = exc
+    for attempt in range(retries):
+        try:
+            compounds = pcp.get_compounds(name, "name")
+            if compounds:
+                break
+        except Exception as exc:
+            last_err = exc
+            time.sleep(0.5 * (attempt + 1))
 
-    if pcp is not None:
-        for attempt in range(retries):
-            try:
-                compounds = pcp.get_compounds(name, "name")
-                if compounds:
-                    break
-            except Exception as exc:
-                last_err = exc
-                time.sleep(0.8 * (attempt + 1))
-
-        if not compounds and name.isdigit():
+    if not compounds:
+        # CID-as-name fallback
+        if name.isdigit():
             try:
                 compounds = pcp.get_compounds(int(name), "cid")
             except Exception as exc:
                 last_err = exc
-
         if not compounds:
-            known = _KNOWN_CID.get(name.lower())
-            if known:
-                try:
-                    compounds = pcp.get_compounds(known, "cid")
-                except Exception as exc:
-                    last_err = exc
+            raise RuntimeError(
+                f"PubChemPy could not resolve {name!r}"
+                + (f": {last_err}" if last_err else "")
+            )
 
-    if compounds:
-        primary = compounds[0]
-        smiles_raw = (
-            getattr(primary, "smiles", None)
-            or getattr(primary, "connectivity_smiles", None)
-            or getattr(primary, "isomeric_smiles", None)
-            or getattr(primary, "canonical_smiles", None)
-        )
-        if not smiles_raw:
-            raise RuntimeError(f"PubChem returned no SMILES for {name!r}")
-        mol = Chem.MolFromSmiles(smiles_raw)
-        if mol is None:
-            raise ValueError(f"RDKit could not parse SMILES from PubChem: {smiles_raw!r}")
-        Chem.SanitizeMol(mol)
-        smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
-        inchikey = Chem.MolToInchiKey(mol) if hasattr(Chem, "MolToInchiKey") else primary.inchikey
-        chembl_id = _chembl_id_for(name, inchikey or primary.inchikey)
-        out = {
-            "input": name,
-            "cid": int(primary.cid),
-            "smiles": smiles,
-            "smiles_pubchem": smiles_raw,
-            "inchikey": inchikey or primary.inchikey,
-            "iupac_name": getattr(primary, "iupac_name", None),
-            "molecular_formula": getattr(primary, "molecular_formula", None),
-            "chembl_id": chembl_id,
-            "candidates": [
-                {
-                    "cid": int(c.cid),
-                    "smiles": getattr(c, "smiles", None) or getattr(c, "connectivity_smiles", None),
-                    "inchikey": c.inchikey,
-                }
-                for c in compounds[:8]
-            ],
-            "source": "pubchempy",
-            "ambiguous": len(compounds) > 1,
-        }
-        set_json("drug", name, out)
-        return out
-
-    # Fallback: legacy CACTUS / PUG (already in crossbind.pubchem)
-    from crossbind.pubchem import name_to_smiles
-
-    try:
-        smiles_raw = name_to_smiles(name)
-    except Exception as exc:
-        raise RuntimeError(
-            f"Could not resolve {name!r} via PubChemPy or CACTUS"
-            + (f": PubChemPy={last_err}; CACTUS={exc}" if last_err else f": {exc}")
-        ) from exc
+    primary = compounds[0]
+    smiles_raw = (
+        getattr(primary, "smiles", None)
+        or getattr(primary, "connectivity_smiles", None)
+        or getattr(primary, "isomeric_smiles", None)
+        or getattr(primary, "canonical_smiles", None)
+    )
+    if not smiles_raw:
+        raise RuntimeError(f"PubChem returned no SMILES for {name!r}")
 
     mol = Chem.MolFromSmiles(smiles_raw)
     if mol is None:
-        # strip salts
-        parts = smiles_raw.split(".")
-        parts = sorted(parts, key=len, reverse=True)
-        mol = Chem.MolFromSmiles(parts[0])
-    if mol is None:
-        raise ValueError(f"RDKit could not parse fallback SMILES: {smiles_raw!r}")
+        raise ValueError(f"RDKit could not parse SMILES from PubChem: {smiles_raw!r}")
     Chem.SanitizeMol(mol)
     smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
-    inchikey = Chem.MolToInchiKey(mol)
-    cid = _KNOWN_CID.get(name.lower())
-    chembl_id = _chembl_id_for(name, inchikey)
+    inchikey = Chem.MolToInchiKey(mol) if hasattr(Chem, "MolToInchiKey") else primary.inchikey
+
+    chembl_id = _chembl_id_for(name, inchikey or primary.inchikey)
+
     out = {
         "input": name,
-        "cid": cid,
+        "cid": int(primary.cid),
         "smiles": smiles,
         "smiles_pubchem": smiles_raw,
-        "inchikey": inchikey,
-        "iupac_name": None,
-        "molecular_formula": None,
+        "inchikey": inchikey or primary.inchikey,
+        "iupac_name": getattr(primary, "iupac_name", None),
+        "molecular_formula": getattr(primary, "molecular_formula", None),
         "chembl_id": chembl_id,
-        "candidates": [],
-        "source": "cactus_fallback",
-        "ambiguous": False,
-        "note": f"PubChemPy unavailable ({last_err}); used CACTUS/legacy fallback",
+        "candidates": [
+            {
+                "cid": int(c.cid),
+                "smiles": getattr(c, "smiles", None)
+                or getattr(c, "connectivity_smiles", None),
+                "inchikey": c.inchikey,
+            }
+            for c in compounds[:8]
+        ],
+        "source": "pubchempy",
+        "ambiguous": len(compounds) > 1,
     }
     set_json("drug", name, out)
     return out

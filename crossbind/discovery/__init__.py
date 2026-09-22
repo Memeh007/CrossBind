@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from crossbind.discovery.drug import resolve_drug
 from crossbind.discovery.orthologs import ortholog_panel
 from crossbind.discovery.pharmacology import mechanism_summary
 from crossbind.discovery.pocket import auto_docking_box
+from crossbind.discovery.protein_lookup import (
+    fetch_uniprot_meta,
+    resolve_protein_query,
+    structure_for_selection,
+)
 from crossbind.discovery.structures import recommend_structure
 from crossbind.discovery.targets import resolve_targets
+from crossbind.job_identity import identity_from_discovery, mechanism_for_uniprot
 
 __all__ = [
     "resolve_drug",
@@ -17,6 +25,8 @@ __all__ = [
     "mechanism_summary",
     "ortholog_panel",
     "run_discovery",
+    "refresh_for_target",
+    "resolve_protein_query",
 ]
 
 
@@ -41,6 +51,51 @@ def _pick_uniprot(targets: list) -> str | None:
     return None
 
 
+def _gene_for_uniprot(targets: list, uniprot: str | None) -> str | None:
+    if not uniprot:
+        return None
+    for trow in targets:
+        if (trow.get("uniprot") or "").upper() == uniprot.upper() and trow.get("gene"):
+            return trow["gene"]
+    return None
+
+
+def _selected_protein_card(
+    *,
+    uniprot: str | None,
+    gene: str | None = None,
+    structure: dict | None = None,
+    mechanism: str | None = None,
+) -> dict[str, Any]:
+    """Enrich a selected-protein card (function blurb, organism, name)."""
+    card: dict[str, Any] = {
+        "gene": gene,
+        "uniprot": uniprot,
+        "protein_name": None,
+        "organism": None,
+        "function": None,
+        "mechanism": mechanism,
+        "structure_label": (structure or {}).get("label"),
+        "structure_id": (structure or {}).get("pdb_id"),
+        "provenance": (structure or {}).get("provenance"),
+        "method": (structure or {}).get("method"),
+        "resolution_A": (structure or {}).get("resolution_A"),
+        "plddt_mean": (structure or {}).get("plddt_mean"),
+        "warning": (structure or {}).get("warning"),
+    }
+    if uniprot:
+        try:
+            meta = fetch_uniprot_meta(uniprot)
+            card["gene"] = card["gene"] or meta.get("gene")
+            card["protein_name"] = meta.get("protein_name")
+            card["organism"] = meta.get("organism")
+            card["function"] = meta.get("function")
+            card["uniprot"] = meta.get("uniprot") or uniprot
+        except Exception as exc:
+            card["meta_error"] = str(exc)
+    return card
+
+
 def run_discovery(name: str, *, uniprot: str | None = None) -> dict:
     """Vertical slice: drug → targets → structure → pocket → mechanisms → orthologs."""
     drug = resolve_drug(name)
@@ -55,22 +110,33 @@ def run_discovery(name: str, *, uniprot: str | None = None) -> dict:
     if structure.get("ok") and structure.get("path"):
         pocket = auto_docking_box(structure["path"])
     pharm = mechanism_summary(drug, targets)
-    gene = None
-    if preferred:
-        for trow in targets:
-            if trow.get("uniprot") == preferred and trow.get("gene"):
-                gene = trow["gene"]
-                break
+    gene = _gene_for_uniprot(targets, preferred)
     if not gene:
         for trow in targets:
             if trow.get("gene"):
                 gene = trow["gene"]
                 break
     orthos = ortholog_panel(gene=gene, uniprot=preferred)
-    return {
+    mech = mechanism_for_uniprot(targets, preferred)
+    selected_protein = _selected_protein_card(
+        uniprot=preferred, gene=gene, structure=structure, mechanism=mech
+    )
+    structure_candidates = []
+    if preferred:
+        try:
+            from crossbind.discovery.protein_lookup import list_structures_for_uniprot
+            structure_candidates = list_structures_for_uniprot(preferred)
+        except Exception:
+            structure_candidates = [
+                {"pdb_id": structure.get("pdb_id"), "provenance": structure.get("provenance"), "label": structure.get("label")}
+            ] if structure.get("pdb_id") else []
+    out = {
         "drug": drug,
         "targets": targets,
+        "selected_uniprot": preferred,
+        "selected_protein": selected_protein,
         "structure": structure,
+        "structure_candidates": structure_candidates,
         "pocket": pocket,
         "pharmacology": pharm,
         "orthologs": orthos,
@@ -83,3 +149,62 @@ def run_discovery(name: str, *, uniprot: str | None = None) -> dict:
             ),
         },
     }
+    # Attach a preview job title for the UI
+    ident = identity_from_discovery(out)
+    out["job_title_preview"] = ident.get("job_title")
+    return out
+
+
+def refresh_for_target(
+    payload: dict,
+    *,
+    uniprot: str | None = None,
+    pdb_id: str | None = None,
+) -> dict:
+    """Re-fetch structure, pocket, orthologs for a chosen UniProt and/or PDB id."""
+    payload = dict(payload or {})
+    uniprot = (uniprot or "").strip().upper() or None
+    pdb_id = (pdb_id or "").strip().upper() or None
+    if not uniprot and not pdb_id:
+        raise ValueError("Provide uniprot or pdb_id")
+
+    structure = structure_for_selection(uniprot=uniprot, pdb_id=pdb_id)
+    if structure.get("ok") and structure.get("uniprot") and not uniprot:
+        uniprot = structure["uniprot"]
+
+    pocket = None
+    if structure.get("ok") and structure.get("path"):
+        pocket = auto_docking_box(structure["path"])
+
+    targets = payload.get("targets") or []
+    gene = _gene_for_uniprot(targets, uniprot)
+    mech = mechanism_for_uniprot(targets, uniprot)
+    selected_protein = _selected_protein_card(
+        uniprot=uniprot, gene=gene, structure=structure, mechanism=mech
+    )
+    if not gene:
+        gene = selected_protein.get("gene")
+
+    orthos = ortholog_panel(gene=gene, uniprot=uniprot)
+
+    structure_candidates = []
+    if uniprot:
+        try:
+            from crossbind.discovery.protein_lookup import list_structures_for_uniprot
+            structure_candidates = list_structures_for_uniprot(uniprot)
+        except Exception:
+            if structure.get("pdb_id"):
+                structure_candidates = [{
+                    "pdb_id": structure.get("pdb_id"),
+                    "provenance": structure.get("provenance"),
+                    "label": structure.get("label"),
+                }]
+    payload["selected_uniprot"] = uniprot
+    payload["selected_protein"] = selected_protein
+    payload["structure"] = structure
+    payload["structure_candidates"] = structure_candidates
+    payload["pocket"] = pocket
+    payload["orthologs"] = orthos
+    ident = identity_from_discovery(payload)
+    payload["job_title_preview"] = ident.get("job_title")
+    return payload

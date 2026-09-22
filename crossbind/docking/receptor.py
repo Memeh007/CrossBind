@@ -1,23 +1,24 @@
-"""Receptor preparation: PDB → rigid PDBQT via Open Babel (or passthrough)."""
+﻿"""Receptor preparation: PDB â†’ rigid PDBQT via Open Babel (or passthrough)."""
 
 from __future__ import annotations
 
 import shutil
 import subprocess
+import os
 from pathlib import Path
 
 
 def prepare_receptor(receptor_path: Path, out_pdbqt: Path, log) -> Path:
     suffix = receptor_path.suffix.lower()
     if suffix == ".pdbqt":
-        log("Receptor already PDBQT — copying")
+        log("Receptor already PDBQT â€” copying")
         out_pdbqt.write_bytes(receptor_path.read_bytes())
         return out_pdbqt
 
     if suffix != ".pdb":
         raise ValueError("Receptor must be .pdb or .pdbqt")
 
-    log("Preparing receptor PDB → PDBQT (rigid)")
+    log("Preparing receptor PDB â†’ PDBQT (rigid)")
 
     # Prefer pybel / openbabel Python bindings
     try:
@@ -50,8 +51,19 @@ def _prepare_with_pybel(receptor_path: Path, out_pdbqt: Path, log) -> Path:
 def _prepare_with_obabel_cli(receptor_path: Path, out_pdbqt: Path, log) -> Path:
     obabel = shutil.which("obabel") or shutil.which("obabel.exe")
     if not obabel:
+        candidates = [
+            Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Python" / "Python314" / "Scripts" / "obabel.exe",
+            Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Python" / "Python312" / "Scripts" / "obabel.exe",
+            Path(r"C:\Program Files\OpenBabel-3.1.1\obabel.exe"),
+            Path(r"C:\Program Files\OpenBabel 3.1.1\obabel.exe"),
+        ]
+        for c in candidates:
+            if c.is_file():
+                obabel = str(c)
+                break
+    if not obabel:
         raise RuntimeError(
-            "Open Babel is required to convert PDB→PDBQT. "
+            "Open Babel is required to convert PDBâ†’PDBQT. "
             "Install Open Babel (https://openbabel.org) or upload a pre-made .pdbqt receptor."
         )
     # argv-list only
@@ -63,3 +75,4 @@ def _prepare_with_obabel_cli(receptor_path: Path, out_pdbqt: Path, log) -> Path:
         )
     log("Receptor PDBQT written via obabel CLI")
     return out_pdbqt
+
