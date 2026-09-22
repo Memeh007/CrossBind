@@ -106,7 +106,7 @@
   <h2>Suggested targets</h2>
   <p class="muted" id="mech-disclaimer"></p>
   <ul id="mech-list"></ul>
-  <p class="help">Pick <strong>Dock to</strong> — structure, pocket, and job title update for that protein.</p>
+  <p class="help">Click a row (or its radio) to <strong>Dock to</strong> that protein — the Selected panel updates immediately; structure/pocket refresh in the background.</p>
   <table class="jobs" id="targets-table">
     <thead><tr><th>Dock to</th><th>Gene</th><th>UniProt</th><th>Note</th><th>Source</th></tr></thead>
     <tbody></tbody>
@@ -163,5 +163,5 @@
 </section>
 {% endblock %}
 {% block scripts %}
-<script src="/static/js/discover.js"></script>
+<script src="/static/js/discover.js?v=select-target-ux1"></script>
 {% endblock %}

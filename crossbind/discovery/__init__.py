@@ -161,31 +161,70 @@ def refresh_for_target(
     uniprot: str | None = None,
     pdb_id: str | None = None,
 ) -> dict:
-    """Re-fetch structure, pocket, orthologs for a chosen UniProt and/or PDB id."""
+    """Re-fetch structure, pocket, orthologs for a chosen UniProt and/or PDB id.
+
+    Always updates selected_uniprot / selected_protein from the request (and targets
+    list) even if structure fetch partially fails — so the UI selection sticks.
+    """
     payload = dict(payload or {})
     uniprot = (uniprot or "").strip().upper() or None
     pdb_id = (pdb_id or "").strip().upper() or None
     if not uniprot and not pdb_id:
         raise ValueError("Provide uniprot or pdb_id")
 
-    structure = structure_for_selection(uniprot=uniprot, pdb_id=pdb_id)
+    targets = payload.get("targets") or []
+    # Commit selection identity first (before slow network) so callers always see it.
+    gene = _gene_for_uniprot(targets, uniprot)
+    mech = mechanism_for_uniprot(targets, uniprot)
+
+    structure: dict[str, Any]
+    try:
+        structure = structure_for_selection(uniprot=uniprot, pdb_id=pdb_id)
+    except Exception as exc:
+        structure = {
+            "ok": False,
+            "error": str(exc),
+            "provenance": None,
+            "uniprot": uniprot,
+            "pdb_id": pdb_id,
+        }
     if structure.get("ok") and structure.get("uniprot") and not uniprot:
         uniprot = structure["uniprot"]
+        gene = gene or _gene_for_uniprot(targets, uniprot)
+        mech = mechanism_for_uniprot(targets, uniprot)
 
     pocket = None
     if structure.get("ok") and structure.get("path"):
-        pocket = auto_docking_box(structure["path"])
+        try:
+            pocket = auto_docking_box(structure["path"])
+        except Exception as exc:
+            pocket = {"ok": False, "warning": f"Pocket failed: {exc}", "center": None, "size": None}
 
-    targets = payload.get("targets") or []
-    gene = _gene_for_uniprot(targets, uniprot)
-    mech = mechanism_for_uniprot(targets, uniprot)
-    selected_protein = _selected_protein_card(
-        uniprot=uniprot, gene=gene, structure=structure, mechanism=mech
-    )
+    try:
+        selected_protein = _selected_protein_card(
+            uniprot=uniprot, gene=gene, structure=structure, mechanism=mech
+        )
+    except Exception as exc:
+        selected_protein = {
+            "gene": gene,
+            "uniprot": uniprot,
+            "mechanism": mech,
+            "meta_error": str(exc),
+            "structure_label": (structure or {}).get("label"),
+            "structure_id": (structure or {}).get("pdb_id"),
+        }
     if not gene:
         gene = selected_protein.get("gene")
+    # Prefer gene from the suggested-targets list when present
+    list_gene = _gene_for_uniprot(targets, uniprot)
+    if list_gene:
+        selected_protein["gene"] = list_gene
+        gene = list_gene
 
-    orthos = ortholog_panel(gene=gene, uniprot=uniprot)
+    try:
+        orthos = ortholog_panel(gene=gene, uniprot=uniprot)
+    except Exception as exc:
+        orthos = {"disclaimer": f"Ortholog lookup failed: {exc}", "species": []}
 
     structure_candidates = []
     if uniprot:
@@ -199,12 +238,17 @@ def refresh_for_target(
                     "provenance": structure.get("provenance"),
                     "label": structure.get("label"),
                 }]
+
     payload["selected_uniprot"] = uniprot
     payload["selected_protein"] = selected_protein
     payload["structure"] = structure
     payload["structure_candidates"] = structure_candidates
     payload["pocket"] = pocket
     payload["orthologs"] = orthos
-    ident = identity_from_discovery(payload)
-    payload["job_title_preview"] = ident.get("job_title")
+    try:
+        ident = identity_from_discovery(payload)
+        payload["job_title_preview"] = ident.get("job_title")
+    except Exception:
+        drug_name = ((payload.get("drug") or {}).get("input") or "ligand")
+        payload["job_title_preview"] = f"{drug_name} × {gene or uniprot or 'target'}"
     return payload

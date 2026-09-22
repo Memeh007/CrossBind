@@ -274,6 +274,9 @@ pre.log {
 code.wrap { white-space: pre-wrap; word-break: break-all; }
 table.jobs tr.row-selected { background: rgba(46, 230, 197, 0.08); }
 table.jobs input[type="radio"] { accent-color: var(--teal); cursor: pointer; }
+#targets-table.targets-busy { opacity: 0.78; }
+#targets-table.targets-busy tbody tr { cursor: progress; }
+#targets-table tbody tr[data-uniprot]:not([data-uniprot=""]) { cursor: pointer; }
 .badge-exp, .badge-pred {
   font-size: 0.72rem; padding: 0.1rem 0.45rem; border-radius: 999px;
   border: 1px solid var(--line); font-family: var(--mono);

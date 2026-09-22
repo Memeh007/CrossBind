@@ -2,6 +2,9 @@
 (function () {
   let lastPayload = null;
   let lastProteinHit = null;
+  let selectAbort = null;
+  let selectReqId = 0;
+  let targetsDelegationBound = false;
 
   function show(id) {
     const el = document.getElementById(id);
@@ -182,12 +185,210 @@
     }
   });
 
-  async function selectTarget({ uniprot, pdb_id }) {
+  function slimDiscoveryJson(payload) {
+    const p = payload || {};
+    return {
+      drug: p.drug || null,
+      targets: p.targets || [],
+      pharmacology: p.pharmacology || null,
+      honesty: p.honesty || null,
+      selected_uniprot: p.selected_uniprot || null,
+      selected_protein: p.selected_protein
+        ? {
+            gene: p.selected_protein.gene,
+            uniprot: p.selected_protein.uniprot,
+            protein_name: p.selected_protein.protein_name,
+            organism: p.selected_protein.organism,
+            mechanism: p.selected_protein.mechanism,
+          }
+        : null,
+    };
+  }
+
+  function targetRowByUniprot(up) {
+    const table = document.getElementById("targets-table");
+    if (!table || !up) return null;
+    const radio = table.querySelector(`input[name="dock-target"][value="${CSS.escape(up)}"]`);
+    return radio ? radio.closest("tr") : null;
+  }
+
+  function applyOptimisticSelection(uniprot, gene) {
+    const up = String(uniprot || "").toUpperCase();
+    const table = document.getElementById("targets-table");
+    if (table) {
+      table.querySelectorAll("tr").forEach((tr) => tr.classList.remove("row-selected"));
+      table.querySelectorAll('input[name="dock-target"]').forEach((r) => {
+        r.checked = r.value === up;
+      });
+      const row = targetRowByUniprot(up);
+      if (row) row.classList.add("row-selected");
+    }
+    const drugName =
+      (lastPayload && lastPayload.drug && lastPayload.drug.input) ||
+      (document.getElementById("drug-name") && document.getElementById("drug-name").value) ||
+      "ligand";
+    const geneLabel = gene || up || "target";
+    const preview = document.getElementById("job-title-preview");
+    if (preview) preview.textContent = drugName + " × " + geneLabel;
+    setKV("selected-kv", [
+      ["Gene", gene || "—"],
+      ["UniProt", up || "—"],
+      ["Protein name", "…"],
+      ["Organism", "…"],
+      ["Mechanism", "…"],
+      ["Structure", "switching…"],
+      ["PDB / AF", "…"],
+      ["Method", "…"],
+      ["Resolution (Å)", "…"],
+      ["pLDDT mean", "…"],
+    ]);
+    const fn = document.getElementById("selected-function");
+    if (fn) fn.textContent = "";
+    show("panel-selected");
+  }
+
+  function setTargetsBusy(busy) {
+    const table = document.getElementById("targets-table");
+    if (!table) return;
+    table.classList.toggle("targets-busy", !!busy);
+    table.setAttribute("aria-busy", busy ? "true" : "false");
+    const btn = document.getElementById("btn-prepare-dock");
+    if (btn) btn.disabled = !!busy;
+  }
+
+  function showSelectError(msg) {
+    const discoverStatus = document.getElementById("discover-status");
+    if (discoverStatus) discoverStatus.textContent = "Failed: " + msg;
+    const dockStatus = document.getElementById("dock-status");
+    if (dockStatus) dockStatus.textContent = "Failed: " + msg;
+  }
+
+  function geneForUniprot(payload, uniprot) {
+    const up = String(uniprot || "").toUpperCase();
+    for (const t of (payload && payload.targets) || []) {
+      if (String(t.uniprot || "").toUpperCase() === up && t.gene) return t.gene;
+    }
+    return null;
+  }
+
+  async function selectTarget({ uniprot, pdb_id, signal, requestId } = {}) {
     if (!lastPayload) throw new Error("Run discovery first (or search a protein)");
-    const fields = { discovery_json: JSON.stringify(lastPayload) };
+    const fields = { discovery_json: JSON.stringify(slimDiscoveryJson(lastPayload)) };
     if (uniprot) fields.uniprot = uniprot;
     if (pdb_id) fields.pdb_id = pdb_id;
-    return postForm("/api/discover/select-target", fields);
+    const fd = new FormData();
+    Object.entries(fields).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== "") fd.set(k, v);
+    });
+    const opts = { method: "POST", body: fd };
+    if (signal) opts.signal = signal;
+    const r = await fetch("/api/discover/select-target", opts);
+    if (requestId != null && requestId !== selectReqId) {
+      const err = new Error("stale");
+      err.stale = true;
+      throw err;
+    }
+    return readJsonResponse(r);
+  }
+
+  async function switchDockTarget(uniprot) {
+    const up = String(uniprot || "").toUpperCase();
+    if (!up) return;
+    if (!lastPayload) {
+      showSelectError("Run discovery first");
+      return;
+    }
+    // Ignore re-clicks on already-confirmed selection while idle
+    if (
+      !selectAbort &&
+      String((lastPayload.selected_uniprot || "")).toUpperCase() === up &&
+      lastPayload.structure
+    ) {
+      return;
+    }
+
+    if (selectAbort) {
+      try {
+        selectAbort.abort();
+      } catch (_) {}
+    }
+    const reqId = ++selectReqId;
+    const controller = new AbortController();
+    selectAbort = controller;
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+    const gene = geneForUniprot(lastPayload, up);
+    applyOptimisticSelection(up, gene);
+    setTargetsBusy(true);
+    const status = document.getElementById("discover-status");
+    if (status) status.textContent = "Switching to " + (gene || up) + "…";
+    const dockStatus = document.getElementById("dock-status");
+    if (dockStatus) dockStatus.textContent = "";
+
+    try {
+      const updated = await selectTarget({
+        uniprot: up,
+        signal: controller.signal,
+        requestId: reqId,
+      });
+      if (reqId !== selectReqId) return; // superseded
+      lastPayload = updated;
+      render(updated);
+      if (status) {
+        status.textContent =
+          "Target updated → " + ((updated.selected_protein || {}).gene || up);
+      }
+    } catch (err) {
+      if (err && (err.stale || err.name === "AbortError")) {
+        // Superseded by a newer click, or aborted — ignore unless we are the latest and timed out
+        if (err.name === "AbortError" && reqId === selectReqId) {
+          const msg =
+            "Timed out switching target after 90s — try again (cached structures are faster).";
+          showSelectError(msg);
+          if (lastPayload) {
+            applyOptimisticSelection(
+              lastPayload.selected_uniprot,
+              (lastPayload.selected_protein || {}).gene || geneForUniprot(lastPayload, lastPayload.selected_uniprot)
+            );
+            render(lastPayload);
+          }
+        }
+        return;
+      }
+      if (reqId !== selectReqId) return;
+      showSelectError(err.message || String(err));
+      if (lastPayload) {
+        applyOptimisticSelection(
+          lastPayload.selected_uniprot,
+          (lastPayload.selected_protein || {}).gene ||
+            geneForUniprot(lastPayload, lastPayload.selected_uniprot)
+        );
+        render(lastPayload);
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      if (reqId === selectReqId) {
+        selectAbort = null;
+        setTargetsBusy(false);
+      }
+    }
+  }
+
+  function bindTargetsDelegation() {
+    if (targetsDelegationBound) return;
+    const table = document.getElementById("targets-table");
+    if (!table) return;
+    targetsDelegationBound = true;
+    table.addEventListener("click", (ev) => {
+      const tr = ev.target.closest("tr");
+      if (!tr || !table.contains(tr) || tr.parentElement.tagName !== "TBODY") return;
+      const radio = tr.querySelector('input[name="dock-target"]');
+      if (!radio || radio.disabled || !radio.value) return;
+      if (ev.target !== radio) {
+        radio.checked = true;
+      }
+      switchDockTarget(radio.value);
+    });
   }
 
   function renderSelected(data) {
@@ -213,6 +414,7 @@
   }
 
   function renderTargets(data) {
+    bindTargetsDelegation();
     const selected = (data.selected_uniprot || "").toUpperCase();
     const tb = document.querySelector("#targets-table tbody");
     tb.innerHTML = (data.targets || [])
@@ -221,7 +423,7 @@
         const up = (t.uniprot || "").toUpperCase();
         const checked = up && up === selected ? "checked" : "";
         const disabled = up ? "" : "disabled";
-        return `<tr class="${up && up === selected ? "row-selected" : ""}">
+        return `<tr class="${up && up === selected ? "row-selected" : ""}" data-uniprot="${escapeHtml(up)}" style="cursor:${up ? "pointer" : "default"}">
           <td><input type="radio" name="dock-target" value="${escapeHtml(up)}" ${checked} ${disabled} data-uniprot="${escapeHtml(up)}" /></td>
           <td>${escapeHtml(t.gene || "—")}</td>
           <td>${escapeHtml(t.uniprot || "—")}</td>
@@ -230,28 +432,6 @@
         </tr>`;
       })
       .join("");
-
-    tb.querySelectorAll('input[name="dock-target"]').forEach((radio) => {
-      radio.addEventListener("change", async () => {
-        const up = radio.value;
-        if (!up) return;
-        const status = document.getElementById("discover-status");
-        status.textContent = "Switching target " + up + "…";
-        try {
-          const updated = await selectTarget({ uniprot: up });
-          lastPayload = updated;
-          render(updated);
-          status.textContent = "Target updated → " + ((updated.selected_protein || {}).gene || up);
-        } catch (err) {
-          status.textContent = "Failed: " + err.message;
-          // Revert radio to last known selected
-          const want = (lastPayload && lastPayload.selected_uniprot) || "";
-          tb.querySelectorAll('input[name="dock-target"]').forEach((r) => {
-            r.checked = r.value === String(want).toUpperCase();
-          });
-        }
-      });
-    });
   }
 
   function render(data) {
