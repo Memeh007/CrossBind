@@ -1,6 +1,6 @@
-# Security Policy — CrossBind
+# Security Policy — Cross Affinity
 
-CrossBind is a **local-first, researchers-only** molecular docking UI. It is **not** a hardened multi-tenant SaaS.
+Cross Affinity is a **local-first, researchers-only** molecular docking UI. It is **not** a hardened multi-tenant SaaS.
 
 ## Default posture
 
@@ -13,7 +13,7 @@ CrossBind is a **local-first, researchers-only** molecular docking UI. It is **n
 - Upload filenames are sanitized; directory components are stripped.
 - Job files live only under `data/jobs/<job_id>/`.
 - API file downloads are allow-listed and resolved with a path-escape check.
-- Default upload size cap: ~50 MB (`CROSSBIND_UPLOAD_MAX`).
+- Default upload size cap: ~50 MB (`CROSS AFFINITY_UPLOAD_MAX`).
 
 ## Secrets & data
 
@@ -24,7 +24,7 @@ CrossBind is a **local-first, researchers-only** molecular docking UI. It is **n
 ## Engine binaries
 
 - `VINA_BIN` / `GNINA_BIN` must point to trusted binaries you installed.
-- CrossBind does not download docking engines automatically.
+- Cross Affinity does not download docking engines automatically.
 
 ## Reporting
 

@@ -1,8 +1,8 @@
-﻿# CrossBind
+﻿# Cross Affinity
 
-**Local molecular docking for researchers** — *biology × compute*.
+**Local molecular docking for researchers** — branded molecule with living atom/bond physics on boot. — *biology × compute*.
 
-CrossBind is a standalone open-source web app (FastAPI + Jinja2) that prepares ligands and receptors and runs **AutoDock Vina 1.2.x** on your machine. Optional **GNINA** CNN scores are supported as separate fields. It is **not** Munroe Lab software and does **not** claim equivalence to ICM (Molsoft) affinities.
+Cross Affinity is a standalone open-source web app (FastAPI + Jinja2) that prepares ligands and receptors and runs **AutoDock Vina 1.2.x** on your machine. Optional **GNINA** CNN scores are supported as separate fields. It is **not** Munroe Lab software and does **not** claim equivalence to ICM (Molsoft) affinities.
 
 Author: **Alexander Cecena** ([Memeh007](https://github.com/Memeh007)) · License: **MIT**
 
@@ -38,7 +38,7 @@ Absolute kcal/mol values are **not interchangeable** across engines or with comm
 ### Windows notes
 
 1. Install Python from [python.org](https://www.python.org/downloads/) (check “Add to PATH”).
-2. Download `vina_1.2.x_windows_x86_64.exe` (or similar), rename/copy to `CrossBind\bin\vina.exe`, **or** set:
+2. Download `vina_1.2.x_windows_x86_64.exe` (or similar), rename/copy to `Cross Affinity\bin\vina.exe`, **or** set:
    ```bat
    set VINA_BIN=C:\path\to\vina.exe
    ```
@@ -59,14 +59,14 @@ chmod +x run.sh
 ## Quick start
 
 ```bat
-cd CrossBind
+cd Cross Affinity
 run.bat
 ```
 
 Or:
 
 ```bash
-cd CrossBind
+cd Cross Affinity
 python -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
@@ -82,15 +82,15 @@ Open **http://127.0.0.1:8787**
 |----------|---------|
 | `VINA_BIN` | Full path to Vina executable (default: search `bin/`, PATH) |
 | `GNINA_BIN` | Full path to GNINA (optional) |
-| `CROSSBIND_HOST` | Bind host (default `127.0.0.1`) |
-| `CROSSBIND_PORT` | Port (default `8787`) |
-| `CROSSBIND_DATA` | Override data directory |
-| `CROSSBIND_UPLOAD_MAX` | Max upload bytes |
+| `CROSS AFFINITY_HOST` | Bind host (default `127.0.0.1`) |
+| `CROSS AFFINITY_PORT` | Port (default `8787`) |
+| `CROSS AFFINITY_DATA` | Override data directory |
+| `CROSS AFFINITY_UPLOAD_MAX` | Max upload bytes |
 
 ## Project layout
 
 ```
-CrossBind/
+Cross Affinity/
   crossbind/           # Python package (app, docking pipeline, templates, static)
   data/jobs/           # Job storage (gitignored)
   bin/                 # Optional local vina/gnina binaries (gitignored)
@@ -111,10 +111,10 @@ Subprocess calls use **argv lists only** (no shell).
 
 ## GitHub
 
-Prepared for publication under **Memeh007/crossbind** or **Memeh007/CrossBind**. This repo is initialized locally; create the remote when ready (do not force-push).
+Prepared for publication under **Memeh007/crossbind** or **Memeh007/Cross Affinity**. This repo is initialized locally; create the remote when ready (do not force-push).
 
 ```bash
-git remote add origin https://github.com/Memeh007/CrossBind.git
+git remote add origin https://github.com/Memeh007/Cross Affinity.git
 git push -u origin main
 ```
 
@@ -132,3 +132,9 @@ Research / educational software. Docking scores guide hypotheses; they are not c
 - One-click **demo fixture** (public PDB + ligand) for first-run
 - Portfolio card + short LinkedIn clip of the boot → dock loop
 - Multi-conformer ligand ensemble (often improves pose quality)
+
+## Branding
+
+- Product name: **Cross Affinity** (Python package folder remains crossbind for imports).
+- Runtime logo: crossbind/static/img/logo-molecule.svg — real <circle> / <line> atoms & bonds, animated by molecule-orbs.js (independent node drift, bond stretch, 4.5s breathe + glow; core ligand anchored).
+- CrossAffinityIcon.svg in the repo root is a VTracer raster-trace (~7.5MB, 15k paths). Keep as art reference; do not load it in the browser boot screen.

@@ -7,7 +7,7 @@ from urllib.parse import quote
 
 import requests
 
-_UA = {"User-Agent": "CrossBind/1.0 (local research; Alexander Cecena)"}
+_UA = {"User-Agent": "CrossAffinity/1.0 (local research; Alexander Cecena)"}
 
 
 def name_to_smiles(name: str, *, retries: int = 3) -> str:

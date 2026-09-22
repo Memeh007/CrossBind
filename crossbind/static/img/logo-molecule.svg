@@ -1,0 +1,59 @@
+﻿<svg id="ca-molecule" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Cross Affinity">
+  <defs>
+    <filter id="ca-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="ca-core-grad" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#ffb347"/>
+      <stop offset="55%" stop-color="#e85d04"/>
+      <stop offset="100%" stop-color="#9b2226"/>
+    </radialGradient>
+  </defs>
+  <rect width="200" height="200" fill="#072645" rx="24"/>
+  <g id="ca-bonds" stroke="#7eb8c9" stroke-width="2.2" stroke-linecap="round" opacity="0.85">
+    <!-- horizontal arm -->
+    <line data-bond="0" data-a="n0" data-b="n1" x1="36" y1="100" x2="58" y2="100"/>
+    <line data-bond="1" data-a="n1" data-b="n2" x1="58" y1="100" x2="80" y2="100"/>
+    <line data-bond="2" data-a="n2" data-b="c0" x1="80" y1="100" x2="100" y2="100"/>
+    <line data-bond="3" data-a="c0" data-b="n3" x1="100" y1="100" x2="120" y2="100"/>
+    <line data-bond="4" data-a="n3" data-b="n4" x1="120" y1="100" x2="142" y2="100"/>
+    <line data-bond="5" data-a="n4" data-b="n5" x1="142" y1="100" x2="164" y2="100"/>
+    <!-- vertical arm -->
+    <line data-bond="6" data-a="n6" data-b="n7" x1="100" y1="36" x2="100" y2="58"/>
+    <line data-bond="7" data-a="n7" data-b="n8" x1="100" y1="58" x2="100" y2="80"/>
+    <line data-bond="8" data-a="n8" data-b="c0" x1="100" y1="80" x2="100" y2="100"/>
+    <line data-bond="9" data-a="c0" data-b="n9" x1="100" y1="100" x2="100" y2="120"/>
+    <line data-bond="10" data-a="n9" data-b="n10" x1="100" y1="120" x2="100" y2="142"/>
+    <line data-bond="11" data-a="n10" data-b="n11" x1="100" y1="142" x2="100" y2="164"/>
+    <!-- ligand petals around core -->
+    <line data-bond="12" data-a="c0" data-b="l0" x1="100" y1="100" x2="112" y2="88"/>
+    <line data-bond="13" data-a="c0" data-b="l1" x1="100" y1="100" x2="88" y2="88"/>
+    <line data-bond="14" data-a="c0" data-b="l2" x1="100" y1="100" x2="112" y2="112"/>
+    <line data-bond="15" data-a="c0" data-b="l3" x1="100" y1="100" x2="88" y2="112"/>
+  </g>
+  <g id="ca-nodes" filter="url(#ca-glow)">
+    <!-- scaffold atoms (drift freely) -->
+    <circle data-node="n0" data-role="scaffold" cx="36" cy="100" r="6.5" fill="#a8dadc"/>
+    <circle data-node="n1" data-role="scaffold" cx="58" cy="100" r="5.5" fill="#457b9d"/>
+    <circle data-node="n2" data-role="scaffold" cx="80" cy="100" r="6" fill="#a8dadc"/>
+    <circle data-node="n3" data-role="scaffold" cx="120" cy="100" r="6" fill="#a8dadc"/>
+    <circle data-node="n4" data-role="scaffold" cx="142" cy="100" r="5.5" fill="#457b9d"/>
+    <circle data-node="n5" data-role="scaffold" cx="164" cy="100" r="6.5" fill="#a8dadc"/>
+    <circle data-node="n6" data-role="scaffold" cx="100" cy="36" r="6.5" fill="#a8dadc"/>
+    <circle data-node="n7" data-role="scaffold" cx="100" cy="58" r="5.5" fill="#457b9d"/>
+    <circle data-node="n8" data-role="scaffold" cx="100" cy="80" r="6" fill="#a8dadc"/>
+    <circle data-node="n9" data-role="scaffold" cx="100" cy="120" r="6" fill="#a8dadc"/>
+    <circle data-node="n10" data-role="scaffold" cx="100" cy="142" r="5.5" fill="#457b9d"/>
+    <circle data-node="n11" data-role="scaffold" cx="100" cy="164" r="6.5" fill="#a8dadc"/>
+    <!-- ligand (anchored / low drift) -->
+    <circle data-node="l0" data-role="ligand" cx="112" cy="88" r="4.5" fill="#ffba08"/>
+    <circle data-node="l1" data-role="ligand" cx="88" cy="88" r="4.5" fill="#fb8500"/>
+    <circle data-node="l2" data-role="ligand" cx="112" cy="112" r="4.5" fill="#fb8500"/>
+    <circle data-node="l3" data-role="ligand" cx="88" cy="112" r="4.5" fill="#ffba08"/>
+    <circle data-node="c0" data-role="core" cx="100" cy="100" r="9" fill="url(#ca-core-grad)"/>
+  </g>
+</svg>

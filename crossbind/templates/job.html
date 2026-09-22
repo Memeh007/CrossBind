@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Job {{ job_id }} — CrossBind{% endblock %}
+{% block title %}Job {{ job_id }} — Cross Affinity{% endblock %}
 {% block content %}
 <section class="panel">
   <div class="row-between">
@@ -54,5 +54,5 @@
 </section>
 {% endblock %}
 {% block scripts %}
-<script>CrossBind.pollJob(document.getElementById('job-status').dataset.job);</script>
+<script>Cross Affinity.pollJob(document.getElementById('job-status').dataset.job);</script>
 {% endblock %}

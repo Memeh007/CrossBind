@@ -1,7 +1,7 @@
-﻿/* CrossBind front-end helpers */
-window.CrossBind = window.CrossBind || {};
+﻿/* Cross Affinity front-end helpers */
+window.Cross Affinity = window.Cross Affinity || {};
 
-CrossBind.pollJob = function (jobId) {
+Cross Affinity.pollJob = function (jobId) {
   const logEl = document.getElementById("job-log");
   const vinaEl = document.getElementById("m-vina");
   const cnnEl = document.getElementById("m-cnn");

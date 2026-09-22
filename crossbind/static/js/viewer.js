@@ -1,4 +1,4 @@
-﻿/* CrossBind 3Dmol viewer — file fetch (not JSON), cartoon-first for large PDBs */
+﻿/* Cross Affinity 3Dmol viewer — file fetch (not JSON), cartoon-first for large PDBs */
 (function () {
   const vp = document.getElementById("viewport");
   if (!vp) return;
@@ -24,7 +24,7 @@
   }
 
   if (typeof $3Dmol === "undefined") {
-    fail("3Dmol.js failed to load. Expected /static/vendor/3Dmol-min.js — restart CrossBind after update.");
+    fail("3Dmol.js failed to load. Expected /static/vendor/3Dmol-min.js — restart Cross Affinity after update.");
     return;
   }
 

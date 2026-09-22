@@ -1,8 +1,8 @@
 @echo off
 cd /d "%~dp0"
-title CrossBind
+title Cross Affinity
 echo.
-echo  CrossBind — local molecular docking
+echo  Cross Affinity - local molecular docking
 echo  ===================================
 echo.
 
@@ -31,13 +31,13 @@ if errorlevel 1 (
 )
 
 REM Optional: set VINA_BIN to your vina.exe full path, e.g.
-REM set VINA_BIN=C:\Users\alexc\Desktop\CrossBind\bin\vina.exe
+REM set VINA_BIN=C:\Users\alexc\Desktop\Cross Affinity\bin\vina.exe
 if exist "bin\vina.exe" if not defined VINA_BIN set "VINA_BIN=%~dp0bin\vina.exe"
 if exist "bin\vina_1.2.7_win.exe" if not defined VINA_BIN set "VINA_BIN=%~dp0bin\vina_1.2.7_win.exe"
 
 set PORT=8787
 echo.
-echo Starting CrossBind on http://127.0.0.1:%PORT%
+echo Starting Cross Affinity on http://127.0.0.1:%PORT%
 echo Leave this window open. Press Ctrl+C to stop.
 echo.
 start "" "http://127.0.0.1:%PORT%/"

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")"
-echo "CrossBind — local molecular docking"
+echo "Cross Affinity — local molecular docking"
 echo "==================================="
 
 if [[ ! -d venv ]]; then
@@ -16,6 +16,6 @@ if [[ -z "${VINA_BIN:-}" ]]; then
   if [[ -x bin/vina ]]; then export VINA_BIN="$(pwd)/bin/vina"; fi
 fi
 
-PORT="${CROSSBIND_PORT:-8787}"
+PORT="${CROSS AFFINITY_PORT:-8787}"
 echo "Starting on http://127.0.0.1:${PORT}"
 exec python -m uvicorn crossbind.app:app --host 127.0.0.1 --port "${PORT}"
