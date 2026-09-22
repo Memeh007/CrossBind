@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Cross Affinity — Discover{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Discover</h1>
+  <p class="lede">
+    Drug name → PubChem SMILES → ChEMBL / Open Targets mechanisms → PDB or AlphaFold structure →
+    auto docking box → prepare &amp; dock with the existing Meeko/Vina pipeline.
+  </p>
+</section>
+
+<div class="banner warn">
+  <strong>Not medical advice.</strong>
+  Targets, mechanisms, orthologs, and docking boxes are <em>computational hypotheses</em> for research triage —
+  not clinical claims, dosing guidance, or experimental proof.
+</div>
+
+<form class="panel dock-form" id="discover-form">
+  <fieldset>
+    <legend>Compound</legend>
+    <div class="grid-2">
+      <label>Drug name
+        <input type="text" name="name" id="drug-name" value="metformin" placeholder="e.g. metformin" required />
+      </label>
+      <label>Optional UniProt override
+        <input type="text" name="uniprot" id="uniprot-override" placeholder="e.g. P54619" />
+      </label>
+    </div>
+  </fieldset>
+  <div class="actions">
+    <button type="submit" class="btn primary" id="btn-discover">Run discovery</button>
+    <span class="hint" id="discover-status"></span>
+  </div>
+</form>
+
+<section class="panel" id="panel-drug" hidden>
+  <h2>Drug identity</h2>
+  <dl class="kv" id="drug-kv"></dl>
+</section>
+
+<section class="panel" id="panel-mech" hidden>
+  <h2>Mechanisms &amp; targets</h2>
+  <p class="muted" id="mech-disclaimer"></p>
+  <ul id="mech-list"></ul>
+  <table class="jobs" id="targets-table">
+    <thead><tr><th>Gene</th><th>UniProt</th><th>Mechanism</th><th>Source</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section class="panel" id="panel-structure" hidden>
+  <h2>Recommended structure</h2>
+  <dl class="kv" id="structure-kv"></dl>
+  <p class="hint" id="structure-warn"></p>
+</section>
+
+<section class="panel" id="panel-pocket" hidden>
+  <h2>Auto docking box</h2>
+  <dl class="kv" id="pocket-kv"></dl>
+  <p class="hint" id="pocket-warn"></p>
+</section>
+
+<section class="panel" id="panel-ortho" hidden>
+  <h2>Cross-species orthologs</h2>
+  <p class="muted" id="ortho-disclaimer"></p>
+  <table class="jobs" id="ortho-table">
+    <thead><tr><th>Species</th><th>Status</th><th>ID</th><th>% id</th><th>Note</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section class="panel" id="panel-dock" hidden>
+  <h2>Prepare &amp; dock</h2>
+  <p class="muted">Creates a docking job using the fetched receptor, resolved SMILES, and auto-box center/size.</p>
+  <form id="prepare-dock-form" class="dock-form">
+    <div class="grid-3">
+      <label>Engine
+        <select name="engine" id="dock-engine">
+          <option value="vina" selected>AutoDock Vina</option>
+          <option value="gnina" {% if not engines.gnina_ok %}disabled{% endif %}>GNINA</option>
+        </select>
+      </label>
+      <label>Exhaustiveness<input type="number" name="exhaustiveness" value="8" min="1" max="64" /></label>
+      <label>Modes<input type="number" name="num_modes" value="9" min="1" max="20" /></label>
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn primary" id="btn-prepare-dock">Prepare &amp; dock</button>
+      <span class="hint" id="dock-status"></span>
+    </div>
+  </form>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/static/js/discover.js"></script>
+{% endblock %}

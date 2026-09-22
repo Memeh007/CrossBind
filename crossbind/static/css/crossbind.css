@@ -218,3 +218,14 @@ pre.log {
   font-size: 0.72rem; color: var(--muted); margin: 0 0 0.4rem; flex-shrink: 0;
   font-family: var(--mono);
 }
+
+
+/* Discover */
+.kv { display: grid; grid-template-columns: 10rem 1fr; gap: 0.35rem 1rem; margin: 0; }
+.kv dt { color: var(--muted); font-size: 0.85rem; }
+.kv dd { margin: 0; word-break: break-word; }
+.status.reference { color: var(--cyan); }
+.status.mapped { color: var(--ok); }
+.status.unmapped, .status.stub { color: var(--warn); }
+.status.pending { color: var(--muted); }
+#mech-list { padding-left: 1.2rem; line-height: 1.5; }

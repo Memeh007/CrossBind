@@ -1,47 +1,21 @@
-﻿"""Ligand preparation: SMILES/file → 3D → Meeko PDBQT."""
+"""Ligand preparation: SMILES/file → 3D → Meeko PDBQT."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 
-def keep_largest_fragment(mol, log=None):
-    """Meeko requires a single fragment. PubChem salts often have .Cl / counterions."""
-    from rdkit import Chem
-
-    frags = Chem.GetMolFrags(mol, asMols=True, sanitizeFrags=True)
-    if len(frags) <= 1:
-        return mol
-    # Prefer largest organic fragment (most heavy atoms, skip lone ions)
-    def score(m):
-        heavy = m.GetNumHeavyAtoms()
-        has_c = any(a.GetSymbol() == "C" for a in m.GetAtoms())
-        return (1 if has_c else 0, heavy)
-
-    frags = sorted(frags, key=score, reverse=True)
-    kept = frags[0]
-    dropped = [Chem.MolToSmiles(f) for f in frags[1:]]
-    if log:
-        log(
-            f"Multi-fragment ligand ({len(frags)} parts) — keeping largest organic "
-            f"({Chem.MolToSmiles(kept)}); dropped: {', '.join(dropped)}"
-        )
-    return kept
-
-
-def smiles_to_mol(smiles: str, log=None):
+def smiles_to_mol(smiles: str):
     from rdkit import Chem
     from rdkit.Chem import AllChem
 
-    # Normalize: take first component group if dotted salts, then still fragment-check
-    raw = smiles.strip()
-    mol = Chem.MolFromSmiles(raw)
+    mol = Chem.MolFromSmiles(smiles.strip())
     if mol is None:
         raise ValueError("Invalid SMILES string")
-    mol = keep_largest_fragment(mol, log=log)
     mol = Chem.AddHs(mol)
     conf_id = AllChem.EmbedMolecule(mol, randomSeed=42)
     if conf_id < 0:
+        # fallback embedding
         conf_id = AllChem.EmbedMolecule(mol, useRandomCoords=True, randomSeed=42)
     if conf_id < 0:
         raise RuntimeError("RDKit failed to embed 3D conformer")
@@ -52,7 +26,7 @@ def smiles_to_mol(smiles: str, log=None):
     return mol
 
 
-def load_ligand_file(path: Path, log=None):
+def load_ligand_file(path: Path):
     from rdkit import Chem
     from rdkit.Chem import AllChem
 
@@ -61,7 +35,7 @@ def load_ligand_file(path: Path, log=None):
     if suffix in {".smi", ".smiles"}:
         text = path.read_text(encoding="utf-8", errors="replace").strip().splitlines()[0]
         smiles = text.split()[0]
-        return smiles_to_mol(smiles, log=log)
+        return smiles_to_mol(smiles)
     if suffix == ".sdf":
         suppl = Chem.SDMolSupplier(str(path), removeHs=False)
         mol = next((m for m in suppl if m is not None), None)
@@ -72,14 +46,13 @@ def load_ligand_file(path: Path, log=None):
     elif suffix == ".pdb":
         mol = Chem.MolFromPDBFile(str(path), removeHs=False)
     elif suffix == ".pdbqt":
+        # Already prepared — return None sentinel; caller copies file
         return None
     else:
         raise ValueError(f"Unsupported ligand format: {suffix}")
 
     if mol is None:
         raise ValueError(f"Could not parse ligand file: {path.name}")
-
-    mol = keep_largest_fragment(mol, log=log)
 
     if mol.GetNumConformers() == 0:
         mol = Chem.AddHs(mol)
@@ -122,10 +95,10 @@ def prepare_ligand(
 
     if smiles:
         log("SMILES → RDKit AddHs → EmbedMolecule → MMFFOptimize")
-        mol = smiles_to_mol(smiles, log=log)
+        mol = smiles_to_mol(smiles)
     elif ligand_path:
         log(f"Loading ligand file: {ligand_path.name}")
-        mol = load_ligand_file(ligand_path, log=log)
+        mol = load_ligand_file(ligand_path)
         if mol is None:
             out_pdbqt.write_bytes(ligand_path.read_bytes())
             return out_pdbqt

@@ -1,4 +1,4 @@
-"""Name → SMILES via PubChem (with retries) and optional CACTUS fallback."""
+"""Name → SMILES via PubChemPy (preferred) with legacy CACTUS fallback."""
 
 from __future__ import annotations
 
@@ -11,11 +11,25 @@ _UA = {"User-Agent": "CrossAffinity/1.0 (local research; Alexander Cecena)"}
 
 
 def name_to_smiles(name: str, *, retries: int = 3) -> str:
+    """Resolve a compound name to an isomeric/canonical SMILES string."""
     name = (name or "").strip()
     if not name:
         raise ValueError("Empty compound name")
 
     last_err: Exception | None = None
+    try:
+        from crossbind.discovery.drug import resolve_drug
+
+        for attempt in range(retries):
+            try:
+                return resolve_drug(name, retries=1)["smiles"]
+            except Exception as exc:
+                last_err = exc
+                time.sleep(0.5 * (attempt + 1))
+    except ImportError as exc:
+        last_err = exc
+
+    # Legacy hand-rolled PUG + CACTUS if PubChemPy path fails entirely
     for attempt in range(retries):
         try:
             return _pubchem_smiles(name)
@@ -30,6 +44,13 @@ def name_to_smiles(name: str, *, retries: int = 3) -> str:
             f"Could not resolve SMILES for {name!r}. "
             f"PubChem: {last_err}; CACTUS: {cactus_err}"
         ) from cactus_err
+
+
+def name_to_drug(name: str) -> dict:
+    """Full drug resolution (CID, SMILES, InChIKey, ChEMBL id)."""
+    from crossbind.discovery.drug import resolve_drug
+
+    return resolve_drug(name)
 
 
 def _pubchem_smiles(name: str) -> str:

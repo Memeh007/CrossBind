@@ -28,6 +28,7 @@ from crossbind.config import (
 from crossbind.docking.pipeline import run_docking_job
 from crossbind.jobs import job_dir, list_jobs, new_job_id, read_log, read_result
 from crossbind.pubchem import name_to_smiles
+from crossbind.discovery import run_discovery
 from crossbind.residues import parse_residues
 from crossbind.security import assert_under, safe_filename
 
@@ -358,6 +359,124 @@ async def api_structure(job_id: str, kind: str = "receptor", prefer: str = ""):
                 }
             )
     raise HTTPException(404, f"No {kind} structure")
+
+
+
+@app.get("/discover", response_class=HTMLResponse)
+async def discover_page(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "discover.html",
+        {
+            "version": __version__,
+            "engines": _engine_status(),
+        },
+    )
+
+
+@app.post("/api/discover")
+async def api_discover(name: str = Form(...), uniprot: str = Form("")):
+    try:
+        result = run_discovery(name.strip(), uniprot=(uniprot or "").strip() or None)
+        return result
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/discover/dock")
+async def api_discover_dock(
+    discovery_json: str = Form(...),
+    engine: str = Form("vina"),
+    exhaustiveness: int = Form(8),
+    num_modes: int = Form(9),
+    cpu: int = Form(0),
+):
+    """Create a docking job from a Discover payload (receptor path + SMILES + auto-box)."""
+    try:
+        payload = json.loads(discovery_json)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(400, f"Invalid discovery_json: {exc}") from exc
+
+    drug = payload.get("drug") or {}
+    structure = payload.get("structure") or {}
+    pocket = payload.get("pocket") or {}
+    smi = (drug.get("smiles") or "").strip()
+    rec_src = structure.get("path")
+    if not smi:
+        raise HTTPException(400, "Discovery payload missing SMILES")
+    if not rec_src or not Path(rec_src).is_file():
+        raise HTTPException(400, "Discovery payload missing receptor structure file")
+
+    center = pocket.get("center") or [0.0, 0.0, 0.0]
+    size = pocket.get("size") or [22.0, 22.0, 22.0]
+    if len(center) != 3 or len(size) != 3:
+        raise HTTPException(400, "Invalid pocket center/size")
+
+    jid = new_job_id()
+    jdir = job_dir(jid)
+    jdir.mkdir(parents=True, exist_ok=True)
+
+    src = Path(rec_src)
+    # Copy into job dir; convert CIF→PDB if needed for existing pipeline
+    if src.suffix.lower() in {".cif", ".mmcif"}:
+        rec_path = jdir / "upload_receptor.pdb"
+        try:
+            from Bio.PDB.MMCIFParser import MMCIFParser
+            from Bio.PDB.PDBIO import PDBIO
+
+            parser = MMCIFParser(QUIET=True)
+            structure_obj = parser.get_structure("rec", str(src))
+            io = PDBIO()
+            io.set_structure(structure_obj)
+            io.save(str(rec_path))
+        except Exception as exc:
+            raise HTTPException(400, f"Could not convert mmCIF to PDB: {exc}") from exc
+    else:
+        rec_ext = src.suffix.lower() if src.suffix.lower() in ALLOWED_RECEPTOR_EXT else ".pdb"
+        rec_path = jdir / f"upload_receptor{rec_ext}"
+        shutil.copy(src, rec_path)
+
+    if rec_path.suffix.lower() == ".pdb":
+        shutil.copy(rec_path, jdir / "receptor.pdb")
+
+    (jdir / "resolved_smiles.txt").write_text(smi, encoding="utf-8")
+    (jdir / "discovery.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    compound = (drug.get("input") or "ligand").strip() or "ligand"
+    cx, cy, cz = float(center[0]), float(center[1]), float(center[2])
+    sx, sy, sz = float(size[0]), float(size[1]), float(size[2])
+
+    meta = {
+        "id": jid,
+        "status": "queued",
+        "compound_name": compound,
+        "engine": engine,
+        "center": [cx, cy, cz],
+        "size": [sx, sy, sz],
+        "source": "discover",
+        "structure_provenance": structure.get("provenance"),
+        "pocket_method": pocket.get("method"),
+    }
+    (jdir / "result.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+    def _thread_run():
+        run_docking_job(
+            jdir,
+            receptor_path=rec_path,
+            smiles=smi,
+            ligand_path=None,
+            center=(cx, cy, cz),
+            size=(sx, sy, sz),
+            exhaustiveness=int(exhaustiveness),
+            num_modes=int(num_modes),
+            cpu=int(cpu),
+            engine=engine,
+            reference_ligand=None,
+            compound_name=compound,
+        )
+
+    threading.Thread(target=_thread_run, daemon=True).start()
+    return JSONResponse({"ok": True, "job_id": jid, "redirect": f"/job/{jid}"})
 
 
 @app.get("/jobs", response_class=HTMLResponse)

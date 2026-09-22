@@ -1,8 +1,8 @@
-﻿# Cross Affinity
+# CrossBind
 
-**Local molecular docking for researchers** — branded molecule with living atom/bond physics on boot. — *biology × compute*.
+**Local molecular docking for researchers** — *biology × compute*.
 
-Cross Affinity is a standalone open-source web app (FastAPI + Jinja2) that prepares ligands and receptors and runs **AutoDock Vina 1.2.x** on your machine. Optional **GNINA** CNN scores are supported as separate fields. It is **not** Munroe Lab software and does **not** claim equivalence to ICM (Molsoft) affinities.
+**Cross Affinity** (package folder `crossbind`) is a standalone open-source web app (FastAPI + Jinja2) that prepares ligands and receptors and runs **AutoDock Vina 1.2.x** on your machine. Slice 1 adds a **Discover** flow (drug → targets → structure → auto-box → dock). Optional **GNINA** CNN scores are supported as separate fields. It is **not** Munroe Lab software and does **not** claim equivalence to ICM (Molsoft) affinities.
 
 Author: **Alexander Cecena** ([Memeh007](https://github.com/Memeh007)) · License: **MIT**
 
@@ -18,6 +18,28 @@ Author: **Alexander Cecena** ([Memeh007](https://github.com/Memeh007)) · Licens
 - **Signature GUI:** 3Dmol.js viewer — cartoon + all amino-acid sidechains toggle, searchable residue list (chain/resi/resn) with click-to-highlight, docking box overlay, ranked poses
 - Redock **RMSD** helper when a reference ligand is provided
 - Binds **127.0.0.1** by default (port **8787**)
+
+
+## Discover (Slice 1)
+
+Vertical slice for research triage (demo drug: **metformin**):
+
+1. Drug name → **PubChemPy** CID / SMILES / InChIKey (RDKit sanitize)
+2. **ChEMBL** mechanisms/targets (Open Targets GraphQL fallback when ChEMBL is down)
+3. Best structure: **rcsb-api** PDB by UniProt, else **Biopython** AlphaFold DB CIF
+4. Auto docking box (crystal ligand centroid + padding, else protein centroid with warning)
+5. **Prepare & dock** reuses the existing Meeko / Vina pipeline
+6. Ortholog panel stubs: human, mouse, fly, dog, rabbit, cat, planaria (**honest miss** if unmapped)
+
+```bash
+# after venv + requirements
+python scripts/smoke_discover_metformin.py
+pytest tests/test_drug_metformin.py -q
+uvicorn crossbind.app:app --host 127.0.0.1 --port 8787
+# open http://127.0.0.1:8787/discover
+```
+
+Docs: `docs/cross_affinity_discovery_os_blueprint.md`, `docs/cross_affinity_library_first.md`.
 
 ## Scoring honesty
 
@@ -38,7 +60,7 @@ Absolute kcal/mol values are **not interchangeable** across engines or with comm
 ### Windows notes
 
 1. Install Python from [python.org](https://www.python.org/downloads/) (check “Add to PATH”).
-2. Download `vina_1.2.x_windows_x86_64.exe` (or similar), rename/copy to `Cross Affinity\bin\vina.exe`, **or** set:
+2. Download `vina_1.2.x_windows_x86_64.exe` (or similar), rename/copy to `CrossBind\bin\vina.exe`, **or** set:
    ```bat
    set VINA_BIN=C:\path\to\vina.exe
    ```
@@ -59,14 +81,14 @@ chmod +x run.sh
 ## Quick start
 
 ```bat
-cd Cross Affinity
+cd CrossBind
 run.bat
 ```
 
 Or:
 
 ```bash
-cd Cross Affinity
+cd CrossBind
 python -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
@@ -82,18 +104,24 @@ Open **http://127.0.0.1:8787**
 |----------|---------|
 | `VINA_BIN` | Full path to Vina executable (default: search `bin/`, PATH) |
 | `GNINA_BIN` | Full path to GNINA (optional) |
-| `CROSS AFFINITY_HOST` | Bind host (default `127.0.0.1`) |
-| `CROSS AFFINITY_PORT` | Port (default `8787`) |
-| `CROSS AFFINITY_DATA` | Override data directory |
-| `CROSS AFFINITY_UPLOAD_MAX` | Max upload bytes |
+| `CROSSBIND_HOST` | Bind host (default `127.0.0.1`) |
+| `CROSSBIND_PORT` | Port (default `8787`) |
+| `CROSSBIND_DATA` | Override data directory |
+| `CROSSBIND_UPLOAD_MAX` | Max upload bytes |
 
 ## Project layout
 
 ```
-Cross Affinity/
-  crossbind/           # Python package (app, docking pipeline, templates, static)
-  data/jobs/           # Job storage (gitignored)
-  bin/                 # Optional local vina/gnina binaries (gitignored)
+CrossBind/
+  crossbind/             # Python package (UI product name: Cross Affinity)
+    discovery/           # Slice 1 adapters (drug, targets, structures, pocket, …)
+    docking/             # Meeko / Vina / GNINA pipeline
+  data/jobs/             # Job storage (gitignored)
+  data/cache/            # SQLite + structure cache (gitignored blobs)
+  docs/                  # Discovery OS blueprint + library-first catalog
+  scripts/               # Smoke scripts
+  tests/
+  bin/                   # Optional local vina/gnina binaries (gitignored)
   run.bat / run.sh
   requirements.txt
   README.md  SECURITY.md  LICENSE
@@ -111,30 +139,13 @@ Subprocess calls use **argv lists only** (no shell).
 
 ## GitHub
 
-Prepared for publication under **Memeh007/crossbind** or **Memeh007/Cross Affinity**. This repo is initialized locally; create the remote when ready (do not force-push).
+Remote: **https://github.com/Memeh007/CrossBind**
 
 ```bash
-git remote add origin https://github.com/Memeh007/Cross Affinity.git
+git remote add origin https://github.com/Memeh007/CrossBind.git
 git push -u origin main
 ```
 
 ## Disclaimer
 
 Research / educational software. Docking scores guide hypotheses; they are not clinical or regulatory decisions.
-
-## Make it better (roadmap)
-
-- Prefer **GNINA** when installed; show Vina + CNN side-by-side and optional consensus rank
-- **Auto-box** from uploaded reference ligand / selected residues
-- **Batch dock** from a SMILES CSV (queue jobs)
-- Explicit **protonation / pH** prep notes (and Open Babel options) in the UI
-- Always-on **redock RMSD report card** when a crystal pose is supplied
-- One-click **demo fixture** (public PDB + ligand) for first-run
-- Portfolio card + short LinkedIn clip of the boot → dock loop
-- Multi-conformer ligand ensemble (often improves pose quality)
-
-## Branding
-
-- Product name: **Cross Affinity** (Python package folder remains crossbind for imports).
-- Runtime logo: crossbind/static/img/logo-molecule.svg — real <circle> / <line> atoms & bonds, animated by molecule-orbs.js (independent node drift, bond stretch, 4.5s breathe + glow; core ligand anchored).
-- CrossAffinityIcon.svg in the repo root is a VTracer raster-trace (~7.5MB, 15k paths). Keep as art reference; do not load it in the browser boot screen.

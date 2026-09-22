@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(os.environ.get("CROSSBIND_DATA", ROOT / "data")).resolve()
 JOBS_DIR = DATA_DIR / "jobs"
+CACHE_DIR = DATA_DIR / "cache"
 UPLOAD_MAX_BYTES = int(os.environ.get("CROSSBIND_UPLOAD_MAX", 50 * 1024 * 1024))
 
 HOST = os.environ.get("CROSSBIND_HOST", "127.0.0.1")
@@ -61,3 +62,5 @@ def resolve_gnina_bin() -> str | None:
 
 def ensure_dirs() -> None:
     JOBS_DIR.mkdir(parents=True, exist_ok=True)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    (CACHE_DIR / "structures").mkdir(parents=True, exist_ok=True)

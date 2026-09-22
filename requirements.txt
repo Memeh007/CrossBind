@@ -3,12 +3,21 @@ uvicorn[standard]>=0.27
 jinja2>=3.1
 python-multipart>=0.0.9
 requests>=2.31
+httpx>=0.27
 numpy>=1.26
 scipy>=1.11
 gemmi>=0.6
 meeko>=0.5,<0.9
 # RDKit: prefer conda-forge on some platforms; pip wheel works on many Windows/Linux builds
 rdkit>=2023.9.1
+# Discovery Slice 1 (library-first)
+pubchempy>=1.0.5
+chembl_webresource_client>=0.10
+rcsb-api>=1.4
+biopython>=1.83
+pdbfixer>=1.9
+mygene>=3.2
+ensembl-rest>=0.3.3
 # Open Babel is optional as a pip package (often hard on Windows).
 # Prefer system Open Babel / obabel CLI, or upload receptor as .pdbqt.
 # openbabel-wheel  # optional; may not install on all platforms

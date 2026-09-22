@@ -29,3 +29,10 @@ Thumbs.db
 *.log
 .pytest_cache/
 .mypy_cache/
+
+# Discovery cache (keep folder structure)
+data/cache/**
+!data/cache/.gitkeep
+!data/cache/structures/
+!data/cache/structures/.gitkeep
+
