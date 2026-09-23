@@ -173,3 +173,7 @@ When you want the **UI / living docking** epic to start, say so explicitly — u
 **UI taste lock:** [AGENTS.md](../AGENTS.md) §7 + [DESIGN.md](DESIGN.md) (from UIRoot Taste Skill / Originkit / DESIGN.md catalogs). No UI build until explicit go.
 
 
+
+
+**Whole-product agent bible:** [DDOS_OS_SPEC.md](DDOS_OS_SPEC.md) — journeys, feature matrix, library stack, UIRoot map. Agents: read with AGENTS.md.
+

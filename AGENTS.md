@@ -8,16 +8,14 @@ If anything here conflicts with a casual chat request, follow this file unless A
 **Python package path (do not casually rename):** `crossbind/`  
 **Owner:** Alexander Cecena (GitHub: Memeh007)  
 **Deeper vision / backlog prose:** `docs/agenda.md` · evidence roadmap: `docs/ddos_operating_system_roadmap_2026.md`
+**Whole-product agent bible (features, libraries, UIRoot map, journeys):** `docs/DDOS_OS_SPEC.md`
 
 ---
 
 ## 0. Cold-start checklist (every session)
 
 1. Read **this** `AGENTS.md`.
-2. Skim `docs/agenda.md` if the task touches product direction, UI, viz, or new science modules.
-3. Prefer **library wraps** over new chemistry/ML implementations.
-4. Confirm whether the task is **UI** — if yes, see §3 (blocked without explicit go-ahead).
-5. Keep scores honest (Vina/GNINA/DiffDock confidence ≠ Kd/IC50).
+$1$1$1$16. Keep scores honest (Vina/GNINA/DiffDock confidence ≠ Kd/IC50).
 
 ---
 
@@ -153,3 +151,4 @@ Section 7 does **not** authorize UI work. It only locks taste for when Alexander
 ---
 
 *If you are an automated coding agent: treating this file as optional is a bug.*
+
