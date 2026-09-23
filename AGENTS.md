@@ -8,7 +8,7 @@ If a chat request conflicts with this file, **this file wins** unless Alexander 
 **Owner:** Alexander Cecena · GitHub `Memeh007`  
 **Runtime:** local FastAPI + Jinja · `run.bat` · `http://127.0.0.1:8787`  
 **Target local agent stack:** Hermes Agent + MiniCPM5-2B (native ~128K context) — this file is the offloaded architecture brain  
-**Deeper overflow:** `docs/DDOS_OS_SPEC.md` · `docs/agenda.md` · `docs/DESIGN.md` · `docs/ddos_operating_system_roadmap_2026.md` · **UI contract (detailed):** `docs/DESIGN.md` (Taste Skill + Open Design 9-section + ddOS dials 4/4/8)
+**Deeper overflow:** `docs/DDOS_OS_SPEC.md` · `docs/agenda.md` · (`docs/DESIGN.expanded.md` · short stub `docs/DESIGN.md` ·) `docs/ddos_operating_system_roadmap_2026.md` · **UI contract (detailed):** `docs/DESIGN.expanded.md` (Taste Skill + Open Design 9-section + ddOS dials 4/4/8)
 
 When prompting any agent, say: *Read AGENTS.md for pipeline rules, UI design system, and golden snippets before writing code.*
 
@@ -254,5 +254,6 @@ This file is the offloaded architecture so a ~2B model with long context becomes
 ---
 
 *ddOS AGENTS.md — Hermes/MiniCPM edition. UI redesign gated until Alexander says go.*
+
 
 
