@@ -177,3 +177,9 @@ When you want the **UI / living docking** epic to start, say so explicitly — u
 
 **Whole-product agent bible:** [DDOS_OS_SPEC.md](DDOS_OS_SPEC.md) — journeys, feature matrix, library stack, UIRoot map. Agents: read with AGENTS.md.
 
+---
+
+## Living engineering queue (2026-09-22)
+
+See **`docs/ddos_pipeline_upgrade_queue_2026-09.md`** (merged from structure + biology research memos). Default next lane: **B1 GNINA → B2 PoseBusters → B3 ADMET-AI**. Companions: `docs/ddos_research_structure_2026.md`, `docs/ddos_research_biology_2026.md`.
+
