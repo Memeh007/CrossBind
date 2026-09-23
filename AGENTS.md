@@ -103,4 +103,53 @@ Non-goals: fake MD, Kd theater, rewriting Vina/P2Rank, unsolicited UI passes.
 
 ---
 
+---
+
+## 7. UIRoot taste lock (read before ANY authorized UI work)
+
+**Source of truth for anti-generic UI culture:** [UIRoot](https://uiroot.com/) — especially:
+- [Taste Skill](https://uiroot.com/tools/158) — stop AI slop / boring frontends
+- [Originkit](https://uiroot.com/tools/203) — free animated components (Framer/React/MCP); use for **motion patterns**, not as the scientific stack
+- [UI Component catalog](https://uiroot.com/category/ui-component) — component libraries & motion/3D/sound kits to evaluate
+- [DESIGN.md catalog](https://uiroot.com/category/design-md) — agent-readable design contracts (`DESIGN.md`, getdesign.md, DesignMD, Open Design, TypeUI, Impeccable, …)
+
+**Our project design contract file:** `docs/DESIGN.md` (keep in sync when taste rules change).
+
+### 7.1 Anti-slop (Taste Skill spirit) — mandatory when UI is authorized
+Do **not** ship generic AI frontend defaults:
+- Inter / purple-gradient / glassmorphism-for-its-own-sake / “AI SaaS” card grids
+- Placeholder sections, lorem, unfinished empty states, fake charts
+- Motion that is decorative only (sparkles, falling fluff) with no scientific meaning
+- Copying marketing landing aesthetics onto a research instrument
+
+Do ship **intentional taste**:
+- Clear visual hierarchy, disciplined spacing, restrained palette
+- Layout variance with purpose (instrument panels, not brochure sections)
+- Motion that explains process (pocket appear → dock → contact proof), calm and complete
+- Full, finished surfaces — Output Skill spirit: no skipped sections
+
+### 7.2 Preferred taste modes for ddOS (when UI starts)
+Default toward a hybrid of Taste Skill modes:
+- **Soft + Minimalist** — calm, sophisticated, tight hierarchy, restrained color (scientific OS, not loud startup)
+- Optional **Brutalist/Swiss** accents only for data density / monospace instrument chrome — never raw shock for its own sake
+- Use **Redesign / Image-to-code** skills only when Alexander supplies references; prefer fidelity to those refs over improvising “pretty”
+
+### 7.3 Originkit & component catalog — how to use
+- Originkit / Magic UI / Aceternity / SmoothUI / Rare UI / etc. = **inspiration and optional motion primitives**
+- Prefer **accessible, unstyled or headless bases** (e.g. Base UI / Radix patterns) under a ddOS-specific skin
+- **3D / WebGL** kits (ThreeUI, Canvas UI, Shaders) only where they serve molecular/scene viz — do not turn the whole OS into a Three.js marketing site
+- Sound kits (Cuelume, Sensory UI, …) are optional later; never required for science correctness
+- **Never scrape UIRoot or vendor sites into the repo.** No copyrighted screenshots or copied proprietary CSS dumps. Link + pattern notes only; implement originals under MIT/our code
+
+### 7.4 DESIGN.md workflow (UIRoot “DESIGN.md” category)
+Before a large UI pass:
+1. Update `docs/DESIGN.md` with tokens, type, spacing, motion, density, and ddOS-specific patterns (viewer, pocket strip, evidence proof).
+2. Agents implement against `DESIGN.md` + this section — not against vibes.
+3. Tools like getdesign.md / DesignMD / Open Design / TypeUI may be used to **analyze** references Alexander provides; output belongs in `docs/DESIGN.md`, not as opaque agent memory.
+
+### 7.5 Still gated
+Section 7 does **not** authorize UI work. It only locks taste for when Alexander says **go**.
+
+---
+
 *If you are an automated coding agent: treating this file as optional is a bug.*

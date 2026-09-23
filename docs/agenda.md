@@ -166,3 +166,10 @@ When you want the **UI / living docking** epic to start, say so explicitly — u
 
 *Last updated: 2026-09-22 (PT) — initial agenda capture from product conversation (living viz, biology depth, wrap best AIs, OS-scale discovery).*
 
+
+
+----r
+
+**UI taste lock:** [AGENTS.md](../AGENTS.md) §7 + [DESIGN.md](DESIGN.md) (from UIRoot Taste Skill / Originkit / DESIGN.md catalogs). No UI build until explicit go.
+
+
