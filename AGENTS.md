@@ -15,7 +15,12 @@ If anything here conflicts with a casual chat request, follow this file unless A
 ## 0. Cold-start checklist (every session)
 
 1. Read **this** `AGENTS.md`.
-$1$1$1$16. Keep scores honest (Vina/GNINA/DiffDock confidence ≠ Kd/IC50).
+2. Read `docs/DDOS_OS_SPEC.md` for whole-app context (journeys, feature matrix, library stack, UIRoot map).
+3. Skim `docs/agenda.md` if the task touches product direction, UI, viz, or new science modules.
+4. Skim `docs/DESIGN.md` if the task is (or will become) UI — still gated by §3 / §7.5.
+5. Prefer **library wraps** over new chemistry/ML implementations.
+6. Confirm whether the task is **UI** — if yes, see §3 (blocked without explicit go-ahead).
+7. Keep scores honest (Vina/GNINA/DiffDock confidence ≠ Kd/IC50).
 
 ---
 
@@ -151,4 +156,5 @@ Section 7 does **not** authorize UI work. It only locks taste for when Alexander
 ---
 
 *If you are an automated coding agent: treating this file as optional is a bug.*
+
 
