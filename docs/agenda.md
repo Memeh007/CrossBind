@@ -3,7 +3,7 @@
 **Product:** **ddOS** (Drug Discovery Operating System)  
 **Repo / folder:** CrossBind · **Python package (for now):** `crossbind`  
 **Author:** Alexander Cecena  
-**Status:** Living north-star. Update this file whenever vision or priorities change.  
+**Status:** Living north-star. **Standing agent contract (read before every code change):** [AGENTS.md](../AGENTS.md) at repo root. Update this file whenever vision or priorities change.  
 **Rule:** Do **not** start UI redesign until Alexander explicitly says go (see §8).
 
 This file exists so we never drift back into “just another docking form.” ddOS is an **operating system for pre–wet-lab discovery**: biology × compute × interpretation × visualization that makes every biological process *legible*.
@@ -165,3 +165,4 @@ When you want the **UI / living docking** epic to start, say so explicitly — u
 ---
 
 *Last updated: 2026-09-22 (PT) — initial agenda capture from product conversation (living viz, biology depth, wrap best AIs, OS-scale discovery).*
+
