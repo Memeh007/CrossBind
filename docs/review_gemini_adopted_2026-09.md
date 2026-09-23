@@ -13,3 +13,8 @@ Accepted into `AGENTS.md` §2.7 / §9.3 and this build pass.
 ## B1 remaining (binary)
 
 Code already isolates `vina_affinity` vs `gnina_cnn_*`. Hard-enable = place `gnina.exe` (or WSL binary) at `bin/gnina.exe` or set `GNINA_BIN`, then `/api/health` shows `gnina_ok: true`. Optional: `GNINA_CNN`, `GNINA_CNN_SCORING` env vars.
+
+## Follow-up (Gemini): PoseBusters config
+
+Use `PoseBusters(config="dock")` for predictive cross-docking with `mol_true=None`. Do **not** use `redock` unless a cognate crystal ligand is supplied for RMSD checks.
+

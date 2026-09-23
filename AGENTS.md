@@ -319,7 +319,8 @@ Use `crossbind.discovery.open_targets_dossier` — cache, honest empty/error, no
 
 ```python
 def gate_pose(protein_pdb: str, ligand_sdf: str) -> dict:
-    """Wrap PoseBusters + RDKit strain/clash. Never invent chemistry."""
+    """Wrap PoseBusters + RDKit strain/clash. Never invent chemistry.""
+    # Use PoseBusters(config="dock") when mol_true is None (predictive dock). "redock" needs crystal ligand."
     # return {"posebusters_pass": bool, "checks": {...}, "strain_kcal": float|None}
     raise NotImplementedError("B2: pip-wrap posebusters; see structure research memo")
 ```
@@ -453,6 +454,7 @@ If the prompt is truncated, keep **§§0–5** intact first (directives, spine, 
 ---
 
 *ddOS AGENTS.md — Hermes/MiniCPM5-2B executor edition. Architecture lives here; MiniCPM executes one slice. UI redesign gated until Alexander says go. Updated 2026-09-22 PT (Gemini review friction rules + MiniCPM context budget).*
+
 
 
 

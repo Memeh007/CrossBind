@@ -19,7 +19,8 @@ def main() -> int:
         print("Install: pip install posebusters")
         print("Do NOT wire B2 into FastAPI until this smoke passes.")
         return 1
-    bust = PoseBusters(config="redock")
+    # ddOS: predictive / non-cognate dock — no crystal mol_true (use dock, not redock)
+    bust = PoseBusters(config="dock")
     df = bust.bust(mol_pred=str(ligand), mol_true=None, mol_cond=str(protein))
     print(df)
     print("OK: PoseBusters ran in this environment")
@@ -27,3 +28,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
