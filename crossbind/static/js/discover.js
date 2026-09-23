@@ -202,6 +202,7 @@
             mechanism: p.selected_protein.mechanism,
           }
         : null,
+      open_targets_dossier: p.open_targets_dossier || null,
     };
   }
 
@@ -447,6 +448,45 @@
     });
   }
 
+
+  function renderOtDossier(data) {
+    const box = document.getElementById("ot-dossier");
+    if (!box) return;
+    const d = (data && (data.open_targets_dossier || (data.selected_protein || {}).open_targets_dossier)) || null;
+    const kv = document.getElementById("ot-dossier-kv");
+    const tract = document.getElementById("ot-dossier-tract");
+    const diseases = document.getElementById("ot-dossier-diseases");
+    const err = document.getElementById("ot-dossier-error");
+    const honesty = document.getElementById("ot-dossier-honesty");
+    if (!d) {
+      box.hidden = true;
+      return;
+    }
+    box.hidden = false;
+    if (honesty) honesty.textContent = d.honesty || "";
+    if (err) err.textContent = d.ok ? "" : (d.error || "Open Targets dossier unavailable");
+    if (kv) {
+      setKV("ot-dossier-kv", d.ok ? [
+        ["Symbol", d.approved_symbol],
+        ["Name", d.approved_name],
+        ["Ensembl", d.ensembl_id],
+        ["Cached", d.cached ? "yes" : "no"],
+      ] : [["Status", "unavailable"]]);
+    }
+    if (tract) {
+      const rows = (d.tractability || []).slice(0, 8).map(function (t) {
+        return (t.label || "?") + (t.modality ? " [" + t.modality + "]" : "");
+      });
+      tract.textContent = rows.length ? ("Tractability: " + rows.join("; ")) : (d.ok ? "Tractability: none reported" : "");
+    }
+    if (diseases) {
+      diseases.innerHTML = (d.disease_associations || []).slice(0, 8).map(function (x) {
+        const sc = x.score != null ? " (score " + x.score + ")" : "";
+        return "<li>" + escapeHtml(x.disease_name || x.disease_id || "?") + sc + "</li>";
+      }).join("") || (d.ok ? "<li class=\"muted\">No top disease associations returned</li>" : "");
+    }
+  }
+
   function renderSelected(data) {
     const sp = data.selected_protein || {};
     const st = data.structure || {};
@@ -467,6 +507,7 @@
     document.getElementById("selected-function").textContent = sp.function
       ? "Function: " + sp.function
       : "";
+    renderOtDossier(data);
   }
 
   function renderTargets(data) {

@@ -226,7 +226,7 @@
         </thead>
         <tbody id="ix-tbody">
         {% for row in rows %}
-          <tr>
+          <tr data-contact-id="{{ row.id or '' }}" data-resi="{{ row.resi or '' }}" data-chain="{{ row.chain or '' }}">
             <td><code>{{ row.resn or row.residue }}</code></td>
             <td class="num">
               {% if row.chain or row.resi %}

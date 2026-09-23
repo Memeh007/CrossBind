@@ -50,14 +50,45 @@ def resolve_vina_bin() -> str | None:
 
 
 def resolve_gnina_bin() -> str | None:
+    """Locate optional GNINA binary (CNN docking / rescoring).
+
+    Windows tip: set ``GNINA_BIN`` to the full path of ``gnina.exe`` (WSL builds
+    are common — point at the Windows-visible path or run under WSL). Example::
+
+        set GNINA_BIN=C:/Users/you/bin/gnina.exe
+
+    Scores are **not** experimental Kd — ``vina_affinity`` and CNN fields are stored separately.
+    """
+    import shutil
+
     if GNINA_BIN and Path(GNINA_BIN).is_file():
         return GNINA_BIN
     if GNINA_BIN:
+        # Explicit override even if missing — caller surfaces a clear error
         return GNINA_BIN
-    import shutil
 
-    found = shutil.which("gnina")
-    return found
+    candidates = [
+        ROOT / "bin" / "gnina",
+        ROOT / "bin" / "gnina.exe",
+        ROOT / "bin" / "gnina_1.3" / "gnina",
+        ROOT / "bin" / "gnina_1.3" / "gnina.exe",
+        Path("C:/Program Files/gnina/gnina.exe"),
+        Path.home() / "bin" / "gnina.exe",
+        Path.home() / "bin" / "gnina",
+        Path.home() / "AppData" / "Local" / "gnina" / "gnina.exe",
+    ]
+    for pth in candidates:
+        try:
+            if pth.is_file():
+                return str(pth)
+        except OSError:
+            continue
+
+    for name in ("gnina", "gnina.exe"):
+        found = shutil.which(name)
+        if found:
+            return found
+    return None
 
 
 def ensure_dirs() -> None:

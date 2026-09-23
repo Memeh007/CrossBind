@@ -15,6 +15,7 @@ from crossbind.discovery.protein_lookup import (
 )
 from crossbind.discovery.structures import recommend_structure
 from crossbind.discovery.targets import resolve_targets
+from crossbind.discovery.open_targets_dossier import fetch_target_dossier
 from crossbind.job_identity import identity_from_discovery, mechanism_for_uniprot
 
 __all__ = [
@@ -242,6 +243,27 @@ def refresh_for_target(
 
     payload["selected_uniprot"] = uniprot
     payload["selected_protein"] = selected_protein
+    # Open Targets dossier (symbol/name, tractability, top disease associations)
+    try:
+        dossier = fetch_target_dossier(
+            gene=selected_protein.get("gene") or gene,
+            uniprot=uniprot,
+        )
+    except Exception as exc:
+        dossier = {
+            "ok": False,
+            "error": str(exc),
+            "source": "open_targets_platform",
+            "honesty": (
+                "Open Targets lookup failed; no fabricated tractability or disease links."
+            ),
+        }
+    payload["open_targets_dossier"] = dossier
+    if isinstance(selected_protein, dict):
+        selected_protein = dict(selected_protein)
+        selected_protein["open_targets_dossier"] = dossier
+        payload["selected_protein"] = selected_protein
+
     payload["structure"] = structure
     payload["structure_candidates"] = structure_candidates
     payload["pocket"] = pocket

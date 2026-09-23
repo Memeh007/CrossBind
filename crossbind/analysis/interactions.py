@@ -54,6 +54,65 @@ def _prolif_available() -> bool:
         return False
 
 
+
+def _parse_residue_parts(label: str | None) -> dict[str, Any]:
+    """Best-effort parse of 'ASP88.A' / 'A.ASP88' / ProLIF-ish labels."""
+    raw = (label or "").strip()
+    out = {"residue": raw, "resn": "", "resi": "", "chain": ""}
+    if not raw:
+        return out
+    m = re.match(r"^([A-Za-z]{1,4})\s*(-?\d+)(?:\.([A-Za-z0-9]))?$", raw)
+    if m:
+        out["resn"] = m.group(1).upper()
+        out["resi"] = m.group(2)
+        out["chain"] = (m.group(3) or "").upper()
+        return out
+    m = re.match(r"^([A-Za-z0-9])[.:]([A-Za-z]{1,4})\s*(-?\d+)$", raw)
+    if m:
+        out["chain"] = m.group(1).upper()
+        out["resn"] = m.group(2).upper()
+        out["resi"] = m.group(3)
+        return out
+    m = re.match(r"^([A-Za-z]{1,4})\s*[.:]\s*(-?\d+)$", raw)
+    if m:
+        out["resn"] = m.group(1).upper()
+        out["resi"] = m.group(2)
+        return out
+    out["resn"] = raw
+    return out
+
+
+def _stamp_contacts(
+    rows: list[dict[str, Any]],
+    *,
+    method: str,
+    pose: int | str = 1,
+) -> list[dict[str, Any]]:
+    """Attach stable ids + structured residue fields for table↔3D sync.
+
+    method is ``prolif`` or ``geometric`` (never a Kd claim).
+    """
+    method = "prolif" if method == "prolif" else "geometric"
+    out: list[dict[str, Any]] = []
+    for i, row in enumerate(rows or []):
+        r = dict(row) if isinstance(row, dict) else {"residue": str(row)}
+        parts = _parse_residue_parts(str(r.get("residue") or ""))
+        r.setdefault("resn", parts["resn"])
+        r.setdefault("resi", parts["resi"])
+        r.setdefault("chain", parts["chain"])
+        r["method"] = method
+        cid = r.get("id")
+        if not cid:
+            chain = r.get("chain") or "X"
+            resi = r.get("resi") or i
+            itype = str(r.get("type") or "contact").replace(" ", "")
+            cid = f"p{pose}-{chain}{resi}-{itype}-{i}"
+        r["id"] = cid
+        out.append(r)
+    return out
+
+
+
 def _split_pdbqt_models(text: str) -> list[str]:
     """Split multi-MODEL PDBQT into per-pose strings (without MODEL/ENDMDL wrappers needed)."""
     models: list[str] = []
@@ -463,7 +522,7 @@ def _annotate_prolif(
                     except Exception as exc2:
                         log.warning("ProLIF ifp fallback failed: %s", exc2)
 
-                by_pose[str(i + 1)] = rows
+                by_pose[str(i + 1)] = _stamp_contacts(rows, method="prolif", pose=i + 1)
 
         if not by_pose:
             return None
@@ -480,6 +539,7 @@ def _annotate_prolif(
         return {
             "ok": True,
             "tool": "prolif",
+            "method": "prolif",
             "tool_version": ver,
             "vicinity_cutoff_A": 6.0,
             "types": ["Hydrophobic", "HBDonor", "HBAcceptor", "PiStacking", "Anionic", "Cationic", "CationPi", "PiCation", "VdWContact"],
@@ -506,7 +566,7 @@ def _annotate_geometry(
     for i, model in enumerate(models[:top_n]):
         lig = _parse_pdbqt_atoms(model)
         rows = _geometry_interactions(lig, rec_atoms)
-        by_pose[str(i + 1)] = rows
+        by_pose[str(i + 1)] = _stamp_contacts(rows, method="geometric", pose=i + 1)
         for r in rows:
             if r["residue"] not in contact_residues:
                 contact_residues.append(r["residue"])
@@ -519,6 +579,7 @@ def _annotate_geometry(
     return {
         "ok": True,
         "tool": "rdkit_geometry",
+        "method": "geometric",
         "tool_version": None,
         "vicinity_cutoff_A": max(HBOND_DIST, HYDROPHOBIC_DIST, SALT_DIST, PI_DIST),
         "types": ["HBDonor", "HBAcceptor", "Hydrophobic", "Anionic", "Cationic", "PiStacking"],
@@ -535,6 +596,34 @@ def _annotate_geometry(
         "error": None,
         "note": "Geometry fallback (distance cutoffs). Install prolif+mdanalysis for richer IFPs.",
     }
+
+
+
+def _ensure_stamped_result(result: dict[str, Any]) -> dict[str, Any]:
+    if not result or not result.get("ok"):
+        return result
+    method = result.get("method") or (
+        "prolif" if result.get("tool") == "prolif" else "geometric"
+    )
+    result["method"] = method
+    by_pose = result.get("by_pose") or {}
+    new_by = {}
+    for k, rows in by_pose.items():
+        if rows and isinstance(rows, list) and rows and not rows[0].get("id"):
+            new_by[str(k)] = _stamp_contacts(rows, method=method, pose=k)
+        else:
+            # still ensure method field
+            new_by[str(k)] = [
+                {**dict(r), "method": r.get("method") or method}
+                if isinstance(r, dict) else r
+                for r in (rows or [])
+            ]
+    result["by_pose"] = new_by
+    top = result.get("top_pose") or new_by.get("1") or []
+    if top and isinstance(top, list) and top and not (isinstance(top[0], dict) and top[0].get("id")):
+        top = _stamp_contacts(top, method=method, pose=1)
+    result["top_pose"] = top
+    return result
 
 
 def annotate_interactions(
@@ -568,7 +657,7 @@ def annotate_interactions(
     if prefer_prolif and _prolif_available() and _receptor_has_hydrogens(rec):
         result = _annotate_prolif(rec, poses, smiles, top_n)
         if result and result.get("ok"):
-            return result
+            return _ensure_stamped_result(result)
         # fall through to geometry
     elif prefer_prolif and _prolif_available():
         log.info(
@@ -577,7 +666,7 @@ def annotate_interactions(
         )
 
     try:
-        return _annotate_geometry(rec, poses, top_n)
+        return _ensure_stamped_result(_annotate_geometry(rec, poses, top_n))
     except Exception as exc:
         base["error"] = str(exc)
         return base

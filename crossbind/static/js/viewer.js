@@ -48,7 +48,7 @@
   let posesData = null;
   let highlight = null;
   let poseModelIndex = null; // 3Dmol model index for ligand frames
-  let contactHighlights = []; // [{chain, resi, label}]
+  let contactHighlights = []; // [{chain, resi, label, id?}]
   let contactLabels = [];
 
   function parseResLabel(label) {

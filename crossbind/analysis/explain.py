@@ -77,14 +77,27 @@ def parse_residue_label(label: str | None) -> dict[str, Any]:
 
 
 def enrich_contact(row: dict[str, Any], *, method: str | None = None) -> dict[str, Any]:
-    """Add resn/resi/chain/method fields for UI tables."""
+    """Add resn/resi/chain/method/id fields for UI tables and viewer sync."""
     r = dict(row) if isinstance(row, dict) else {"residue": str(row)}
     parsed = parse_residue_label(str(r.get("residue") or ""))
     r.setdefault("resn", parsed["resn"])
     r.setdefault("resi", parsed["resi"])
     r.setdefault("chain", parsed["chain"])
+    m = r.get("method") or method
+    if m in ("prolif", "ProLIF", "plf"):
+        r["method"] = "prolif"
+    elif m:
+        # rdkit_geometry / geometry / geometric → geometric
+        r["method"] = "geometric" if str(m).lower() in {
+            "geometric", "geometry", "rdkit_geometry", "rdkit", "fallback"
+        } else str(m)
     if method and not r.get("method"):
-        r["method"] = method
+        r["method"] = "prolif" if method == "prolif" else "geometric"
+    if not r.get("id"):
+        chain = r.get("chain") or "X"
+        resi = r.get("resi") or "?"
+        itype = str(r.get("type") or "contact").replace(" ", "")
+        r["id"] = f"{chain}{resi}-{itype}"
     return r
 
 
@@ -92,7 +105,11 @@ def enrich_interactions(interactions: dict[str, Any] | None) -> dict[str, Any] |
     if not interactions or not isinstance(interactions, dict):
         return interactions
     out = dict(interactions)
-    method = out.get("tool") or "geometry"
+    method = out.get("method") or out.get("tool") or "geometry"
+    if method == "prolif":
+        method = "prolif"
+    elif str(method).lower() in {"rdkit_geometry", "geometry", "geometric", "rdkit"}:
+        method = "geometric"
     if out.get("top_pose"):
         out["top_pose"] = [enrich_contact(r, method=method) for r in out["top_pose"]]
     by_pose = out.get("by_pose") or {}

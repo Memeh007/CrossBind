@@ -65,6 +65,14 @@ Absolute kcal/mol values are **not interchangeable** across engines or with comm
 
 ### Windows notes
 
+Optional **GNINA** (first-class when present): set a full path before `run.bat`:
+
+```bat
+set GNINA_BIN=C:\path\to\gnina.exe
+```
+
+`GET /api/health` reports `gnina_ok` when the binary resolves. Missing GNINA is fine — Vina remains the default engine. CNN score/affinity are stored separately from `vina_affinity` (not Kd).
+
 1. Install Python from [python.org](https://www.python.org/downloads/) (check “Add to PATH”).
 2. Download `vina_1.2.x_windows_x86_64.exe` (or similar), rename/copy to `CrossBind\bin\vina.exe`, **or** set:
    ```bat
