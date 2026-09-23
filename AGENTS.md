@@ -7,7 +7,7 @@ If a chat request conflicts with this file, **this file wins** unless Alexander 
 **Repo folder:** CrossBind · **Python package:** `crossbind/` (do not rename casually)  
 **Owner:** Alexander Cecena · GitHub `Memeh007`  
 **Runtime:** local FastAPI + Jinja · `run.bat` · `http://127.0.0.1:8787`  
-**Target local agent stack:** Hermes Agent + MiniCPM5-2B (native ~128K context) — this file is the offloaded architecture brain  
+**Target local agent stack:** Hermes Agent + **MiniCPM5-2B** (native **131,072**-token context; XML tool-calling; optional Think mode) — this file is the **offloaded architecture brain**; MiniCPM is the **fast executor**, not the architect  
 **Deeper overflow:** `docs/DDOS_OS_SPEC.md` · `docs/agenda.md` · `docs/DESIGN.expanded.md` (UI) · `docs/ddos_pipeline_upgrade_queue_2026-09.md` (**build contract B1–B14**) · `docs/ddos_research_structure_2026.md` · `docs/ddos_research_biology_2026.md` · `docs/ddos_operating_system_roadmap_2026.md`
 
 When prompting any agent, say: *Read AGENTS.md for pipeline rules, UI design system, and golden snippets before writing code.*
@@ -23,7 +23,7 @@ When prompting any agent, say: *Read AGENTS.md for pipeline rules, UI design sys
 5. **Evidence you can point at.** Every claim ties to residue/distance/atoms, score field name, PDB/UniProt/ChEMBL/Open Targets ID, or measured ADMET descriptor.
 6. **UI is gated.** Do **not** redesign UI, "physics UI," or restyle chrome unless Alexander says **go** / "start UI" in the current turn. You MAY update this file / `docs/DESIGN.md` anytime.
 7. **Visualization is science, not decoration.** When UI is authorized: motion and highlights must make binding / biological process legible (site -> pocket -> pose -> contacts). No purple-gradient AI-SaaS slop; no falling decorative molecules; no fake MD.
-8. **Infer toward the full OS.** ddOS is not "a docking form." Prefer features that deepen the discovery spine (proof, engines, biology, study scale) over cosmetic changes. Search the web for better libraries; propose wraps that fit the allowlist.
+8. **Deepen the discovery spine, do not freestyle architecture.** ddOS is not "a docking form." Prefer proof/engines/biology/study-scale over cosmetics. **Architect / heavy models** may search the web and propose wraps. **MiniCPM5-2B** must only implement the **one named B-slice or single-file task** it was given (see §9) — never redesign the pipeline in one shot.
 9. **Windows Desktop is primary.** Paths under `C:\Users\alexc\Desktop\CrossBind`. Keep `bin/p2rank/` gitignored. Cache-bust static JS when changing boot/viewer scripts.
 10. **Brand:** UI product name **ddOS**. Boot logo = `crossbind/static/img/boot-logo.png` (text-free). Never reintroduce "Cross Affinity" wordmarks in chrome.
 11. **Finished outputs.** No placeholder panels, lorem, skipped sections, or unfinished empty states in production paths (Taste Skill Output spirit).
@@ -361,6 +361,8 @@ EVIDENCE_PACK_KEYS = [
 
 **All lanes required** (Credibility + Biology + Scale). Follow `docs/ddos_pipeline_upgrade_queue_2026-09.md`.
 
+**MiniCPM5-2B:** implement **exactly one** B-id per task from this list — do not chain B1–B14 in a single run unless the orchestrator explicitly lists a short closed set (e.g. B1 then stop).
+
 1. Truth and proof (PoseBusters before stronger ProLIF/LLM claims) — **B2** with **B1**  
 2. Local ADMET-AI triage — **B3**  
 3. OT GraphQL cache + orthologs + evidence pack — **B4, B7, B8**  
@@ -378,13 +380,69 @@ A skeptical computational chemist can: trace drug->target IDs; see structure pro
 
 ---
 
-## 9. Hermes / MiniCPM5-2B note
 
-This file is the offloaded architecture so a ~2B model with long context becomes a **translation engine** (rules -> Python/Jinja), not an architecture guesser. Keep sections 0-5 intact under any truncation. Hermes also loads `.hermes.md` (points here).
+## 8.5 Citations & paper library (Hermes must look things up)
+
+ddOS agents **must not invent papers, DOIs, method names, or benchmark numbers**. When science or tool choice is uncertain:
+
+1. **Search** (web / Semantic Scholar / PubMed / Crossref / GitHub READMEs) for primary sources. Hermes is expected to look things up; do not rely on parametric memory for citations.
+2. **Prefer** DOIs + open PDFs (publisher, PMC, arXiv, bioRxiv). Record license (CC-BY, publisher PDF, preprint).
+3. **Download** useful PDFs into `docs/citations/pdfs/` with a stable name: `YYYY_FirstAuthor_ShortTitle.pdf` (or `.html` snapshot if PDF blocked).
+4. **Index** every added paper in `docs/citations/INDEX.md` with: title, authors/year, DOI/URL, local path, **why ddOS cares**, linked B-id or pipeline stage.
+5. **Quote sparingly** into AGENTS/research memos; point MiniCPM at the INDEX row + one PDF when a B-slice needs evidence — do not dump every PDF into every MiniCPM prompt.
+6. Weekly routine / orchestrators: if a new tool or claim appears without a citation row, **fetch and add it** before treating it as policy.
+
+**Never** fabricate a DOI. If a PDF cannot be obtained, still add an INDEX row with URL + "PDF unavailable" and use the abstract/HTML facts you can verify.
+
+## 9. MiniCPM5-2B operating contract (Hermes local executor)
+
+MiniCPM5-2B is an **exceptionally strong ~2B local executor** (fast, 131K context, native XML tool calls, optional Think mode). It is **not** the primary architect of ddOS. This file (plus the overflow docs) is the architecture; MiniCPM **translates one assigned task into code**.
+
+### 9.1 You are the executor — not the architect
+
+| Do (good MiniCPM work) | Do not (2B failure modes) |
+|------------------------|---------------------------|
+| One B-slice or one file / one function | Design the whole Discover→dock→biology OS in one reply |
+| Copy golden snippets (§5) and existing `crossbind/` patterns | Invent PubChem/ChEMBL/UniProt/RDKit method names from memory |
+| Wrap allowlisted CLIs via `subprocess` / existing helpers | Reinvent pocket ML, IFPs, or scoring |
+| Parse Vina/GNINA/P2Rank coordinate or score lines | Invent biology edge-case policy (AF vs crystal, ortholog confidence) |
+| Localized syntax / import / type fixes | Redesign dense UI grids or IA unless Alexander said **go** |
+| Toggle Think mode for tricky single-file logic | "Infer" a new pipeline stage not in §2.6 / the B1–B14 queue |
+| Ask orchestrator/Hermes to look up + file a citation (§8.5) | Invent DOIs, papers, or benchmark numbers |
+
+Heavy / API / Grok Bot models own: architecture, multi-API scaffolding, DESIGN system passes, choosing next science priorities when ambiguous.
+
+### 9.2 Task size rule (hard)
+
+1. Accept work only as: **one B-id** (e.g. B2) **or** a named path (e.g. `crossbind/docking/gnina.py`) **or** a named bug.  
+2. Touch the **minimum files** needed. Prefer edit over new modules.  
+3. If the prompt asks for "build the whole predictive stack" / "wire PubChem+ChEMBL+UniProt+OT+orthologs", **refuse the sprawl**: implement only the first missing B-slice in §7 order, or ask the orchestrator to split.  
+4. Before coding: open the **real** target file(s) in-repo; mimic signatures already there. Never guess an API.  
+5. After coding: run the smallest relevant check (`pytest` for that module, or `/api/health` if engines). Do not claim Kd or invent biology in strings.
+
+### 9.3 Context loading (use the 131K window)
+
+When Hermes packs context for MiniCPM, prefer this order (stop when full):
+
+1. This file §§0–5 (always)  
+2. The **one** module being edited + its closest test  
+3. The matching B-slice paragraph from `docs/ddos_pipeline_upgrade_queue_2026-09.md`  
+4. Only if needed: one research memo section (structure **or** biology, not both)
+5. If the B-slice cites a paper: that row from `docs/citations/INDEX.md` (+ PDF path if local)
+
+Do **not** dump every overflow doc every turn — long context is large, but attention still drifts.
+
+### 9.4 Tool calling
+
+Use native XML / Hermes tool calls for: reading files, running `pytest`, invoking local binaries already resolved by `crossbind.config`, git status. Do not call paid cloud LLM APIs for biology truth (§0.3).
+
+### 9.5 Truncation priority
+
+If the prompt is truncated, keep **§§0–5** intact first (directives, spine, UI gate short form, allowlist, golden snippets). §§6–8 and research memos are secondary. Hermes also loads `.hermes.md` (points here).
 
 ---
 
-*ddOS AGENTS.md — Hermes/MiniCPM edition. Predictive pre–in-vivo tool-composition backbone. UI redesign gated until Alexander says go. Updated 2026-09-22 PT.*
+*ddOS AGENTS.md — Hermes/MiniCPM5-2B executor edition. Architecture lives here; MiniCPM executes one slice. UI redesign gated until Alexander says go. Updated 2026-09-22 PT.*
 
 
 
