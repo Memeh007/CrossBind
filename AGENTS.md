@@ -82,7 +82,7 @@ Receptor upload (PDB/PDBQT/CIF) + ligand (SMILES / file / PubChem name) -> same 
 
 ## 3. UI strict design system (locked; implement only after go)
 
-**Full visual bible:** `docs/DESIGN.md` — tokens, dials (4/4/8), component contracts, Taste anti-slop bans, pre-flight. This section is the short form.
+**Full visual bible:** `docs/DESIGN.expanded.md` — tokens, dials (4/4/8), component contracts, Taste anti-slop bans, pre-flight. This section is the short form.
 
 
 Culture: UIRoot Taste Skill (anti-slop Soft+Minimalist), UIRoot DESIGN.md tools, Originkit = motion patterns only, Mobbin = pattern refs only — **never scrape assets**.
@@ -254,4 +254,5 @@ This file is the offloaded architecture so a ~2B model with long context becomes
 ---
 
 *ddOS AGENTS.md — Hermes/MiniCPM edition. UI redesign gated until Alexander says go.*
+
 
