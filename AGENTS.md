@@ -151,6 +151,16 @@ Legend: **S** shipped · **N** next (all lanes required) · **L** later · **U**
 
 **All three lanes are required** (Credibility B1–B3 · Biology B4/B7/B8 · Scale B5/B6/B10). Recommended serial order for coding agents: **B1→B2→B3→B4→B5→B6→B7→B8→B9→B10→B11→B12→B13→B14**. Do not skip B2 before deepening ProLIF claims. Living contract: `docs/ddos_pipeline_upgrade_queue_2026-09.md`.
 
+
+## 2.7 Engineering friction rules (from review — do not skip)
+
+These are standing build rules, not optional tips:
+
+1. **Receptor prep robustness.** Do not rely on bare Open Babel alone for messy PDBs. Prefer: `pdbfixer` (and/or `reduce`) to repair missing heavy atoms / nonstandard residues **before** PDBQT, or Meeko’s modern receptor prep when available. Silent bad PDBQT → silent bad docks.  
+2. **PoseBusters isolation (B2).** Validate `posebusters` in a **standalone script** under the same venv/`run.bat` Python **before** wiring it into the FastAPI job runner. RDKit/PyTorch dep clashes on Windows are common — catch them offline first.  
+3. **PlanMine / planaria orthologs (B7).** PlanMine REST can be fragile. Ship a **pre-indexed RBH SQLite cache** for *Schmidtea mediterranea* (and refresh periodically) rather than live PlanMine on every Discover click. Banner remains: PlanMine RBH ≠ Alliance-curated.  
+4. **MiniCPM context.** Enforce §9.3 pack order and ~25K soft cap. Overflow docs are for orchestrators (Grok/Cursor), not every MiniCPM turn.
+
 ## 3. UI strict design system (locked; implement only after go)
 
 **Full visual bible:** `docs/DESIGN.expanded.md` — tokens, dials (4/4/8), component contracts, Taste anti-slop bans, pre-flight. This section is the short form.
@@ -363,7 +373,7 @@ EVIDENCE_PACK_KEYS = [
 
 **MiniCPM5-2B:** implement **exactly one** B-id per task from this list — do not chain B1–B14 in a single run unless the orchestrator explicitly lists a short closed set (e.g. B1 then stop).
 
-1. Truth and proof (PoseBusters before stronger ProLIF/LLM claims) — **B2** with **B1**  
+1. Truth and proof — **B1** GNINA hard enable, then **B2** PoseBusters (isolated smoke first), with receptor-prep hardening (`pdbfixer`/reduce) alongside  
 2. Local ADMET-AI triage — **B3**  
 3. OT GraphQL cache + orthologs + evidence pack — **B4, B7, B8**  
 4. Study-scale (batch ligands, multi-PDB, FPSim2) — **B5, B6, B10**  
@@ -420,17 +430,17 @@ Heavy / API / Grok Bot models own: architecture, multi-API scaffolding, DESIGN s
 4. Before coding: open the **real** target file(s) in-repo; mimic signatures already there. Never guess an API.  
 5. After coding: run the smallest relevant check (`pytest` for that module, or `/api/health` if engines). Do not claim Kd or invent biology in strings.
 
-### 9.3 Context loading (use the 131K window)
+### 9.3 Context loading (hard budget — Gemini / needle-in-haystack)
 
-When Hermes packs context for MiniCPM, prefer this order (stop when full):
+MiniCPM5-2B advertises **131K** tokens, but ~2B models often degrade past ~**20–30K** useful prompt tokens. Hermes **must** enforce a tight pack:
 
-1. This file §§0–5 (always)  
+1. This file **§§0–5 only** (always; do not attach §§6–9 unless asked)  
 2. The **one** module being edited + its closest test  
-3. The matching B-slice paragraph from `docs/ddos_pipeline_upgrade_queue_2026-09.md`  
-4. Only if needed: one research memo section (structure **or** biology, not both)
-5. If the B-slice cites a paper: that row from `docs/citations/INDEX.md` (+ PDF path if local)
+3. The **single** matching B-slice paragraph from `docs/ddos_pipeline_upgrade_queue_2026-09.md`  
+4. Optional: one short research-memo subsection **or** one `docs/citations/INDEX.md` row (+ PDF path) — never both full memos  
+5. Soft cap: keep total packed context under ~25K tokens for coding turns
 
-Do **not** dump every overflow doc every turn — long context is large, but attention still drifts.
+**Forbidden:** dumping DESIGN + OS SPEC + both research memos + full citation PDFs into one MiniCPM turn.
 
 ### 9.4 Tool calling
 
@@ -442,7 +452,7 @@ If the prompt is truncated, keep **§§0–5** intact first (directives, spine, 
 
 ---
 
-*ddOS AGENTS.md — Hermes/MiniCPM5-2B executor edition. Architecture lives here; MiniCPM executes one slice. UI redesign gated until Alexander says go. Updated 2026-09-22 PT.*
+*ddOS AGENTS.md — Hermes/MiniCPM5-2B executor edition. Architecture lives here; MiniCPM executes one slice. UI redesign gated until Alexander says go. Updated 2026-09-22 PT (Gemini review friction rules + MiniCPM context budget).*
 
 
 

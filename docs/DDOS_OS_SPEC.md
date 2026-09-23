@@ -265,3 +265,13 @@ Serial build order for MiniCPM: **B1→B14** as listed. Living detail: `ddos_pip
 
 
 *Compiled 2026-09-22; predictive stack section added 2026-09-22 PT evening.*
+
+## K. Engineering friction (Gemini review, adopted)
+
+1. MiniCPM packs: AGENTS §§0–5 + one file + one B-slice; ~25K soft cap (§9.3).
+2. Receptor: pdbfixer (optional) before Open Babel PDBQT.
+3. B2: scripts/smoke_posebusters.py must pass before FastAPI wiring.
+4. B7: PlanMine via cached RBH SQLite, not live-only REST.
+5. B1: code ready; set GNINA_BIN / in/gnina.exe for gnina_ok.
+
+See docs/review_gemini_adopted_2026-09.md.

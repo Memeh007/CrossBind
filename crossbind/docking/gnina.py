@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -80,8 +81,17 @@ def run_gnina(
     if cpu and int(cpu) > 0:
         cmd.extend(["--cpu", str(int(cpu))])
 
+    # GNINA 1.3 CNN controls (optional). Scores are NOT experimental Kd/IC50.
+    # Examples: GNINA_CNN=dense_1_3  or  GNINA_CNN=fast  (see gnina --help)
+    cnn = (os.environ.get("GNINA_CNN") or "").strip()
+    if cnn:
+        cmd.extend(["--cnn", cnn])
+    cnn_scoring = (os.environ.get("GNINA_CNN_SCORING") or "").strip()
+    if cnn_scoring:
+        cmd.extend(["--cnn_scoring", cnn_scoring])
+
     if log:
-        log("Running GNINA (CNN rescoring)...")
+        log("Running GNINA (CNN fields separate from vina_affinity; not Kd)...")
 
     kwargs: dict = {
         "stdout": subprocess.PIPE,

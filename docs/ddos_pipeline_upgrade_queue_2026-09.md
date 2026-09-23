@@ -1,6 +1,8 @@
-# ddOS Pipeline Upgrade Queue — merged research (2026-09-22 PT)
+﻿# ddOS Pipeline Upgrade Queue — merged research (2026-09-22 PT)
 
 ## Philosophy: tools that help tools
+
+**Gemini review (adopted):** MiniCPM ~25K pack; pdbfixer before obabel; PlanMine RBH SQLite for B7; PoseBusters isolated smoke before FastAPI. See docs/review_gemini_adopted_2026-09.md.
 
 ddOS is a **predictive pre–in-vivo triage OS**. We do not reinvent chemistry. We **adapt** mature tools so each stage validates or enriches the previous — the same pattern serious open pipelines use (sample → validity → contacts → triage → biology context).
 
