@@ -8,7 +8,7 @@ If a chat request conflicts with this file, **this file wins** unless Alexander 
 **Owner:** Alexander Cecena · GitHub `Memeh007`  
 **Runtime:** local FastAPI + Jinja · `run.bat` · `http://127.0.0.1:8787`  
 **Target local agent stack:** Hermes Agent + MiniCPM5-2B (native ~128K context) — this file is the offloaded architecture brain  
-**Deeper overflow:** `docs/DDOS_OS_SPEC.md` · `docs/agenda.md` · (`docs/DESIGN.expanded.md` · short stub `docs/DESIGN.md` ·) `docs/ddos_operating_system_roadmap_2026.md` · **UI contract (detailed):** `docs/DESIGN.expanded.md` (Taste Skill + Open Design 9-section + ddOS dials 4/4/8)
+**Deeper overflow:** `docs/DDOS_OS_SPEC.md` · `docs/agenda.md` · `docs/DESIGN.expanded.md` (UI) · `docs/ddos_pipeline_upgrade_queue_2026-09.md` (**build contract B1–B14**) · `docs/ddos_research_structure_2026.md` · `docs/ddos_research_biology_2026.md` · `docs/ddos_operating_system_roadmap_2026.md`
 
 When prompting any agent, say: *Read AGENTS.md for pipeline rules, UI design system, and golden snippets before writing code.*
 
@@ -17,15 +17,16 @@ When prompting any agent, say: *Read AGENTS.md for pipeline rules, UI design sys
 ## 0. Prime Directives (unbreakable)
 
 1. **Wrap first, invent last.** Never write custom algorithms for pocket finding, docking, cheminformatics parsing, IFPs, or free-energy. Use approved libraries/CLIs only (see section 4).
-2. **Zero-cost / local-first compute.** Prefer local CLIs (`subprocess` for P2Rank/Vina/GNINA) and free public REST (PubChem, ChEMBL, RCSB, AlphaFold DB, Open Targets GraphQL). Do **not** call OpenAI/Anthropic/paid cloud LLMs for biology truth. Optional **local** Ollama narrate only if evidence-bound.
-3. **Honesty over hype.** Never label Vina / GNINA CNN / DiffDock confidence as experimental **Kd / IC50**. AlphaFold structures require provenance warnings. Pockets are hypotheses. Ligand-aware winner = "best-ranked for this ligand under engine X," never "the true site."
-4. **Evidence you can point at.** Every claim ties to residue/distance/atoms, score field name, PDB/UniProt/ChEMBL/Open Targets ID, or measured ADMET descriptor.
-5. **UI is gated.** Do **not** redesign UI, "physics UI," or restyle chrome unless Alexander says **go** / "start UI" in the current turn. You MAY update this file / `docs/DESIGN.md` anytime.
-6. **Visualization is science, not decoration.** When UI is authorized: motion and highlights must make binding / biological process legible (site -> pocket -> pose -> contacts). No purple-gradient AI-SaaS slop; no falling decorative molecules; no fake MD.
-7. **Infer toward the full OS.** ddOS is not "a docking form." Prefer features that deepen the discovery spine (proof, engines, biology, study scale) over cosmetic changes. Search the web for better libraries; propose wraps that fit the allowlist.
-8. **Windows Desktop is primary.** Paths under `C:\Users\alexc\Desktop\CrossBind`. Keep `bin/p2rank/` gitignored. Cache-bust static JS when changing boot/viewer scripts.
-9. **Brand:** UI product name **ddOS**. Boot logo = `crossbind/static/img/boot-logo.png` (text-free). Never reintroduce "Cross Affinity" wordmarks in chrome.
-10. **Finished outputs.** No placeholder panels, lorem, skipped sections, or unfinished empty states in production paths (Taste Skill Output spirit).
+2. **Compose tools that help tools.** Prefer adapters where stage N validates or enriches stage N-1 (e.g. PoseBusters/strain after Vina/GNINA/DiffDock before ProLIF; GNINA CNN rescores Vina-family poses; OT/orthologs enrich dock hits; ADMET-AI triages before wet lab). Do not invent chemistry to replace a mature validator.
+3. **Zero-cost / local-first compute.** Prefer local CLIs (`subprocess` for P2Rank/Vina/GNINA) and free public REST (PubChem, ChEMBL, RCSB, AlphaFold DB, Open Targets GraphQL). Do **not** call OpenAI/Anthropic/paid cloud LLMs for biology truth. Optional **local** Ollama narrate only if evidence-bound.
+4. **Honesty over hype.** Never label Vina / GNINA CNN / DiffDock confidence as experimental **Kd / IC50**. AlphaFold structures require provenance warnings. Pockets are hypotheses. Ligand-aware winner = "best-ranked for this ligand under engine X," never "the true site."
+5. **Evidence you can point at.** Every claim ties to residue/distance/atoms, score field name, PDB/UniProt/ChEMBL/Open Targets ID, or measured ADMET descriptor.
+6. **UI is gated.** Do **not** redesign UI, "physics UI," or restyle chrome unless Alexander says **go** / "start UI" in the current turn. You MAY update this file / `docs/DESIGN.md` anytime.
+7. **Visualization is science, not decoration.** When UI is authorized: motion and highlights must make binding / biological process legible (site -> pocket -> pose -> contacts). No purple-gradient AI-SaaS slop; no falling decorative molecules; no fake MD.
+8. **Infer toward the full OS.** ddOS is not "a docking form." Prefer features that deepen the discovery spine (proof, engines, biology, study scale) over cosmetic changes. Search the web for better libraries; propose wraps that fit the allowlist.
+9. **Windows Desktop is primary.** Paths under `C:\Users\alexc\Desktop\CrossBind`. Keep `bin/p2rank/` gitignored. Cache-bust static JS when changing boot/viewer scripts.
+10. **Brand:** UI product name **ddOS**. Boot logo = `crossbind/static/img/boot-logo.png` (text-free). Never reintroduce "Cross Affinity" wordmarks in chrome.
+11. **Finished outputs.** No placeholder panels, lorem, skipped sections, or unfinished empty states in production paths (Taste Skill Output spirit).
 
 ---
 
@@ -79,6 +80,76 @@ Receptor upload (PDB/PDBQT/CIF) + ligand (SMILES / file / PubChem name) -> same 
 `GET /api/health` reports `vina_ok`, `p2rank_ok`, `gnina_ok` honestly. P2Rank at `bin/p2rank/prank.bat` + Java 17. GNINA via `GNINA_BIN`.
 
 ---
+
+## 2.5 Tool composition — predictive stack before in vivo
+
+**Purpose:** ddOS is a **pre–in-vivo predictive triage OS**. It ranks and explains chemical–biology hypotheses with **auditable, method-tagged evidence** so Alexander can decide what (if anything) deserves planaria / fly / mouse / mammalian follow-up. Docking alone is never permission to claim in vivo efficacy.
+
+**Composition rule:** each stage wraps a mature tool that *helps* the next. Do not skip validators.
+
+```
+Identity (PubChem/ChEMBL)
+  → Structure provenance (PDB / AF / upload)
+  → Site (holo → P2Rank [→ optional fpocket+PRANK] → ligand-aware Vina rank)
+  → Pose (Vina and/or GNINA; optional DiffDock-L / Boltz later)
+  → Validity gate (PoseBusters + RDKit strain/clash)     ← helps ProLIF stay honest
+  → Contact proof (ProLIF) + 3D sync
+  → Local ADMET-AI (triage)                              ← helps wet-lab prioritization
+  → Biology enrichers (Open Targets GraphQL cache, Reactome/STRING later)
+  → Orthologs (Alliance → OrthoDB → DIOPT → PlanMine)    ← translational hypothesis only
+  → Study scale (batch ligands, multi-PDB ensemble, FPSim2 analogs)
+  → Evidence pack export (JSON/MD/TSV, versions stamped)
+```
+
+**Why (non-fiction; full citations in research memos):**
+
+| Adapter | Helps | Why we use it | Proof pointer |
+|---------|-------|---------------|---------------|
+| P2Rank (+ later fpocket+PRANK) | Dock box | Ligandable sites; LIGYSIS 2024 favors geometric+ML combo for top-N+2 | `ddos_research_structure_2026.md` |
+| Vina 1.2.x | Baseline pose/rank | Local default; scores are ranking tools | shipped |
+| GNINA 1.3 | Rescore/refine Vina-family | CNN enrichment vs empirical Vina in VS settings (McNutt *J. Cheminform.* 2025) | structure memo; **B1** |
+| PoseBusters + strain | ProLIF / narration | Many AI poses fail chemical/physical validity (Buttenschoen *Chem. Sci.* 2024) | **B2** |
+| ProLIF | Proof table↔3D | Measurable contacts, not vibes | shipped A1 |
+| ADMET-AI (MIT, offline) | Wet-lab shortlist | Local Chemprop/TDC ADMET (Swanson *Bioinformatics* 2024) | biology memo; **B3** |
+| Open Targets Platform GraphQL v4 | Target/disease dossier | Genetics merged into Platform (25.03+); release-pin cache | biology memo; **B4** |
+| OrthoDB + Alliance + DIOPT + PlanMine | Translational panel | Planaria needs PlanMine (SmedGD retired); Alliance ≠ planaria | biology memo; **B7** |
+| DiffDock-L (optional) | Blind/uncertain pocket | Generative pose + confidence; FAQ: confidence ≠ affinity; always rescore | **B12** |
+| Boltz-2 (optional, MIT) | Co-fold / research affinity | Prefer over AF3 Server for product; never Server→dock (ToS) | **B14** |
+| Uni-Dock / batch CSV | Library triage | GPU Vina-family VS (Yu *JCTC* 2023); study desk | **B5** |
+| OpenMM / Uni-GBSA | Shortlist physics | Minimize / end-point ΔG after pose triage — not Discover default | **B9/B13** |
+| FPSim2 | Analog neighbors | Local ChEMBL fps similarity seeds SAR | **B10** |
+
+**Hard bans:** AF3 Server outputs must not feed AutoDock/Vina/GNINA/VS. Scores ≠ Kd/IC50. OT association ≠ causality. Ortholog ≠ same pharmacology (PlanMine = RBH, not Alliance-curated).
+
+### 2.6 Canonical stage table (shipped vs build)
+
+Legend: **S** shipped · **N** next (all lanes required) · **L** later · **U** UI-gated
+
+| Stage | Tools | Status | Build id |
+|-------|-------|--------|----------|
+| Identity | PubChemPy, ChEMBL, RDKit | S | — |
+| Targets / MoA | ChEMBL, OT GraphQL deepen | S / N | B4 |
+| Structure | RCSB, AF DB, upload + banners | S | — |
+| Pockets | holo, P2Rank; fpocket+PRANK later | S / N | B11 |
+| Ligand-aware rank | Vina top-K | S | — |
+| Dock | Vina 1.2.x | S | — |
+| GNINA CNN path | GNINA 1.3 binary + fields | N (path stubbed) | **B1** |
+| Pose validity | PoseBusters + RDKit strain/clash | N | **B2** |
+| Contacts | ProLIF (+ geometric fallback) | S | — |
+| ADMET | RDKit now → ADMET-AI local | S / N | **B3** |
+| OT dossier | GraphQL + release cache | partial / N | **B4** |
+| Batch ligands | CSV/SDF → study table (± Uni-Dock) | N | **B5** |
+| Ensemble receptors | multi-PDB / AF samples | N | **B6** |
+| Orthologs | Alliance→OrthoDB→DIOPT→PlanMine | stubs / N | **B7** |
+| Evidence pack | JSON + MD + TSV | N | **B8** |
+| OpenMM minimize | top-pose relax | N | **B9** |
+| Analogs | FPSim2 on ChEMBL fps | N | **B10** |
+| DiffDock-L sidecar | Docker; always rescore | L/N | **B12** |
+| MM/GBSA | Uni-GBSA / MMPBSA.py | L | **B13** |
+| Boltz-2 opt-in | MIT co-fold | L | **B14** |
+| Instrument UI redesign | DESIGN.expanded.md | U | — |
+
+**All three lanes are required** (Credibility B1–B3 · Biology B4/B7/B8 · Scale B5/B6/B10). Recommended serial order for coding agents: **B1→B2→B3→B4→B5→B6→B7→B8→B9→B10→B11→B12→B13→B14**. Do not skip B2 before deepening ProLIF claims. Living contract: `docs/ddos_pipeline_upgrade_queue_2026-09.md`.
 
 ## 3. UI strict design system (locked; implement only after go)
 
@@ -142,7 +213,13 @@ Disallowed: ambient fluff, motion that blocks tables.
 | Pose AI (later) | DiffDock-L — confidence is not affinity |
 | IFP | ProLIF (+ MDAnalysis); geometric fallback in-repo |
 | Knowledge | Open Targets GraphQL (dossier module), ChEMBL |
-| ADMET | RDKit now; ADMET-AI / SwissADME link-outs later |
+| ADMET | RDKit now; **ADMET-AI** local (MIT) next; ADMETlab API optional online only |
+| Validity | **PoseBusters** + RDKit strain/clash before ProLIF |
+| Orthologs | Alliance REST, OrthoDB, DIOPT, PlanMine (not SmedGD) |
+| Analogs | FPSim2 on ChEMBL fps |
+| Batch / GPU VS | Uni-Dock (Apache 2.0) optional |
+| Co-fold (later) | Boltz-1/2 (MIT); never AF3 Server→dock |
+| Physics shortlist | OpenMM minimize; Uni-GBSA / MMPBSA.py |
 | FE (later) | OpenMM / OpenFE / OpenBioSim — not Discover default |
 | Cache | SQLite via `crossbind.discovery.cache` |
 | Viz | 3Dmol.js (now); NGL only if explicit migration |
@@ -212,6 +289,54 @@ Use `crossbind.discovery.open_targets_dossier` — cache, honest empty/error, no
 
 ---
 
+
+### 5.7 Method-tagged score object (always)
+
+```python
+{
+  "vina_affinity": -5.84,          # kcal/mol rank — NOT Kd
+  "gnina_cnn_score": None,         # only if GNINA ran
+  "gnina_cnn_affinity": None,
+  "diffdock_confidence": None,     # pose quality — NOT affinity
+  "posebusters_pass": None,        # bool after B2
+  "ligand_strain_kcal": None,
+  "gbsa_dg": None,                 # end-point — NOT experimental dG
+  "score_honesty": "ranking/triage only — not experimental Kd/IC50",
+}
+```
+
+### 5.8 Pose validity gate interface (B2 — implement as wrap)
+
+```python
+def gate_pose(protein_pdb: str, ligand_sdf: str) -> dict:
+    """Wrap PoseBusters + RDKit strain/clash. Never invent chemistry."""
+    # return {"posebusters_pass": bool, "checks": {...}, "strain_kcal": float|None}
+    raise NotImplementedError("B2: pip-wrap posebusters; see structure research memo")
+```
+
+### 5.9 Evidence pack keys (B8)
+
+```python
+EVIDENCE_PACK_KEYS = [
+  "drug_identity", "ot_dossier", "chembl_moa_top", "dock_summary",
+  "contacts_prolif", "admet_ai", "ortholog_matrix", "versions",
+]
+# versions must include: chembl_release, ot_release, orthodb, model/binary hashes
+```
+
+### 5.10 Ortholog row schema (B7)
+
+```python
+{
+  "species": "planaria",           # human|mouse|fly|planaria|dog|rabbit|cat|...
+  "query_id": "P54646",
+  "ortholog_id": "...",
+  "method": "planmine_rbh",      # alliance|orthodb|diopt|planmine_rbh
+  "identity": None,                # float 0-100 when known
+  "banner": "Orthologs support translational hypothesis, not dose or MoA transfer.",
+}
+```
+
 ## 6. Repo map
 
 | Path | Role |
@@ -224,26 +349,32 @@ Use `crossbind.discovery.open_targets_dossier` — cache, honest empty/error, no
 | `crossbind/static/css/crossbind.css` | design tokens |
 | `crossbind/static/js/` | discover.js, viewer.js, boot.js, app.js |
 | `docs/DDOS_OS_SPEC.md` | full OS inference bible |
-| `docs/DESIGN.md` | visual contract |
+| `docs/DESIGN.expanded.md` | visual contract (canonical) |
+| `docs/ddos_pipeline_upgrade_queue_2026-09.md` | **B1–B14 build contract** |
+| `docs/ddos_research_structure_2026.md` | pose/physics evidence |
+| `docs/ddos_research_biology_2026.md` | OT/ADMET/ortholog evidence |
 | `tests/` | pytest |
 
 ---
 
 ## 7. Priority when inferring next work
 
-1. Truth and proof  
-2. Engine wraps (GNINA, DiffDock-L)  
-3. Biology context (Open Targets depth, orthologs)  
-4. Study-scale (multi-PDB, batch ligands)  
-5. UI / living viz — only after explicit go  
+**All lanes required** (Credibility + Biology + Scale). Follow `docs/ddos_pipeline_upgrade_queue_2026-09.md`.
 
-Agents with web search: find better libraries, then wrap — do not invent chemistry.
+1. Truth and proof (PoseBusters before stronger ProLIF/LLM claims) — **B2** with **B1**  
+2. Local ADMET-AI triage — **B3**  
+3. OT GraphQL cache + orthologs + evidence pack — **B4, B7, B8**  
+4. Study-scale (batch ligands, multi-PDB, FPSim2) — **B5, B6, B10**  
+5. Optional pose AI / physics / Boltz — **B9, B11–B14**  
+6. UI / living viz — **only after explicit go**
+
+Agents with web search: find better libraries, then wrap — do not invent chemistry. Prefer tools that validate or enrich an existing stage.
 
 ---
 
 ## 8. Definition of done
 
-A skeptical computational chemist can: trace drug->target IDs; see structure provenance; see why a pocket was chosen; click proof residues that match 3D; know scores are not Kd; export enough for wet-lab planning.
+A skeptical computational chemist can: trace drug->target IDs; see structure provenance; see why a pocket was chosen; click proof residues that match 3D; know scores are not Kd; export an evidence pack with method-tagged scores, validity gates, ADMET triage, and ortholog banners — enough to decide whether in vivo / planaria follow-up is warranted.
 
 ---
 
@@ -253,7 +384,7 @@ This file is the offloaded architecture so a ~2B model with long context becomes
 
 ---
 
-*ddOS AGENTS.md — Hermes/MiniCPM edition. UI redesign gated until Alexander says go.*
+*ddOS AGENTS.md — Hermes/MiniCPM edition. Predictive pre–in-vivo tool-composition backbone. UI redesign gated until Alexander says go. Updated 2026-09-22 PT.*
 
 
 

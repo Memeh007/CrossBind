@@ -1,5 +1,23 @@
 # ddOS Pipeline Upgrade Queue — merged research (2026-09-22 PT)
 
+## Philosophy: tools that help tools
+
+ddOS is a **predictive pre–in-vivo triage OS**. We do not reinvent chemistry. We **adapt** mature tools so each stage validates or enriches the previous — the same pattern serious open pipelines use (sample → validity → contacts → triage → biology context).
+
+```
+PubChem/ChEMBL → PDB/AF → P2Rank(/fpocket) → Vina/GNINA[/DiffDock-L]
+    → PoseBusters+strain → ProLIF → ADMET-AI
+    → Open Targets + Orthologs → Evidence pack
+    (+ batch ligands / multi-PDB / FPSim2 for study scale)
+```
+
+**All lanes required** (Credibility + Biology vertical + Scale). Do not treat the lane picker as optional forever — MiniCPM/coding agents must implement the full B1–B14 contract over time. Recommended serial order remains B1→B14.
+
+**Honesty:** every numeric column is method-tagged; none is experimental Kd/IC50/PK; orthologs are hypotheses; never AF3 Server→dock.
+
+---
+
+
 **Product:** ddOS / CrossBind (`crossbind`) v1.3.2  
 **Living stack:** Vina ✅ · P2Rank ✅ · GNINA path stubbed ❌ binary · ProLIF ✅ · RDKit ADMET ✅ · OT dossier hooks ✅  
 **Rule:** library-first · scores ≠ Kd · **no UI redesign** until Alexander says go  
@@ -50,7 +68,7 @@ ddOS is already a credible **Discover → pocket → dock → contact proof** in
 **Lane B — Discovery OS vertical:** B4 → B7 → B8 (pharmacology + orthologs + export)  
 **Lane C — Scale:** B5 → B6 → B10 (batch + ensemble + analogs)
 
-Default recommendation if Alexander does not choose: **Lane A**, then B5.
+Alexander requires **all lanes**. Default coding serial order: **B1→B14**. Start with Credibility (B1–B3) only as the first sprint, then Biology, then Scale — do not abandon later lanes.
 
 ---
 

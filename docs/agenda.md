@@ -10,6 +10,11 @@ This file exists so we never drift back into “just another docking form.” dd
 
 ---
 
+
+## 0. Predictive OS before in vivo (2026-09-22)
+
+ddOS is the **backbone for predictive drug discovery before animal / planaria models**: compose mature tools (validators, rescorers, ADMET, knowledge graphs, orthologs) into an auditable evidence chain. **All engineering lanes are required** (credibility, biology, scale). Coding agents follow `docs/ddos_pipeline_upgrade_queue_2026-09.md` (B1–B14) and `AGENTS.md` §2.5–2.6. UI redesign remains gated.
+
 ## 1. One-sentence mission
 
 Build a **local-first drug discovery OS** that takes a drug (or idea) → maps targets & mechanisms → resolves structures & pockets → docks with honest scores → **shows binding as a living physical event** → explains residue-level evidence → triages ADMET → connects human pharmacology and cross-species orthologs — wrapping the **best existing scientific libraries and AIs**, not reinventing chemistry.

@@ -4,7 +4,7 @@
 **Product:** **ddOS** — Drug Discovery Operating System  
 **Repo folder:** `CrossBind` · **Python package:** `crossbind/` (do not casually rename) · **Owner:** Alexander Cecena (`Memeh007`)  
 **Local app:** `http://127.0.0.1:8787` via `run.bat` on Windows Desktop  
-**Companion contracts:** [`AGENTS.md`](../AGENTS.md) (standing rules) · [`agenda.md`](agenda.md) (north-star prose) · [`DESIGN.md`](DESIGN.md) (visual taste) · [`ddos_operating_system_roadmap_2026.md`](ddos_operating_system_roadmap_2026.md) (evidence citations)
+**Companion contracts:** [`AGENTS.md`](../AGENTS.md) (standing rules) · [`agenda.md`](agenda.md) (north-star prose) · [`DESIGN.expanded.md`](DESIGN.expanded.md) (visual taste) · [`ddos_pipeline_upgrade_queue_2026-09.md`](ddos_pipeline_upgrade_queue_2026-09.md) (**B1–B14**) · [`ddos_research_structure_2026.md`](ddos_research_structure_2026.md) · [`ddos_research_biology_2026.md`](ddos_research_biology_2026.md) · [`ddos_operating_system_roadmap_2026.md`](ddos_operating_system_roadmap_2026.md)
 
 This document is the **whole-product mental model**. If you only skim one long file after `AGENTS.md`, skim this. Infer missing features toward this OS — do not shrink ddOS back into “a docking form.”
 
@@ -94,15 +94,15 @@ Legend: **S** = shipped · **N** = next (science OK without UI go) · **U** = ne
 | P2Rank pockets (+ AF config) | S | P2Rank CLI, Java 17 |
 | Ligand-aware top-K pocket rank | S | Vina into top-K; honest labels |
 | Vina dock pipeline | S | RDKit, Meeko, Open Babel, Vina 1.2.x |
-| Optional GNINA fields | S/partial | Wire first-class path | N |
+| Optional GNINA fields | S/partial | **B1** hard enable binary + CNN columns | N |
 | Job queue cancel/restart | S | |
-| RDKit ADMET / drug-likeness | S | Expand w/ ADMET-AI later | N/L |
+| RDKit ADMET / drug-likeness | S | **B3** ADMET-AI local next | N |
 | Residue contacts + evidence text | S | ProLIF when present; geometric fallback | N deepen |
 | 3Dmol viewer + highlights | S | Living viz / physics UI | U |
-| Ortholog panel stubs | S | Real mappings | N |
+| Ortholog panel stubs | S | **B7** Alliance→OrthoDB→DIOPT→PlanMine | N |
 | Boot ddOS + text-free logo | S | |
 | DiffDock-L optional pose path | L/N | confidence ≠ affinity |
-| Open Targets tractability dossier | N | |
+| Open Targets tractability dossier | partial | **B4** GraphQL v4 + release cache | N |
 | Multi-PDB / ensemble dock | N | |
 | Batch ligands / virtual screen table | N | |
 | MM/GBSA or OpenFE shortlist | L | after dock triage |
@@ -206,4 +206,62 @@ Until visualization makes binding **felt and verified**, the OS is incomplete �
 
 ---
 
-*Compiled 2026-09-22 for agent consumption from product intent + UIRoot category survey + existing ddOS roadmap/agenda.*
+
+---
+
+## J. Predictive pre–in-vivo stack (tool adapters)
+
+ddOS exists to **triage chemical–biology hypotheses before in vivo / planaria / fly / mouse work**. It is not a docking toy and not a claim of animal efficacy.
+
+### J.1 Composition philosophy
+
+Wrap mature tools so each stage **validates or enriches** the previous:
+
+Identity → Structure → Pocket → Pose (Vina/GNINA[/DiffDock-L]) → **PoseBusters/strain** → ProLIF → **ADMET-AI** → **Open Targets / orthologs** → Evidence pack.
+
+Coding agents implement **adapters** (`subprocess` / official Python clients), never reimplemented chemistry.
+
+### J.2 Why these adapters (evidence pointers)
+
+| Need | Adapter | Why | Memo |
+|------|---------|-----|------|
+| Better rank than Vina-only | GNINA 1.3 CNN | VS enrichment literature; path already stubbed | structure |
+| Stop junk poses entering proof | PoseBusters + strain | Chem Sci 2024: ML poses often chemically invalid | structure |
+| Local ADMET before wet lab | ADMET-AI MIT | Offline; TDC-trained; better than RDKit-only | biology |
+| Disease/target genetics | OT GraphQL v4 + parquet cache | Genetics merged into Platform 25.03+ | biology |
+| Translational species | Alliance→OrthoDB→DIOPT→PlanMine | Planaria ≠ Alliance; SmedGD retired | biology |
+| Study scale | Batch CSV + multi-PDB + FPSim2 | VS/ensemble/analogs without LiveDesign | both |
+| Blind pocket failure mode | DiffDock-L → always rescore | Confidence ≠ affinity | structure |
+| AF3-class without Server ToS | Boltz MIT | Never AF3 Server→dock | structure |
+
+### J.3 Feature matrix — B1–B14 (all lanes required)
+
+| Id | Feature | Status | Lane |
+|----|---------|--------|------|
+| B1 | GNINA 1.3 hard enable | N | Credibility |
+| B2 | PoseBusters + RDKit strain gate | N | Credibility |
+| B3 | ADMET-AI local | N | Credibility |
+| B4 | OT GraphQL + release cache | N | Biology |
+| B5 | Batch ligands CSV/SDF | N | Scale |
+| B6 | Multi-PDB / AF ensemble | N | Scale |
+| B7 | Ortholog resolver (+ PlanMine) | N | Biology |
+| B8 | Evidence pack export | N | Biology |
+| B9 | OpenMM minimize | N | Credibility/Physics |
+| B10 | FPSim2 analogs | N | Scale |
+| B11 | fpocket + P2Rank rescore | N | Credibility |
+| B12 | DiffDock-L sidecar | L/N | Pose AI |
+| B13 | Uni-GBSA / MMPBSA | L | Physics |
+| B14 | Boltz-2 opt-in | L | Co-fold |
+
+Serial build order for MiniCPM: **B1→B14** as listed. Living detail: `ddos_pipeline_upgrade_queue_2026-09.md`.
+
+### J.4 Explicit non-goals
+
+- Inventing pocket ML, H-bond detectors, or SMILES parsers when allowlisted tools exist
+- Automating **AlphaFold Server** outputs into docking/VS (ToS)
+- Claiming Kd/IC50/PK or in vivo success from computational scores
+- Shipping DrugBank/DisGeNET/KEGG dumps without license review
+- UI redesign before Alexander says go
+
+
+*Compiled 2026-09-22; predictive stack section added 2026-09-22 PT evening.*
