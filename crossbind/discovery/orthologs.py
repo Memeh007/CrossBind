@@ -570,6 +570,12 @@ def _ensembl_species_row(sp, row, results) -> None:
             f"% id = share of human protein identical"
             + (f", {row['identity_target']}% of target." if row.get("identity_target") is not None else ".")
         )
+        q_id, t_id = row.get("identity"), row.get("identity_target")
+        if q_id and t_id and q_id < 0.5 * t_id:
+            # perc_id is identical/own-length, so the ratio is the target:human length ratio.
+            row["confidence"] = "low"
+            row["partial_model"] = True
+            row["note"] += f" Target protein ~{round(100 * q_id / t_id)}% of human length — likely partial gene model."
         _orthodb_concordance(row, o_tax)
         return
     if o_tax and o_tax.get("genes"):

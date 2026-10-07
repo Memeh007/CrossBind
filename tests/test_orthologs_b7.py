@@ -149,6 +149,17 @@ def test_one_source_down_falls_back_and_caches_short(isolated, monkeypatch):
     assert cache.get_json("orthologs_b7_degraded", "PRKAA1|Q13131", ttl_s=3600) == panel
 
 
+def test_short_ensembl_model_flagged_partial():
+    sp = next(s for s in orthologs.SPECIES if s["key"] == "rabbit")
+    hit = {"id": "ENSOCUG00000031162", "symbol": None, "type": "ortholog_one2one",
+           "perc_id": 23.9, "perc_id_target": 59.8, "taxonomy_level": "Eutheria"}
+    row = orthologs._base_row(sp, "P54619")
+    orthologs._ensembl_species_row(sp, row, {"ensembl_compara": orthologs._ok({"9986": [hit]}), "orthodb": None})
+    assert row["status"] == "mapped" and row["identity"] == 23.9
+    assert row["partial_model"] is True and row["confidence"] == "low"
+    assert "partial gene model" in row["note"]
+
+
 def test_http_json_retries_once_on_transient_status(monkeypatch):
     import httpx
 
