@@ -30,7 +30,7 @@ from crossbind.docking.pipeline import run_docking_job
 from crossbind.docking.process_registry import kill as kill_engine_proc
 from crossbind.jobs import job_dir, list_jobs, new_job_id, read_log, read_result
 from crossbind.pubchem import name_to_smiles
-from crossbind.discovery import refresh_for_target, resolve_protein_query, run_discovery
+from crossbind.discovery import ortholog_panel, refresh_for_target, resolve_protein_query, run_discovery
 from crossbind.discovery.structure_convert import StructureConvertError, ensure_receptor_pdb, receptor_convert_meta
 from crossbind.discovery.pocket import auto_docking_box, resolve_pockets, select_pocket_by_id
 from crossbind.discovery.cache import structures_dir
@@ -595,6 +595,14 @@ async def api_discover_select_target(
         return updated
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/orthologs")
+def api_orthologs(gene: str = "", uniprot: str = ""):
+    """Cross-species ortholog panel (B7) for a human gene symbol and/or UniProt accession."""
+    if not gene.strip() and not uniprot.strip():
+        raise HTTPException(400, "Provide gene or uniprot")
+    return ortholog_panel(gene=gene.strip() or None, uniprot=uniprot.strip() or None)
 
 
 
