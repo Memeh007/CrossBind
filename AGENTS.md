@@ -57,7 +57,7 @@ Input: drug name (or SMILES)
        optional GNINA when GNINA_BIN set (store vina_affinity vs gnina_cnn_* separately)
   G. Post-dock: ProLIF contacts (preferred) or geometric fallback -> proof table + viewer sync ids
   H. ADMET RDKit triage; evidence summary from measurements only; optional local Ollama narrate
-  I. Ortholog panel (human/mouse/fly/dog/rabbit/cat/planaria) — honest miss if unmapped
+  I. Ortholog panel (human/mouse/rat/zebrafish/fly/worm/dog/rabbit/cat/planaria) — method-tagged; honest miss/unavailable
   J. Open Targets dossier on target select (tractability / top diseases; cached)
 ```
 
@@ -140,7 +140,7 @@ Legend: **S** shipped · **N** next (all lanes required) · **L** later · **U**
 | OT dossier | GraphQL + release cache | partial / N | **B4** |
 | Batch ligands | CSV/SDF → study table (± Uni-Dock) | N | **B5** |
 | Ensemble receptors | multi-PDB / AF samples | N | **B6** |
-| Orthologs | Alliance→OrthoDB→DIOPT→PlanMine | stubs / N | **B7** |
+| Orthologs | Alliance→DIOPT→OrthoDB · Ensembl Compara · PlanMine RBH SQLite | S (v1) | **B7** |
 | Evidence pack | JSON + MD + TSV | N | **B8** |
 | OpenMM minimize | top-pose relax | N | **B9** |
 | Analogs | FPSim2 on ChEMBL fps | N | **B10** |
@@ -176,7 +176,7 @@ Culture: UIRoot Taste Skill (anti-slop Soft+Minimalist), UIRoot DESIGN.md tools,
 - **Primary bio-luminescent green** `#2ee6c5` (`--teal`) **only** for active states, CTAs, docking targets, ok chips
 - Warn `#f5a524` · bad `#f07178`
 - Radius `6px` · dense 4/8px spacing · sidebar ~220px
-- Fonts: Inter UI + JetBrains Mono for IDs/scores; enforce **tabular-nums**
+- Fonts: IBM Plex Sans UI + IBM Plex Mono for IDs/scores; enforce **tabular-nums**
 
 ### 3.2 Layout
 
@@ -225,7 +225,7 @@ Disallowed: ambient fluff, motion that blocks tables.
 | Knowledge | Open Targets GraphQL (dossier module), ChEMBL |
 | ADMET | RDKit now; **ADMET-AI** local (MIT) next; ADMETlab API optional online only |
 | Validity | **PoseBusters** + RDKit strain/clash before ProLIF |
-| Orthologs | Alliance REST, OrthoDB, DIOPT, PlanMine (not SmedGD) |
+| Orthologs | Alliance REST, DIOPT, OrthoDB, Ensembl Compara (% id), PlanMine (not SmedGD) |
 | Analogs | FPSim2 on ChEMBL fps |
 | Batch / GPU VS | Uni-Dock (Apache 2.0) optional |
 | Co-fold (later) | Boltz-1/2 (MIT); never AF3 Server→dock |
