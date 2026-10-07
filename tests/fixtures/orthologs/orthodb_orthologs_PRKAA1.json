@@ -1,0 +1,541 @@
+{
+ "data": [
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-2",
+    "param": "10090_0:00136b"
+   },
+   "clade_id": 33208,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10090_0:004a1b"
+   },
+   "clade_id": 33208,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10116_0:000f75"
+   },
+   "clade_id": 33208,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA2",
+    "param": "10116_0:002244"
+   },
+   "clade_id": 33208,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "CELE_T01C8.9",
+    "param": "6239_0:0044a0"
+   },
+   "clade_id": 33208,
+   "taxon_id": "6239_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-2",
+    "param": "6239_0:00478f"
+   },
+   "clade_id": 33208,
+   "taxon_id": "6239_0"
+  },
+  {
+   "gene": {
+    "id": "AMPKalpha",
+    "param": "7227_0:002835"
+   },
+   "clade_id": 33208,
+   "taxon_id": "7227_0"
+  },
+  {
+   "gene": {
+    "id": "SMESG000055720",
+    "param": "79327_0:002810"
+   },
+   "clade_id": 33208,
+   "taxon_id": "79327_0"
+  },
+  {
+   "gene": {
+    "id": "100001198",
+    "param": "7955_0:00166e"
+   },
+   "clade_id": 33208,
+   "taxon_id": "7955_0"
+  },
+  {
+   "gene": {
+    "id": "572074",
+    "param": "7955_0:004f49"
+   },
+   "clade_id": 33208,
+   "taxon_id": "7955_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA2",
+    "param": "9615_0:000e24"
+   },
+   "clade_id": 33208,
+   "taxon_id": "9615_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA1",
+    "param": "9615_0:000f33"
+   },
+   "clade_id": 33208,
+   "taxon_id": "9615_0"
+  },
+  {
+   "gene": {
+    "id": "101095885",
+    "param": "9685_0:00015e"
+   },
+   "clade_id": 33208,
+   "taxon_id": "9685_0"
+  },
+  {
+   "gene": {
+    "id": "101096000",
+    "param": "9685_0:0026f1"
+   },
+   "clade_id": 33208,
+   "taxon_id": "9685_0"
+  },
+  {
+   "gene": {
+    "id": "100358166",
+    "param": "9986_0:001e91"
+   },
+   "clade_id": 33208,
+   "taxon_id": "9986_0"
+  },
+  {
+   "gene": {
+    "id": "100340670",
+    "param": "9986_0:002886"
+   },
+   "clade_id": 33208,
+   "taxon_id": "9986_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10090_0:004a1b"
+   },
+   "clade_id": 314146,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10116_0:000f75"
+   },
+   "clade_id": 314146,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "100358166",
+    "param": "9986_0:001e91"
+   },
+   "clade_id": 314146,
+   "taxon_id": "9986_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10090_0:004a1b"
+   },
+   "clade_id": 9347,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10116_0:000f75"
+   },
+   "clade_id": 9347,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA1",
+    "param": "9615_0:000f33"
+   },
+   "clade_id": 9347,
+   "taxon_id": "9615_0"
+  },
+  {
+   "gene": {
+    "id": "101095885",
+    "param": "9685_0:00015e"
+   },
+   "clade_id": 9347,
+   "taxon_id": "9685_0"
+  },
+  {
+   "gene": {
+    "id": "100358166",
+    "param": "9986_0:001e91"
+   },
+   "clade_id": 9347,
+   "taxon_id": "9986_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10090_0:004a1b"
+   },
+   "clade_id": 40674,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10116_0:000f75"
+   },
+   "clade_id": 40674,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA1",
+    "param": "9615_0:000f33"
+   },
+   "clade_id": 40674,
+   "taxon_id": "9615_0"
+  },
+  {
+   "gene": {
+    "id": "101095885",
+    "param": "9685_0:00015e"
+   },
+   "clade_id": 40674,
+   "taxon_id": "9685_0"
+  },
+  {
+   "gene": {
+    "id": "100358166",
+    "param": "9986_0:001e91"
+   },
+   "clade_id": 40674,
+   "taxon_id": "9986_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-2",
+    "param": "10090_0:00136b"
+   },
+   "clade_id": 2759,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10090_0:004a1b"
+   },
+   "clade_id": 2759,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10116_0:000f75"
+   },
+   "clade_id": 2759,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA2",
+    "param": "10116_0:002244"
+   },
+   "clade_id": 2759,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "CELE_T01C8.9",
+    "param": "6239_0:0044a0"
+   },
+   "clade_id": 2759,
+   "taxon_id": "6239_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-2",
+    "param": "6239_0:00478f"
+   },
+   "clade_id": 2759,
+   "taxon_id": "6239_0"
+  },
+  {
+   "gene": {
+    "id": "AMPKalpha",
+    "param": "7227_0:002835"
+   },
+   "clade_id": 2759,
+   "taxon_id": "7227_0"
+  },
+  {
+   "gene": {
+    "id": "SMESG000055720",
+    "param": "79327_0:002810"
+   },
+   "clade_id": 2759,
+   "taxon_id": "79327_0"
+  },
+  {
+   "gene": {
+    "id": "100001198",
+    "param": "7955_0:00166e"
+   },
+   "clade_id": 2759,
+   "taxon_id": "7955_0"
+  },
+  {
+   "gene": {
+    "id": "572074",
+    "param": "7955_0:004f49"
+   },
+   "clade_id": 2759,
+   "taxon_id": "7955_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA2",
+    "param": "9615_0:000e24"
+   },
+   "clade_id": 2759,
+   "taxon_id": "9615_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA1",
+    "param": "9615_0:000f33"
+   },
+   "clade_id": 2759,
+   "taxon_id": "9615_0"
+  },
+  {
+   "gene": {
+    "id": "101095885",
+    "param": "9685_0:00015e"
+   },
+   "clade_id": 2759,
+   "taxon_id": "9685_0"
+  },
+  {
+   "gene": {
+    "id": "101096000",
+    "param": "9685_0:0026f1"
+   },
+   "clade_id": 2759,
+   "taxon_id": "9685_0"
+  },
+  {
+   "gene": {
+    "id": "100358166",
+    "param": "9986_0:001e91"
+   },
+   "clade_id": 2759,
+   "taxon_id": "9986_0"
+  },
+  {
+   "gene": {
+    "id": "100340670",
+    "param": "9986_0:002886"
+   },
+   "clade_id": 2759,
+   "taxon_id": "9986_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-2",
+    "param": "10090_0:00136b"
+   },
+   "clade_id": 32523,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10090_0:004a1b"
+   },
+   "clade_id": 32523,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10116_0:000f75"
+   },
+   "clade_id": 32523,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA2",
+    "param": "10116_0:002244"
+   },
+   "clade_id": 32523,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA2",
+    "param": "9615_0:000e24"
+   },
+   "clade_id": 32523,
+   "taxon_id": "9615_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA1",
+    "param": "9615_0:000f33"
+   },
+   "clade_id": 32523,
+   "taxon_id": "9615_0"
+  },
+  {
+   "gene": {
+    "id": "101095885",
+    "param": "9685_0:00015e"
+   },
+   "clade_id": 32523,
+   "taxon_id": "9685_0"
+  },
+  {
+   "gene": {
+    "id": "101096000",
+    "param": "9685_0:0026f1"
+   },
+   "clade_id": 32523,
+   "taxon_id": "9685_0"
+  },
+  {
+   "gene": {
+    "id": "100358166",
+    "param": "9986_0:001e91"
+   },
+   "clade_id": 32523,
+   "taxon_id": "9986_0"
+  },
+  {
+   "gene": {
+    "id": "100340670",
+    "param": "9986_0:002886"
+   },
+   "clade_id": 32523,
+   "taxon_id": "9986_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-2",
+    "param": "10090_0:00136b"
+   },
+   "clade_id": 7742,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10090_0:004a1b"
+   },
+   "clade_id": 7742,
+   "taxon_id": "10090_0"
+  },
+  {
+   "gene": {
+    "id": "AMPK subunit alpha-1",
+    "param": "10116_0:000f75"
+   },
+   "clade_id": 7742,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA2",
+    "param": "10116_0:002244"
+   },
+   "clade_id": 7742,
+   "taxon_id": "10116_0"
+  },
+  {
+   "gene": {
+    "id": "100001198",
+    "param": "7955_0:00166e"
+   },
+   "clade_id": 7742,
+   "taxon_id": "7955_0"
+  },
+  {
+   "gene": {
+    "id": "572074",
+    "param": "7955_0:004f49"
+   },
+   "clade_id": 7742,
+   "taxon_id": "7955_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA2",
+    "param": "9615_0:000e24"
+   },
+   "clade_id": 7742,
+   "taxon_id": "9615_0"
+  },
+  {
+   "gene": {
+    "id": "PRKAA1",
+    "param": "9615_0:000f33"
+   },
+   "clade_id": 7742,
+   "taxon_id": "9615_0"
+  },
+  {
+   "gene": {
+    "id": "101095885",
+    "param": "9685_0:00015e"
+   },
+   "clade_id": 7742,
+   "taxon_id": "9685_0"
+  },
+  {
+   "gene": {
+    "id": "101096000",
+    "param": "9685_0:0026f1"
+   },
+   "clade_id": 7742,
+   "taxon_id": "9685_0"
+  },
+  {
+   "gene": {
+    "id": "100358166",
+    "param": "9986_0:001e91"
+   },
+   "clade_id": 7742,
+   "taxon_id": "9986_0"
+  },
+  {
+   "gene": {
+    "id": "100340670",
+    "param": "9986_0:002886"
+   },
+   "clade_id": 7742,
+   "taxon_id": "9986_0"
+  }
+ ],
+ "status": "ok"
+}

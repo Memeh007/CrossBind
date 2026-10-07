@@ -1,0 +1,14 @@
+{
+ "status": "ok",
+ "gene": {
+  "gene_id": {
+   "id": "AMPK subunit alpha-1",
+   "param": "9606_1:0017fe"
+  },
+  "description": "5'-AMP-activated protein kinase catalytic subunit alpha-1"
+ },
+ "organism": {
+  "id": "9606_1",
+  "name": "Homo sapiens"
+ }
+}
