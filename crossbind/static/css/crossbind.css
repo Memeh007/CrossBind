@@ -108,6 +108,8 @@ code, .mono { font-family: var(--mono); font-size: 0.9em; color: var(--text); fo
 .tray-row.ok .tray-state { color: var(--teal); }
 .tray-row.bad .tray-dot { background: var(--bad); border-color: var(--bad); }
 .tray-row.bad .tray-state { color: var(--bad); }
+.tray-row.warn .tray-dot { background: var(--warn); border-color: var(--warn); }
+.tray-row.warn .tray-state { color: var(--warn); }
 .tray-row.muted .tray-name { color: var(--muted); }
 .tray-foot {
   margin: 10px 14px 0; padding-top: 8px; border-top: 1px solid var(--line-soft);
@@ -115,13 +117,13 @@ code, .mono { font-family: var(--mono); font-size: 0.9em; color: var(--text); fo
 }
 
 .app-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.topbar-compact { display: none; }
 .topbar {
   display: flex; align-items: center; gap: 10px;
   padding: 0 10px; height: 44px;
   background: var(--bg2);
   border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20;
 }
+.topbar.topbar-compact { display: none; }
 .brand.brand-compact { padding: 0 4px 0 0; border-bottom: none; gap: 8px; flex-shrink: 0; }
 .brand.brand-compact .brand-logo { width: 22px; height: 22px; }
 .top-nav-mobile {
@@ -255,7 +257,7 @@ pre.log {
 
 @media (max-width: 900px) {
   .sidebar { display: none; }
-  .topbar-compact { display: flex; }
+  .topbar.topbar-compact { display: flex; }
 }
 @media (max-width: 520px) {
   .footer { flex-direction: column; gap: 2px; }

@@ -58,7 +58,7 @@
             <span class="tray-name">Vina</span>
             <span class="tray-state">{% if engines.vina_ok %}ready{% else %}missing{% endif %}</span>
           </li>
-          <li class="tray-row {% if engines.p2rank_ok %}ok{% else %}muted{% endif %}">
+          <li class="tray-row {% if engines.p2rank_ok %}ok{% else %}warn{% endif %}">
             <span class="tray-dot" aria-hidden="true"></span>
             <span class="tray-name">P2Rank</span>
             <span class="tray-state">{% if engines.p2rank_ok %}ready{% else %}missing{% endif %}</span>
