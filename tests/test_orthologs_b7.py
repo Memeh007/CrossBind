@@ -133,6 +133,38 @@ def test_network_down_degrades_to_honest_unavailable(isolated, monkeypatch):
     assert cache.get_json("orthologs_b7", "PRKAA1|Q13131", ttl_s=0) is None
 
 
+def test_one_source_down_falls_back_and_caches_short(isolated, monkeypatch):
+    def router(url, **kw):
+        if "rest.ensembl.org" in url:
+            raise orthologs.SourceError("HTTP 503")
+        return _router(url, **kw)
+
+    monkeypatch.setattr(orthologs, "_http_json", router)
+    panel = orthologs.ortholog_panel(gene="PRKAA1", uniprot="Q13131")
+    rows = _rows(panel)
+    assert panel["degraded"] is True
+    assert rows["dog"]["status"] == "mapped" and rows["dog"]["method"] == "orthodb"
+    assert rows["mouse"]["identity"] is None
+    assert cache.get_json("orthologs_b7", "PRKAA1|Q13131", ttl_s=0) is None
+    assert cache.get_json("orthologs_b7_degraded", "PRKAA1|Q13131", ttl_s=3600) == panel
+
+
+def test_http_json_retries_once_on_transient_status(monkeypatch):
+    import httpx
+
+    calls = []
+
+    def fake_get(url, **kw):
+        calls.append(url)
+        code = 503 if len(calls) == 1 else 200
+        return httpx.Response(code, json={"ok": True}, request=httpx.Request("GET", url))
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+    monkeypatch.setattr(orthologs.time, "sleep", lambda s: None)
+    assert orthologs._http_json("https://example.invalid/x") == {"ok": True}
+    assert len(calls) == 2
+
+
 def test_planaria_honest_miss_when_no_source_maps(isolated, monkeypatch):
     def router(url, **kw):
         if "orthodb.org/v12/orthologs" in url:

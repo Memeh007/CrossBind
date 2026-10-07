@@ -14,6 +14,7 @@ cached and never replaced with a guessed ortholog.
 from __future__ import annotations
 
 import concurrent.futures as cf
+import time
 from typing import Any, Callable
 
 from crossbind.discovery import planmine
@@ -22,7 +23,9 @@ from crossbind.discovery.cache import get_json, set_json
 UA = "ddOS-CrossBind/B7 (orthologs; local research tool)"
 TTL_SOURCE_S = 30 * 86400
 TTL_PANEL_S = 14 * 86400
+TTL_DEGRADED_PANEL_S = 3600
 PANEL_TIMEOUT_S = 75
+RETRY_STATUS = {429, 502, 503, 504}
 
 ROW_BANNER = "Orthologs support translational hypothesis, not dose or MoA transfer."
 DISCLAIMER = (
@@ -88,14 +91,19 @@ def _http_json(
     import httpx
 
     headers = {"Accept": "application/json", "User-Agent": UA}
-    try:
-        if json_body is not None:
-            headers["Content-Type"] = "application/json"
-            r = httpx.post(url, json=json_body, headers=headers, timeout=timeout)
-        else:
-            r = httpx.get(url, params=params, headers=headers, timeout=timeout, follow_redirects=True)
-    except Exception as exc:
-        raise SourceError(f"{type(exc).__name__}: {exc}") from exc
+    for attempt in range(2):
+        try:
+            if json_body is not None:
+                headers["Content-Type"] = "application/json"
+                r = httpx.post(url, json=json_body, headers=headers, timeout=timeout)
+            else:
+                r = httpx.get(url, params=params, headers=headers, timeout=timeout, follow_redirects=True)
+        except Exception as exc:
+            raise SourceError(f"{type(exc).__name__}: {exc}") from exc
+        if r.status_code in RETRY_STATUS and attempt == 0:
+            time.sleep(2.0)
+            continue
+        break
     if r.status_code != 200:
         raise SourceError(f"HTTP {r.status_code}")
     try:
@@ -577,6 +585,16 @@ def _planaria_row(sp, row, results, symbol: str | None) -> None:
     pm_data = pm.get("data") or {}
     hit = pm_data.get("hit") if pm["ok"] else None
     row["planmine_cache"] = pm_data.get("cache")
+    odb_ids = [g.get("id") for g in (o_tax or {}).get("genes") or [] if g.get("id")]
+    tie_rule = "own predicted-transcript hit"
+    if hit and symbol and odb_ids:
+        tied = {g.split(".")[0] for g in [hit.get("gene") or "", *(hit.get("tied_genes") or [])] if g}
+        odb_set = {g.split(".")[0] for g in odb_ids}
+        if hit.get("tied_genes") and (hit.get("gene") or "").split(".")[0] not in odb_set and tied & odb_set:
+            again = planmine.planaria_lookup(symbol, allow_live=False, prefer_genes=odb_ids)
+            if again.get("ok") and again.get("hit"):
+                hit = again["hit"]
+                tie_rule = "OrthoDB v12 orthogroup membership"
 
     if hit:
         gid = hit.get("gene") or hit.get("contig")
@@ -609,7 +627,7 @@ def _planaria_row(sp, row, results, symbol: str | None) -> None:
             row["ambiguous"] = True
             parts.append(
                 f"Ambiguous: equally scoring gene models {', '.join(hit['tied_genes'][:4])} "
-                f"(picked by own predicted-transcript hit)."
+                f"(picked by {tie_rule})."
             )
         elif hit.get("other_genes"):
             parts.append(f"Weaker gene models: {', '.join(hit['other_genes'])}.")
@@ -668,6 +686,8 @@ def ortholog_panel(*, gene: str | None = None, uniprot: str | None = None) -> di
     uniprot = (uniprot or "").strip().upper() or None
     cache_key = f"{gene or ''}|{uniprot or ''}"
     cached = get_json("orthologs_b7", cache_key, ttl_s=TTL_PANEL_S)
+    if cached is None:
+        cached = get_json("orthologs_b7_degraded", cache_key, ttl_s=TTL_DEGRADED_PANEL_S)
     if cached is not None:
         return cached
 
@@ -769,8 +789,10 @@ def ortholog_panel(*, gene: str | None = None, uniprot: str | None = None) -> di
         "banner": ROW_BANNER,
         "disclaimer": DISCLAIMER,
     }
+    out["degraded"] = any(s["status"] in ("partial", "unavailable") for s in sources)
     if (symbol or uniprot) and not any(r["status"] == "unavailable" for r in rows):
-        set_json("orthologs_b7", cache_key, out)
+        # A failed source can hide better evidence (e.g. % id), so degraded panels expire fast.
+        set_json("orthologs_b7_degraded" if out["degraded"] else "orthologs_b7", cache_key, out)
     return out
 
 

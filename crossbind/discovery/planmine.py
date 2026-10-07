@@ -253,9 +253,20 @@ def _ev(x: Any) -> float:
         return 1.0
 
 
-def resolve_symbol(con: sqlite3.Connection, symbol: str, *, evalue_max: float = EVALUE_MAX) -> dict[str, Any] | None:
-    """Gene-level RBH-style mapping for one human symbol, or None if PlanMine has no hit."""
+def resolve_symbol(
+    con: sqlite3.Connection,
+    symbol: str,
+    *,
+    evalue_max: float = EVALUE_MAX,
+    prefer_genes: Iterable[str] = (),
+) -> dict[str, Any] | None:
+    """Gene-level RBH-style mapping for one human symbol, or None if PlanMine has no hit.
+
+    ``prefer_genes`` (unversioned SMESG ids, e.g. from OrthoDB) only breaks ties between
+    gene models with the same best forward e-value.
+    """
     sym = symbol.upper()
+    prefer = {g.split(".")[0] for g in prefer_genes}
     fwd = [
         dict(zip(("contig", "assembly", "contig_length", "refseq", "evalue"), r))
         for r in con.execute(
@@ -293,6 +304,7 @@ def resolve_symbol(con: sqlite3.Connection, symbol: str, *, evalue_max: float = 
     def rank(t: dict[str, Any]) -> tuple:
         return (
             _ev(t["best"]["evalue"]),
+            0 if t["gene"] and t["gene"].split(".")[0] in prefer else 1,
             t["own_ev"],
             -len(t["contigs"]),
             -(t["best"]["contig_length"] or 0),
@@ -489,7 +501,9 @@ def planmine_versions() -> dict[str, str]:
 # --- public entry -------------------------------------------------------------------------
 
 
-def planaria_lookup(symbol: str | None, *, allow_live: bool | None = None) -> dict[str, Any]:
+def planaria_lookup(
+    symbol: str | None, *, allow_live: bool | None = None, prefer_genes: Iterable[str] = ()
+) -> dict[str, Any]:
     """Cache-first PlanMine lookup. Returns {ok, covered, hit, error, source, cache}."""
     if allow_live is None:
         allow_live = os.environ.get("CROSSBIND_PLANMINE_LIVE", "1") != "0"
@@ -513,7 +527,7 @@ def planaria_lookup(symbol: str | None, *, allow_live: bool | None = None) -> di
             else:
                 error = "symbol not in local PlanMine cache and live PlanMine disabled"
         covered = is_covered(con, sym)
-        hit = resolve_symbol(con, sym) if covered else None
+        hit = resolve_symbol(con, sym, prefer_genes=prefer_genes) if covered else None
         return {
             "ok": covered,
             "covered": covered,
