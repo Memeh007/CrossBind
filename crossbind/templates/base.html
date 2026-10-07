@@ -6,8 +6,8 @@
   <title>{% block title %}ddOS{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/css/crossbind.css" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/crossbind.css?v=ddos-shell-instrument1" />
   <link rel="icon" href="/static/img/favicon.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="/static/img/favicon-32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="/static/img/favicon-16.png" />
@@ -15,44 +15,87 @@
   {% block head %}{% endblock %}
 </head>
 <body>
+  {%- set nav_path = request.url.path if request is defined else '' -%}
+  {%- if nav_path.startswith('/discover') -%}{%- set nav_active = 'discover' -%}
+  {%- elif nav_path.startswith('/job') or nav_path.startswith('/viewer') -%}{%- set nav_active = 'jobs' -%}
+  {%- elif nav_path == '/' -%}{%- set nav_active = 'dock' -%}
+  {%- else -%}{%- set nav_active = '' -%}{%- endif -%}
+  {%- set nav_modules = [
+    ('discover', '/discover', '01', 'Discover', 'drug → target → pose'),
+    ('dock', '/', '02', 'Dock', 'receptor + ligand'),
+    ('jobs', '/jobs', '03', 'Jobs', 'queue · results · 3D'),
+  ] -%}
   <div class="app-shell">
     <aside class="sidebar" aria-label="Primary">
       <a class="brand" href="/discover">
         <img class="brand-logo" src="/static/img/logo-molecule.svg" alt="" width="28" height="28" />
-        <span class="brand-text">ddOS</span>
+        <span class="brand-stack">
+          <span class="brand-text">ddOS</span>
+          <span class="brand-sub">Drug Discovery OS</span>
+        </span>
       </a>
+      <div class="side-label">Modules</div>
       <nav class="side-nav">
-        <a href="/discover">Discover</a>
-        <a href="/">Dock</a>
-        <a href="/jobs">Jobs</a>
-        <a href="/api/health" target="_blank" rel="noopener">Health</a>
+        {% for key, href, idx, name, hint in nav_modules %}
+        <a class="side-mod{% if nav_active == key %} is-active{% endif %}" href="{{ href }}"{% if nav_active == key %} aria-current="page"{% endif %}>
+          <span class="side-mod__key">{{ idx }}</span>
+          <span class="side-mod__name">{{ name }}</span>
+          <span class="side-mod__hint">{{ hint }}</span>
+        </a>
+        {% endfor %}
+        <a class="side-mod" href="/api/health" target="_blank" rel="noopener">
+          <span class="side-mod__key">04</span>
+          <span class="side-mod__name">Health <span class="side-mod__ext" aria-hidden="true">↗</span></span>
+          <span class="side-mod__hint">GET /api/health</span>
+        </a>
       </nav>
-      <div class="engine-pills side-pills">
-        {% if engines is defined %}
-          <span class="pill {% if engines.vina_ok %}ok{% else %}bad{% endif %}">Vina {% if engines.vina_ok %}ready{% else %}missing{% endif %}</span>
-          <span class="pill {% if engines.gnina_ok %}ok{% else %}muted{% endif %}">GNINA {% if engines.gnina_ok %}ready{% else %}optional{% endif %}</span>
-        {% endif %}
+      {% if engines is defined %}
+      <div class="sys-tray" aria-label="Engine status">
+        <div class="side-label">Engines</div>
+        <ul class="tray-list">
+          <li class="tray-row {% if engines.vina_ok %}ok{% else %}bad{% endif %}">
+            <span class="tray-dot" aria-hidden="true"></span>
+            <span class="tray-name">Vina</span>
+            <span class="tray-state">{% if engines.vina_ok %}ready{% else %}missing{% endif %}</span>
+          </li>
+          <li class="tray-row {% if engines.p2rank_ok %}ok{% else %}warn{% endif %}">
+            <span class="tray-dot" aria-hidden="true"></span>
+            <span class="tray-name">P2Rank</span>
+            <span class="tray-state">{% if engines.p2rank_ok %}ready{% else %}missing{% endif %}</span>
+          </li>
+          <li class="tray-row {% if engines.gnina_ok %}ok{% else %}muted{% endif %}">
+            <span class="tray-dot" aria-hidden="true"></span>
+            <span class="tray-name">GNINA</span>
+            <span class="tray-state">{% if engines.gnina_ok %}ready{% else %}optional{% endif %}</span>
+          </li>
+        </ul>
+        <div class="tray-foot">v{{ version }} · local</div>
       </div>
+      {% endif %}
     </aside>
     <div class="app-main">
       <header class="topbar topbar-compact">
-        <nav class="top-nav-mobile">
-          <a href="/discover">Discover</a>
-          <a href="/">Dock</a>
-          <a href="/jobs">Jobs</a>
-          <a href="/api/health" target="_blank" rel="noopener">Health</a>
+        <a class="brand brand-compact" href="/discover">
+          <img class="brand-logo" src="/static/img/logo-molecule.svg" alt="" width="22" height="22" />
+          <span class="brand-text">ddOS</span>
+        </a>
+        <nav class="top-nav-mobile" aria-label="Primary">
+          {% for key, href, idx, name, hint in nav_modules %}
+          <a class="{% if nav_active == key %}is-active{% endif %}" href="{{ href }}"{% if nav_active == key %} aria-current="page"{% endif %}>{{ name }}</a>
+          {% endfor %}
+          <a href="/api/health" target="_blank" rel="noopener">Health ↗</a>
         </nav>
       </header>
       <main class="container">
         {% block content %}{% endblock %}
       </main>
       <footer class="footer">
-        <span>ddOS v{{ version }} — Drug Discovery Operating System</span>
-        <span>Alexander Cecena / <a href="https://github.com/Memeh007" target="_blank" rel="noopener">Memeh007</a> · MIT</span>
+        <span>ddOS v{{ version }} · Drug Discovery Operating System</span>
+        <span>Alexander Cecena · <a href="https://github.com/Memeh007" target="_blank" rel="noopener">Memeh007</a> · MIT</span>
       </footer>
     </div>
   </div>
-  <script src="/static/js/boot.js?v=ddos-boot-logo2"></script>
+  <script src="/static/js/boot.js?v=ddos-boot-instrument1"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
