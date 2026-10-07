@@ -51,7 +51,7 @@ ddOS is already a credible **Discover → pocket → dock → contact proof** in
 | **B4** | **Open Targets GraphQL v4 + release-pinned cache** deepen dossier | Biology | Genetics merged 25.03; Platform through 26.06 | Med |
 | **B5** | **Batch ligands (CSV/SDF)** → study table (Vina multiprocess; Uni-Dock later) | Structure | Unlocks VS demos without co-folding | Med |
 | **B6** | **Multi-PDB / AF-sample ensemble dock** + provenance rollup | Structure | Already prefer-holo; need multi-structure | Med |
-| **B7** | **Ortholog resolver v1** Alliance → OrthoDB → DIOPT → PlanMine | Biology | Vertical slice for H/M/fly/planaria (+ dog/rabbit/cat later) | Med–Hard |
+| **B7** ✅ v1 | **Ortholog resolver v1** Alliance → DIOPT → OrthoDB; Ensembl Compara; PlanMine RBH SQLite | Biology | Shipped 2026-10 — see B7 status below | Med–Hard |
 | **B8** | **Evidence pack export** JSON + MD + TSV (versions stamped) | Biology | Study desk without UI redesign | Easy–Med |
 | **B9** | **OpenMM minimize** (± short restrained MD) on top poses | Structure | Physics-lite before GBSA | Med |
 | **B10** | **FPSim2** on ChEMBL fps for analog neighbors | Biology | SAR seed table | Med |
@@ -59,6 +59,13 @@ ddOS is already a credible **Discover → pocket → dock → contact proof** in
 | **B12** | **DiffDock-L Docker sidecar** (blind) → always Vina/GNINA rescore | Structure | Confidence ≠ affinity | Hard (GPU) |
 | **B13** | **Uni-GBSA / MMPBSA.py** end-point column | Structure | Shortlist only; not Discover default | Hard |
 | **B14** | **Boltz-2 opt-in** co-fold + research affinity | Structure | MIT AF3-class; never AF3 Server automation | Hard (GPU) |
+
+### B7 status (v1, 2026-10)
+
+- Code: `crossbind/discovery/orthologs.py` (panel + adapters), `crossbind/discovery/planmine.py` (SQLite cache), `GET /api/orthologs?gene=&uniprot=`; Discover ortholog panel shows ortholog / % id / source.
+- Species: mouse, rat, zebrafish, fly, worm (Alliance stringent → DIOPT v9 API → OrthoDB v12); dog, rabbit, cat (Ensembl Compara → OrthoDB v12); planaria (PlanMine BLAST best-best at gene level → OrthoDB v12). % identity only from Ensembl Compara when it names the same gene.
+- Planaria cache: `data/cache/planmine_smed_rbh.sqlite` (gitignored), first-run seed of 22 metformin-axis genes in `crossbind/discovery/data/planmine_smed_seed.json`; full rebuild `python scripts/build_planmine_rbh_cache.py --all` (~72k human hits, ~90 s). Live PlanMine fills misses only (`CROSSBIND_PLANMINE_LIVE=0` to disable).
+- Limits: PlanMine "RBH" uses its precomputed contig→RefSeq table in both directions (not an independent reverse BLAST); DIOPT and Alliance share DIOPT 9.1 inputs (not independent); DIOPT v10 web release has no v10 API path yet; no % identity for planaria. Next: OrthoDB/OMA identity for invertebrates, B8 export of `orthologs` block.
 
 **Defer:** DynamicBind, Uni-Mol Docking V2, PocketMiner cryptic lane, Chai (re-verify Apache at pin), PLIP dual (GPL caution), DrugBank/DisGeNET/KEGG embeds, LiveDesign-class collab, UI redesign.
 

@@ -1,0 +1,48 @@
+{
+ "results": {
+  "5562": {
+   "65248": {
+    "best_score": "Yes",
+    "score": 15,
+    "max_score": 15,
+    "best_score_rev": "Yes",
+    "best_score_count": 2,
+    "confidence": "high",
+    "geneid": 65248,
+    "species_id": 10116,
+    "symbol": "Prkaa1",
+    "species_specific_geneid": 3387,
+    "species_specific_geneid_type": "RGD",
+    "count": 15
+   },
+   "78975": {
+    "best_score": "No",
+    "score": 4,
+    "max_score": 15,
+    "best_score_rev": "No",
+    "best_score_count": 0,
+    "confidence": "moderate",
+    "geneid": 78975,
+    "species_id": 10116,
+    "symbol": "Prkaa2",
+    "species_specific_geneid": 620893,
+    "species_specific_geneid_type": "RGD",
+    "count": 4
+   },
+   "499073": {
+    "best_score": "No",
+    "score": 2,
+    "max_score": 15,
+    "best_score_rev": "No",
+    "best_score_count": 0,
+    "confidence": "low",
+    "geneid": 499073,
+    "species_id": 10116,
+    "symbol": "Brsk1",
+    "species_specific_geneid": 1563268,
+    "species_specific_geneid_type": "RGD",
+    "count": 2
+   }
+  }
+ }
+}

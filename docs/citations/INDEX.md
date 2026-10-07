@@ -23,7 +23,10 @@
 | Uni-GBSA | https://doi.org/10.1093/bib/bbad218 | OUP — retry |
 | ADMETlab 3.0 | https://doi.org/10.1093/nar/gkae236 | PMC — retry |
 | BindingDB 2024 | https://doi.org/10.1093/nar/gkae1075 | PMC — retry |
-| OrthoDB v12 | https://doi.org/10.1093/nar/gkae987 | PMC — retry |
+| OrthoDB v12 | https://doi.org/10.1093/nar/gkae987 | PMC — retry. B7: planaria + dog/rabbit/cat fallback, planaria concordance |
+| PlanMine 3.0 (Rozanski et al. 2019, NAR 47:D812) | https://doi.org/10.1093/nar/gky1070 | PDF unavailable (bot wall); PMC6324014. B7: S. mediterranea BLAST annotations + SMESG gene models behind the RBH-style cache |
+| DIOPT (Hu et al. 2011, BMC Bioinformatics 12:357) | https://doi.org/10.1186/1471-2105-12-357 | PDF unavailable (bot wall); PMC3179972. B7: model-org fallback/concordance (v9 API) |
+| Alliance central infrastructure (Alliance Consortium 2024, Genetics 227:iyae049) | https://doi.org/10.1093/genetics/iyae049 | PDF unavailable (bot wall); PMC11075569. B7: primary model-org orthology; built on DIOPT 9.1 inputs, so DIOPT agreement is not independent |
 | Open Targets releases | https://platform-docs.opentargets.org/release-notes | HTML docs OK |
 
 *Updated 2026-09-22 PT. Hermes should keep growing this library when new tools/claims appear.*

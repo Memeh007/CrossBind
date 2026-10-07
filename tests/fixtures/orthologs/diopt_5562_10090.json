@@ -1,0 +1,48 @@
+{
+ "results": {
+  "5562": {
+   "105787": {
+    "best_score": "Yes",
+    "score": 15,
+    "max_score": 15,
+    "best_score_rev": "Yes",
+    "best_score_count": 2,
+    "confidence": "high",
+    "geneid": 105787,
+    "species_id": 10090,
+    "symbol": "Prkaa1",
+    "species_specific_geneid": 2145955,
+    "species_specific_geneid_type": "MGI",
+    "count": 15
+   },
+   "108079": {
+    "best_score": "No",
+    "score": 5,
+    "max_score": 15,
+    "best_score_rev": "No",
+    "best_score_count": 0,
+    "confidence": "moderate",
+    "geneid": 108079,
+    "species_id": 10090,
+    "symbol": "Prkaa2",
+    "species_specific_geneid": 1336173,
+    "species_specific_geneid_type": "MGI",
+    "count": 5
+   },
+   "58864": {
+    "best_score": "No",
+    "score": 2,
+    "max_score": 15,
+    "best_score_rev": "No",
+    "best_score_count": 0,
+    "confidence": "low",
+    "geneid": 58864,
+    "species_id": 10090,
+    "symbol": "Tssk3",
+    "species_specific_geneid": 1929914,
+    "species_specific_geneid_type": "MGI",
+    "count": 2
+   }
+  }
+ }
+}

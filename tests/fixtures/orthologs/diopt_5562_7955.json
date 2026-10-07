@@ -1,0 +1,48 @@
+{
+ "results": {
+  "5562": {
+   "100001198": {
+    "best_score": "Yes",
+    "score": 14,
+    "max_score": 15,
+    "best_score_rev": "Yes",
+    "best_score_count": 2,
+    "confidence": "high",
+    "geneid": 100001198,
+    "species_id": 7955,
+    "symbol": "prkaa1",
+    "species_specific_geneid": "ZDB-GENE-030325-1",
+    "species_specific_geneid_type": "ZFIN",
+    "count": 14
+   },
+   "572074": {
+    "best_score": "No",
+    "score": 5,
+    "max_score": 15,
+    "best_score_rev": "No",
+    "best_score_count": 0,
+    "confidence": "moderate",
+    "geneid": 572074,
+    "species_id": 7955,
+    "symbol": "prkaa2",
+    "species_specific_geneid": "ZDB-GENE-081120-5",
+    "species_specific_geneid_type": "ZFIN",
+    "count": 5
+   },
+   "100149571": {
+    "best_score": "No",
+    "score": 2,
+    "max_score": 15,
+    "best_score_rev": "No",
+    "best_score_count": 0,
+    "confidence": "low",
+    "geneid": 100149571,
+    "species_id": 7955,
+    "symbol": "brsk2b",
+    "species_specific_geneid": "ZDB-GENE-100422-3",
+    "species_specific_geneid_type": "ZFIN",
+    "count": 2
+   }
+  }
+ }
+}

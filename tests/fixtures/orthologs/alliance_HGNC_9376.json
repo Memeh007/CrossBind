@@ -1,0 +1,461 @@
+{
+ "results": [
+  {
+   "geneToGeneOrthologyGenerated": {
+    "objectGene": {
+     "primaryExternalId": "SGD:S000002885",
+     "taxon": {
+      "curie": "NCBITaxon:559292"
+     },
+     "geneSymbol": {
+      "displayText": "SNF1"
+     }
+    },
+    "isBestScore": {
+     "name": "Yes"
+    },
+    "isBestScoreReverse": {
+     "name": "Yes"
+    },
+    "confidence": {
+     "name": "high"
+    },
+    "predictionMethodsMatched": [
+     {
+      "name": "Hieranoid"
+     },
+     {
+      "name": "InParanoid"
+     },
+     {
+      "name": "OMA"
+     },
+     {
+      "name": "OrthoFinder"
+     },
+     {
+      "name": "OrthoInspector"
+     },
+     {
+      "name": "PANTHER"
+     },
+     {
+      "name": "PhylomeDB"
+     },
+     {
+      "name": "SonicParanoid"
+     }
+    ],
+    "predictionMethodsNotMatched": [
+     {
+      "name": "Ensembl Compara"
+     }
+    ]
+   }
+  },
+  {
+   "geneToGeneOrthologyGenerated": {
+    "objectGene": {
+     "primaryExternalId": "WB:WBGene00020142",
+     "taxon": {
+      "curie": "NCBITaxon:6239"
+     },
+     "geneSymbol": {
+      "displayText": "aak-2"
+     }
+    },
+    "isBestScore": {
+     "name": "Yes"
+    },
+    "isBestScoreReverse": {
+     "name": "Yes"
+    },
+    "confidence": {
+     "name": "high"
+    },
+    "predictionMethodsMatched": [
+     {
+      "name": "Hieranoid"
+     },
+     {
+      "name": "InParanoid"
+     },
+     {
+      "name": "OMA"
+     },
+     {
+      "name": "OrthoFinder"
+     },
+     {
+      "name": "OrthoInspector"
+     },
+     {
+      "name": "PANTHER"
+     },
+     {
+      "name": "PhylomeDB"
+     },
+     {
+      "name": "SonicParanoid"
+     }
+    ],
+    "predictionMethodsNotMatched": [
+     {
+      "name": "Ensembl Compara"
+     }
+    ]
+   }
+  },
+  {
+   "geneToGeneOrthologyGenerated": {
+    "objectGene": {
+     "primaryExternalId": "Xenbase:XB-GENE-946195",
+     "taxon": {
+      "curie": "NCBITaxon:8364"
+     },
+     "geneSymbol": {
+      "displayText": "prkaa1"
+     }
+    },
+    "isBestScore": {
+     "name": "Yes"
+    },
+    "isBestScoreReverse": {
+     "name": "Yes"
+    },
+    "confidence": {
+     "name": "high"
+    },
+    "predictionMethodsMatched": [
+     {
+      "name": "Ensembl Compara"
+     },
+     {
+      "name": "Hieranoid"
+     },
+     {
+      "name": "InParanoid"
+     },
+     {
+      "name": "OMA"
+     },
+     {
+      "name": "OrthoFinder"
+     },
+     {
+      "name": "OrthoInspector"
+     },
+     {
+      "name": "PhylomeDB"
+     },
+     {
+      "name": "SonicParanoid"
+     }
+    ],
+    "predictionMethodsNotMatched": [
+     {
+      "name": "PANTHER"
+     }
+    ]
+   }
+  },
+  {
+   "geneToGeneOrthologyGenerated": {
+    "objectGene": {
+     "primaryExternalId": "RGD:3387",
+     "taxon": {
+      "curie": "NCBITaxon:10116"
+     },
+     "geneSymbol": {
+      "displayText": "Prkaa1"
+     }
+    },
+    "isBestScore": {
+     "name": "Yes"
+    },
+    "isBestScoreReverse": {
+     "name": "Yes"
+    },
+    "confidence": {
+     "name": "high"
+    },
+    "predictionMethodsMatched": [
+     {
+      "name": "Ensembl Compara"
+     },
+     {
+      "name": "Hieranoid"
+     },
+     {
+      "name": "InParanoid"
+     },
+     {
+      "name": "OMA"
+     },
+     {
+      "name": "OrthoFinder"
+     },
+     {
+      "name": "OrthoInspector"
+     },
+     {
+      "name": "PANTHER"
+     },
+     {
+      "name": "PhylomeDB"
+     },
+     {
+      "name": "HGNC"
+     },
+     {
+      "name": "SonicParanoid"
+     }
+    ]
+   }
+  },
+  {
+   "geneToGeneOrthologyGenerated": {
+    "objectGene": {
+     "primaryExternalId": "Xenbase:XB-GENE-946198",
+     "taxon": {
+      "curie": "NCBITaxon:8355"
+     },
+     "geneSymbol": {
+      "displayText": "prkaa1.L"
+     }
+    },
+    "isBestScore": {
+     "name": "Yes"
+    },
+    "isBestScoreReverse": {
+     "name": "Yes"
+    },
+    "confidence": {
+     "name": "high"
+    },
+    "predictionMethodsMatched": [
+     {
+      "name": "Xenbase"
+     }
+    ]
+   }
+  },
+  {
+   "geneToGeneOrthologyGenerated": {
+    "objectGene": {
+     "primaryExternalId": "WB:WBGene00019801",
+     "taxon": {
+      "curie": "NCBITaxon:6239"
+     },
+     "geneSymbol": {
+      "displayText": "aak-1"
+     }
+    },
+    "isBestScore": {
+     "name": "No"
+    },
+    "isBestScoreReverse": {
+     "name": "Yes"
+    },
+    "confidence": {
+     "name": "moderate"
+    },
+    "predictionMethodsMatched": [
+     {
+      "name": "OrthoFinder"
+     },
+     {
+      "name": "PANTHER"
+     },
+     {
+      "name": "PhylomeDB"
+     }
+    ],
+    "predictionMethodsNotMatched": [
+     {
+      "name": "SonicParanoid"
+     },
+     {
+      "name": "Hieranoid"
+     },
+     {
+      "name": "InParanoid"
+     },
+     {
+      "name": "OMA"
+     },
+     {
+      "name": "Ensembl Compara"
+     },
+     {
+      "name": "OrthoInspector"
+     }
+    ]
+   }
+  },
+  {
+   "geneToGeneOrthologyGenerated": {
+    "objectGene": {
+     "primaryExternalId": "ZFIN:ZDB-GENE-030325-1",
+     "taxon": {
+      "curie": "NCBITaxon:7955"
+     },
+     "geneSymbol": {
+      "displayText": "prkaa1"
+     }
+    },
+    "isBestScore": {
+     "name": "Yes"
+    },
+    "isBestScoreReverse": {
+     "name": "Yes"
+    },
+    "confidence": {
+     "name": "high"
+    },
+    "predictionMethodsMatched": [
+     {
+      "name": "Ensembl Compara"
+     },
+     {
+      "name": "Hieranoid"
+     },
+     {
+      "name": "InParanoid"
+     },
+     {
+      "name": "OMA"
+     },
+     {
+      "name": "OrthoFinder"
+     },
+     {
+      "name": "OrthoInspector"
+     },
+     {
+      "name": "PANTHER"
+     },
+     {
+      "name": "PhylomeDB"
+     },
+     {
+      "name": "SonicParanoid"
+     }
+    ],
+    "predictionMethodsNotMatched": [
+     {
+      "name": "ZFIN"
+     }
+    ]
+   }
+  },
+  {
+   "geneToGeneOrthologyGenerated": {
+    "objectGene": {
+     "primaryExternalId": "FB:FBgn0023169",
+     "taxon": {
+      "curie": "NCBITaxon:7227"
+     },
+     "geneSymbol": {
+      "displayText": "AMPKα"
+     }
+    },
+    "isBestScore": {
+     "name": "Yes"
+    },
+    "isBestScoreReverse": {
+     "name": "No"
+    },
+    "confidence": {
+     "name": "moderate"
+    },
+    "predictionMethodsMatched": [
+     {
+      "name": "Hieranoid"
+     },
+     {
+      "name": "InParanoid"
+     },
+     {
+      "name": "OMA"
+     },
+     {
+      "name": "OrthoFinder"
+     },
+     {
+      "name": "OrthoInspector"
+     },
+     {
+      "name": "PANTHER"
+     },
+     {
+      "name": "PhylomeDB"
+     },
+     {
+      "name": "SonicParanoid"
+     }
+    ],
+    "predictionMethodsNotMatched": [
+     {
+      "name": "Ensembl Compara"
+     }
+    ]
+   }
+  },
+  {
+   "geneToGeneOrthologyGenerated": {
+    "objectGene": {
+     "primaryExternalId": "MGI:2145955",
+     "taxon": {
+      "curie": "NCBITaxon:10090"
+     },
+     "geneSymbol": {
+      "displayText": "Prkaa1"
+     }
+    },
+    "isBestScore": {
+     "name": "Yes"
+    },
+    "isBestScoreReverse": {
+     "name": "Yes"
+    },
+    "confidence": {
+     "name": "high"
+    },
+    "predictionMethodsMatched": [
+     {
+      "name": "Ensembl Compara"
+     },
+     {
+      "name": "HGNC"
+     },
+     {
+      "name": "Hieranoid"
+     },
+     {
+      "name": "InParanoid"
+     },
+     {
+      "name": "OMA"
+     },
+     {
+      "name": "OrthoFinder"
+     },
+     {
+      "name": "OrthoInspector"
+     },
+     {
+      "name": "PANTHER"
+     },
+     {
+      "name": "PhylomeDB"
+     },
+     {
+      "name": "SonicParanoid"
+     }
+    ]
+   }
+  }
+ ],
+ "total": 9
+}
