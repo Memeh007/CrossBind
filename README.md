@@ -35,7 +35,7 @@ Vertical slice for research triage (demo drug: **metformin**):
 4. Pocket hypotheses: prefer **holo crystal ligand** site; else **P2Rank** (optional CLI, `-c alphafold` for AF); else centroid fallback
 5. Optional **ligand-aware** ranking: dock query ligand into top-K pockets with Vina; pick best affinity (not Kd)
 6. **Prepare & dock** reuses the existing Meeko / Vina pipeline
-7. Ortholog panel stubs: human, mouse, fly, dog, rabbit, cat, planaria (**honest miss** if unmapped)
+7. Ortholog panel (B7): mouse, rat, zebrafish, fly, worm, dog, rabbit, cat, planaria — method-tagged rows from Alliance / DIOPT / OrthoDB / Ensembl Compara / PlanMine RBH cache; **honest miss** or **unavailable** when sources do not map. Rebuild the planaria cache with `python scripts/build_planmine_rbh_cache.py --all`
 
 ```bash
 # after venv + requirements

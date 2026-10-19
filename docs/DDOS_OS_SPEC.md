@@ -99,7 +99,7 @@ Legend: **S** = shipped · **N** = next (science OK without UI go) · **U** = ne
 | RDKit ADMET / drug-likeness | S | **B3** ADMET-AI local next | N |
 | Residue contacts + evidence text | S | ProLIF when present; geometric fallback | N deepen |
 | 3Dmol viewer + highlights | S | Living viz / physics UI | U |
-| Ortholog panel stubs | S | **B7** Alliance→OrthoDB→DIOPT→PlanMine | N |
+| Ortholog resolver v1 | S | **B7** Alliance→DIOPT→OrthoDB, Ensembl Compara, PlanMine RBH SQLite | S (v1) |
 | Boot ddOS + text-free logo | S | |
 | DiffDock-L optional pose path | L/N | confidence ≠ affinity |
 | Open Targets tractability dossier | partial | **B4** GraphQL v4 + release cache | N |

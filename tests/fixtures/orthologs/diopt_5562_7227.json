@@ -1,0 +1,48 @@
+{
+ "results": {
+  "5562": {
+   "43904": {
+    "best_score": "Yes",
+    "score": 12,
+    "max_score": 13,
+    "best_score_rev": "No",
+    "best_score_count": 1,
+    "confidence": "moderate",
+    "geneid": 43904,
+    "species_id": 7227,
+    "symbol": "AMPKalpha",
+    "species_specific_geneid": "FBgn0023169",
+    "species_specific_geneid_type": "FlyBase",
+    "count": 12
+   },
+   "42233": {
+    "best_score": "No",
+    "score": 3,
+    "max_score": 13,
+    "best_score_rev": "No",
+    "best_score_count": 0,
+    "confidence": "low",
+    "geneid": 42233,
+    "species_id": 7227,
+    "symbol": "Tssk",
+    "species_specific_geneid": "FBgn0038630",
+    "species_specific_geneid_type": "FlyBase",
+    "count": 3
+   },
+   "36579": {
+    "best_score": "No",
+    "score": 2,
+    "max_score": 13,
+    "best_score_rev": "No",
+    "best_score_count": 0,
+    "confidence": "low",
+    "geneid": 36579,
+    "species_id": 7227,
+    "symbol": "Snrk",
+    "species_specific_geneid": "FBgn0033915",
+    "species_specific_geneid_type": "FlyBase",
+    "count": 2
+   }
+  }
+ }
+}

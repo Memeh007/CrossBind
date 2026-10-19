@@ -1,0 +1,261 @@
+{
+ "data": [
+  {
+   "id": "ENSG00000132356",
+   "homologies": [
+    {
+     "type": "ortholog_one2one",
+     "taxonomy_level": "Euarchontoglires",
+     "target": {
+      "perc_pos": 87.8549,
+      "id": "ENSRNOG00000012799",
+      "perc_id": 87.3817,
+      "protein_id": "ENSRNOP00000017626",
+      "species": "rattus_norvegicus",
+      "taxon_id": 10116
+     },
+     "source": {
+      "protein_id": "ENSP00000380317",
+      "perc_id": 99.1055,
+      "taxon_id": 9606,
+      "species": "homo_sapiens",
+      "perc_pos": 99.6422,
+      "id": "ENSG00000132356"
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES"
+    },
+    {
+     "target": {
+      "id": "ENSMUSG00000050697",
+      "perc_pos": 99.4633,
+      "species": "mus_musculus",
+      "taxon_id": 10090,
+      "perc_id": 98.7478,
+      "protein_id": "ENSMUSP00000063166"
+     },
+     "source": {
+      "species": "homo_sapiens",
+      "taxon_id": 9606,
+      "perc_id": 98.7478,
+      "protein_id": "ENSP00000380317",
+      "id": "ENSG00000132356",
+      "perc_pos": 99.4633
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "type": "ortholog_one2one",
+     "taxonomy_level": "Euarchontoglires"
+    },
+    {
+     "source": {
+      "perc_pos": 99.8211,
+      "id": "ENSG00000132356",
+      "perc_id": 99.6422,
+      "protein_id": "ENSP00000380317",
+      "taxon_id": 9606,
+      "species": "homo_sapiens"
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "target": {
+      "perc_pos": 77.3925,
+      "id": "ENSCAFG00845002768",
+      "perc_id": 77.2538,
+      "protein_id": "ENSCAFP00845003926",
+      "taxon_id": 9615,
+      "species": "canis_lupus_familiaris"
+     },
+     "taxonomy_level": "Boreoeutheria",
+     "type": "ortholog_one2one"
+    },
+    {
+     "source": {
+      "perc_pos": 94.8122,
+      "id": "ENSG00000132356",
+      "perc_id": 92.8444,
+      "protein_id": "ENSP00000380317",
+      "species": "homo_sapiens",
+      "taxon_id": 9606
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "target": {
+      "id": "ENSFCTG00005019461",
+      "perc_pos": 92.0139,
+      "taxon_id": 9685,
+      "species": "felis_catus",
+      "protein_id": "ENSFCTP00005041706",
+      "perc_id": 90.1042
+     },
+     "taxonomy_level": "Boreoeutheria",
+     "type": "ortholog_one2one"
+    },
+    {
+     "taxonomy_level": "Euarchontoglires",
+     "type": "ortholog_one2one",
+     "source": {
+      "perc_pos": 99.2844,
+      "id": "ENSG00000132356",
+      "protein_id": "ENSP00000380317",
+      "perc_id": 98.7478,
+      "taxon_id": 9606,
+      "species": "homo_sapiens"
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "target": {
+      "taxon_id": 9986,
+      "species": "oryctolagus_cuniculus",
+      "protein_id": "ENSOCUP00000000775",
+      "perc_id": 84.1463,
+      "id": "ENSOCUG00000000897",
+      "perc_pos": 84.6037
+     }
+    },
+    {
+     "target": {
+      "perc_id": 16.0465,
+      "protein_id": "FBpp0086695",
+      "species": "drosophila_melanogaster",
+      "taxon_id": 7227,
+      "perc_pos": 25.3488,
+      "id": "FBgn0033915"
+     },
+     "source": {
+      "id": "ENSG00000132356",
+      "perc_pos": 38.9982,
+      "taxon_id": 9606,
+      "species": "homo_sapiens",
+      "perc_id": 24.6869,
+      "protein_id": "ENSP00000380317"
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "type": "ortholog_many2many",
+     "taxonomy_level": "Opisthokonta"
+    },
+    {
+     "source": {
+      "protein_id": "ENSP00000380317",
+      "perc_id": 32.2004,
+      "taxon_id": 9606,
+      "species": "homo_sapiens",
+      "perc_pos": 53.8462,
+      "id": "ENSG00000132356"
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "target": {
+      "perc_id": 6.42169,
+      "protein_id": "FBpp0428143",
+      "taxon_id": 7227,
+      "species": "drosophila_melanogaster",
+      "perc_pos": 10.7385,
+      "id": "FBgn0262617"
+     },
+     "taxonomy_level": "Opisthokonta",
+     "type": "ortholog_many2many"
+    },
+    {
+     "target": {
+      "protein_id": "B0511.4.1",
+      "perc_id": 28.8828,
+      "species": "caenorhabditis_elegans",
+      "taxon_id": 6239,
+      "perc_pos": 43.5967,
+      "id": "WBGene00015230"
+     },
+     "source": {
+      "protein_id": "ENSP00000380317",
+      "perc_id": 18.9624,
+      "taxon_id": 9606,
+      "species": "homo_sapiens",
+      "perc_pos": 28.6225,
+      "id": "ENSG00000132356"
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "type": "ortholog_many2many",
+     "taxonomy_level": "Opisthokonta"
+    },
+    {
+     "taxonomy_level": "Opisthokonta",
+     "type": "ortholog_many2many",
+     "source": {
+      "species": "homo_sapiens",
+      "taxon_id": 9606,
+      "perc_id": 18.068,
+      "protein_id": "ENSP00000380317",
+      "id": "ENSG00000132356",
+      "perc_pos": 27.5492
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "target": {
+      "protein_id": "Y38H8A.4.1",
+      "perc_id": 30.5136,
+      "species": "caenorhabditis_elegans",
+      "taxon_id": 6239,
+      "perc_pos": 46.5257,
+      "id": "WBGene00012638"
+     }
+    },
+    {
+     "taxonomy_level": "Opisthokonta",
+     "type": "ortholog_many2many",
+     "source": {
+      "perc_pos": 27.7281,
+      "id": "ENSG00000132356",
+      "perc_id": 18.2469,
+      "protein_id": "ENSP00000380317",
+      "taxon_id": 9606,
+      "species": "homo_sapiens"
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "target": {
+      "species": "caenorhabditis_elegans",
+      "taxon_id": 6239,
+      "protein_id": "C27D6.11.1",
+      "perc_id": 30.8157,
+      "id": "WBGene00044388",
+      "perc_pos": 46.8278
+     }
+    },
+    {
+     "taxonomy_level": "Opisthokonta",
+     "type": "ortholog_many2many",
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "source": {
+      "perc_pos": 38.9982,
+      "id": "ENSG00000132356",
+      "protein_id": "ENSP00000380317",
+      "perc_id": 24.3292,
+      "species": "homo_sapiens",
+      "taxon_id": 9606
+     },
+     "target": {
+      "species": "caenorhabditis_elegans",
+      "taxon_id": 6239,
+      "perc_id": 13.3858,
+      "protein_id": "ZK524.4.1",
+      "id": "WBGene00013994",
+      "perc_pos": 21.4567
+     }
+    },
+    {
+     "taxonomy_level": "Euteleostomi",
+     "type": "ortholog_one2one",
+     "source": {
+      "perc_pos": 92.8444,
+      "id": "ENSG00000132356",
+      "protein_id": "ENSP00000380317",
+      "perc_id": 86.0465,
+      "species": "homo_sapiens",
+      "taxon_id": 9606
+     },
+     "method_link_type": "ENSEMBL_ORTHOLOGUES",
+     "target": {
+      "perc_pos": 90.5759,
+      "id": "ENSDARG00000060596",
+      "perc_id": 83.9442,
+      "protein_id": "ENSDARP00000079966",
+      "species": "danio_rerio",
+      "taxon_id": 7955
+     }
+    }
+   ]
+  }
+ ]
+}

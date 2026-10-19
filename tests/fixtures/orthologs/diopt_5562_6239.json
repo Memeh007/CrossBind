@@ -1,0 +1,48 @@
+{
+ "results": {
+  "5562": {
+   "181727": {
+    "best_score": "Yes",
+    "score": 11,
+    "max_score": 13,
+    "best_score_rev": "Yes",
+    "best_score_count": 2,
+    "confidence": "high",
+    "geneid": 181727,
+    "species_id": 6239,
+    "symbol": "aak-2",
+    "species_specific_geneid": "WBGene00020142",
+    "species_specific_geneid_type": "WormBase",
+    "count": 11
+   },
+   "176230": {
+    "best_score": "No",
+    "score": 6,
+    "max_score": 13,
+    "best_score_rev": "Yes",
+    "best_score_count": 1,
+    "confidence": "moderate",
+    "geneid": 176230,
+    "species_id": 6239,
+    "symbol": "aak-1",
+    "species_specific_geneid": "WBGene00019801",
+    "species_specific_geneid_type": "WormBase",
+    "count": 6
+   },
+   "172500": {
+    "best_score": "No",
+    "score": 3,
+    "max_score": 13,
+    "best_score_rev": "No",
+    "best_score_count": 0,
+    "confidence": "low",
+    "geneid": 172500,
+    "species_id": 6239,
+    "symbol": "ZK524.4",
+    "species_specific_geneid": "WBGene00013994",
+    "species_specific_geneid_type": "WormBase",
+    "count": 3
+   }
+  }
+ }
+}

@@ -613,13 +613,19 @@
     const ortho = data.orthologs || {};
     if (ortho.species || ortho.disclaimer) {
       show("panel-ortho");
-      document.getElementById("ortho-disclaimer").textContent = ortho.disclaimer || "";
+      document.getElementById("ortho-disclaimer").textContent = [ortho.banner, ortho.disclaimer]
+        .filter(Boolean)
+        .join(" ");
       const otb = document.querySelector("#ortho-table tbody");
       otb.innerHTML = (ortho.species || [])
-        .map(
-          (s) =>
-            `<tr><td>${escapeHtml(s.label)}</td><td><span class="status ${escapeHtml(s.status)}">${escapeHtml(s.status)}</span></td><td>${escapeHtml(s.id || s.symbol || "—")}</td><td>${s.identity != null ? Number(s.identity).toFixed(1) : "—"}</td><td class="muted">${escapeHtml(s.note || "")}</td></tr>`
-        )
+        .map((s) => {
+          const sym = s.symbol && s.symbol !== s.id ? `${escapeHtml(s.symbol)} ` : "";
+          const ortholog = s.id || s.symbol ? `${sym}<span class="mono">${escapeHtml(s.id || "")}</span>` : "—";
+          const src = s.method
+            ? [s.method, s.confidence, s.predicted ? "predicted" : null].filter(Boolean).join(" · ")
+            : "—";
+          return `<tr><td>${escapeHtml(s.label)}</td><td><span class="status ${escapeHtml(s.status)}">${escapeHtml(s.status)}</span></td><td>${ortholog}</td><td class="mono">${s.identity != null ? Number(s.identity).toFixed(1) : "—"}</td><td class="mono">${escapeHtml(src)}</td><td class="muted">${escapeHtml(s.note || "")}</td></tr>`;
+        })
         .join("");
     }
 

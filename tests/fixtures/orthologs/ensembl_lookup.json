@@ -1,0 +1,50 @@
+{
+ "ENSCAFG00845002768": {
+  "display_name": "PRKAA1",
+  "species": "canis_lupus_familiaris"
+ },
+ "ENSDARG00000060596": {
+  "display_name": "prkaa1",
+  "species": "danio_rerio"
+ },
+ "ENSOCUG00000000897": {
+  "display_name": "PRKAA1",
+  "species": "oryctolagus_cuniculus"
+ },
+ "FBgn0033915": {
+  "display_name": "Snrk",
+  "species": "drosophila_melanogaster"
+ },
+ "FBgn0262617": {
+  "display_name": "Nuak",
+  "species": "drosophila_melanogaster"
+ },
+ "ENSRNOG00000012799": {
+  "display_name": "Prkaa1",
+  "species": "rattus_norvegicus"
+ },
+ "WBGene00013994": {
+  "display_name": "ZK524.4",
+  "species": "caenorhabditis_elegans"
+ },
+ "WBGene00015230": {
+  "display_name": "tag-344",
+  "species": "caenorhabditis_elegans"
+ },
+ "WBGene00044388": {
+  "display_name": "C27D6.11",
+  "species": "caenorhabditis_elegans"
+ },
+ "ENSMUSG00000050697": {
+  "display_name": "Prkaa1",
+  "species": "mus_musculus"
+ },
+ "ENSFCTG00005019461": {
+  "display_name": "PRKAA1",
+  "species": "felis_catus"
+ },
+ "WBGene00012638": {
+  "display_name": "Y38H8A.4",
+  "species": "caenorhabditis_elegans"
+ }
+}

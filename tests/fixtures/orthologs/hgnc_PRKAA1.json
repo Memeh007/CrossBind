@@ -1,0 +1,16 @@
+{
+ "response": {
+  "numFound": 1,
+  "docs": [
+   {
+    "hgnc_id": "HGNC:9376",
+    "symbol": "PRKAA1",
+    "entrez_id": "5562",
+    "ensembl_gene_id": "ENSG00000132356",
+    "uniprot_ids": [
+     "Q13131"
+    ]
+   }
+  ]
+ }
+}

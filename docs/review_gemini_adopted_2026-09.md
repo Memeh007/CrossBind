@@ -6,7 +6,7 @@ Accepted into `AGENTS.md` §2.7 / §9.3 and this build pass.
 |----------|--------|
 | MiniCPM attention ~20–30K | §9.3 hard pack + ~25K soft cap; only §§0–5 + one file + one B-slice |
 | Receptor prep fragility | `crossbind/docking/receptor.py` optional **pdbfixer** repair before Open Babel |
-| PlanMine fragility | B7 must use RBH SQLite cache (queued; not live-only) |
+| PlanMine fragility | B7 shipped: `crossbind/discovery/planmine.py` SQLite cache (seeded; `scripts/build_planmine_rbh_cache.py`); live PlanMine only fills cache misses |
 | PoseBusters Windows deps | `scripts/smoke_posebusters.py` — pass before FastAPI wiring |
 | Execute B1→B2→B3 | Queue unchanged; B1 code path exists — needs `GNINA_BIN` binary |
 

@@ -35,7 +35,7 @@ def main() -> int:
     ortho = result.get("orthologs") or {}
     print("orthologs gene", ortho.get("gene"))
     for s in ortho.get("species") or []:
-        print(" -", s["label"], s["status"], s.get("id"), s.get("identity"))
+        print(" -", s["label"], s["status"], s.get("method"), s.get("id"), s.get("identity"))
 
     center = pk.get("center") or [0, 0, 0]
     ok = (
