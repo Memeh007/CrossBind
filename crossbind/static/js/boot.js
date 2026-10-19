@@ -1,18 +1,22 @@
-/* ddOS — one-shot boot overlay: instrument start-up log backed by /api/health */
+/* ddOS — one-shot boot splash: docking orb + phosphor wordmark + start-up log backed by /api/boot */
 (function () {
   "use strict";
 
   var STORAGE_KEY = "ddos_booted";
-  var STEP_MS = 380;
-  var HOLD_MS = 700;
-  var MIN_MS = 3000;
-  var MAX_MS = 5000;
-  var HEALTH_TIMEOUT_MS = 2500;
-  var REDUCED_MS = 400;
+  var STEP_MS = 170;
+  var HOLD_MS = 650;
+  var MIN_MS = 2200;
+  var MAX_MS = 4000;
+  var PROBE_TIMEOUT_MS = 1800;
+  var FONT_TIMEOUT_MS = 900;
+  var REDUCED_HOLD_MS = 900;
+  var OUT_MS = 420;
+  var OUT_FAST_MS = 160;
   var TITLE = "ddOS";
   var CAPTION = "Drug Discovery Operating System";
   var CREDIT = "Alexander Cecena & Grok Bot";
-  var LOGO_URL = "/static/img/boot-logo.png";
+  // one orb contact per check below; "system" completes the boot instead of adding a contact
+  var CHECKS = ["shell", "type", "modules", "probe", "cache", "orthologs", "vina", "p2rank", "gnina"];
 
   var TAGS = {
     pending: "[ .. ]",
@@ -60,6 +64,16 @@
     return n;
   }
 
+  function pad2(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+
+  function wait(ms) {
+    return new Promise(function (r) {
+      setTimeout(r, ms);
+    });
+  }
+
   function buildOverlay() {
     var root = el("div");
     root.id = "cb-boot";
@@ -67,40 +81,45 @@
     root.setAttribute("aria-live", "polite");
     root.setAttribute("aria-label", "ddOS starting");
 
-    var panel = el("div", "cb-boot__panel");
-    var head = el("div", "cb-boot__head");
-    var mark = el("img", "cb-boot__mark");
-    mark.src = LOGO_URL;
-    mark.alt = "";
-    mark.width = 56;
-    mark.height = 56;
-    var ident = el("div", "cb-boot__ident");
-    ident.appendChild(el("h1", "cb-boot__title", TITLE));
-    ident.appendChild(el("p", "cb-boot__caption", CAPTION));
-    head.appendChild(mark);
-    head.appendChild(ident);
+    var stage = el("div", "cb-boot__stage");
+
+    var orb = el("div", "cb-boot__orb");
+    orb.setAttribute("aria-hidden", "true");
+    var canvas = el("canvas", "cb-boot__canvas");
+    orb.appendChild(canvas);
+    ["tl", "tr", "bl", "br"].forEach(function (k) {
+      orb.appendChild(el("span", "cb-boot__corner cb-boot__corner--" + k));
+    });
+
+    var brand = el("div", "cb-boot__brand");
+    var word = el("h1", "cb-boot__word", TITLE);
+    word.setAttribute("data-text", TITLE);
+    var sub = el("p", "cb-boot__sub", CAPTION);
+    sub.setAttribute("data-text", CAPTION);
+    brand.appendChild(word);
+    brand.appendChild(sub);
 
     var log = el("ul", "cb-boot__log");
-    var bar = el("div", "cb-boot__bar");
-    bar.setAttribute("aria-hidden", "true");
-    var track = el("div", "cb-boot__track");
-    var fill = el("div", "cb-boot__fill");
-    var pct = el("span", "cb-boot__pct", "0%");
-    track.appendChild(fill);
-    bar.appendChild(track);
-    bar.appendChild(pct);
 
-    panel.appendChild(head);
-    panel.appendChild(log);
-    panel.appendChild(bar);
+    var meta = el("div", "cb-boot__meta");
+    var count = el("span", "cb-boot__count", "boot 00/" + pad2(CHECKS.length));
+    var clock = el("span", "cb-boot__clock", "t+0.00 s");
+    meta.appendChild(count);
+    meta.appendChild(clock);
+
+    stage.appendChild(orb);
+    stage.appendChild(brand);
+    stage.appendChild(log);
+    stage.appendChild(meta);
 
     var foot = el("div", "cb-boot__foot");
     foot.appendChild(el("span", null, CREDIT));
+    foot.appendChild(el("span", "cb-boot__skip", "click or press any key to skip"));
     foot.appendChild(el("span", null, "local · " + (window.location.host || "127.0.0.1")));
 
-    root.appendChild(panel);
+    root.appendChild(stage);
     root.appendChild(foot);
-    return { root: root, log: log, fill: fill, pct: pct };
+    return { root: root, canvas: canvas, log: log, count: count, clock: clock };
   }
 
   function addLine(log, key) {
@@ -109,7 +128,7 @@
     li.appendChild(el("span", "cb-boot__key", key));
     li.appendChild(el("span", "cb-boot__val", ""));
     log.appendChild(li);
-    // Force a style flush so the opacity transition runs.
+    // Force a style flush so the reveal transition runs.
     void li.offsetWidth;
     li.classList.add("is-on");
     return li;
@@ -122,12 +141,13 @@
     li.children[2].textContent = val;
   }
 
-  function probeHealth() {
+  function probeBoot() {
     var ctrl = typeof AbortController === "function" ? new AbortController() : null;
+    var t0 = performance.now();
     var timer = setTimeout(function () {
       if (ctrl) ctrl.abort();
-    }, HEALTH_TIMEOUT_MS);
-    return fetch("/api/health", { cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
+    }, PROBE_TIMEOUT_MS);
+    return fetch("/api/boot", { cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
       .then(function (r) {
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
@@ -135,6 +155,7 @@
       .then(
         function (data) {
           clearTimeout(timer);
+          data._ms = Math.round(performance.now() - t0);
           return data;
         },
         function () {
@@ -142,6 +163,46 @@
           return null;
         }
       );
+  }
+
+  function fontsReady() {
+    var f = document.fonts;
+    if (!f || !f.ready) return Promise.resolve(null);
+    return Promise.race([f.ready, wait(FONT_TIMEOUT_MS)]).then(function () {
+      try {
+        return { sans: f.check('600 16px "IBM Plex Sans"'), mono: f.check('400 12px "IBM Plex Mono"') };
+      } catch (_) {
+        return null;
+      }
+    });
+  }
+
+  function pageModules() {
+    var names = [];
+    Array.prototype.forEach.call(document.scripts, function (s) {
+      if (!s.src) return;
+      var name = s.src.split("?")[0].split("/").pop();
+      if (/^boot(-orb)?\.js$/.test(name) || names.indexOf(name) !== -1) return;
+      names.push(name);
+    });
+    return names;
+  }
+
+  function cacheLine(d) {
+    if (!d || !d.present) return { state: "", tag: TAGS.off, val: "discovery cache empty · fills on first query" };
+    if (d.error) return { state: "warn", tag: TAGS.warn, val: "discovery.sqlite unreadable" };
+    return { state: "ok", tag: TAGS.ok, val: "discovery.sqlite · " + d.entries + (d.entries === 1 ? " entry" : " entries") };
+  }
+
+  function orthologLine(o) {
+    if (!o || !o.present) {
+      return o && o.seed_available
+        ? { state: "", tag: TAGS.off, val: "PlanMine RBH not built · seed loads on first query" }
+        : { state: "warn", tag: TAGS.miss, val: "PlanMine RBH cache and seed missing" };
+    }
+    if (o.error) return { state: "warn", tag: TAGS.warn, val: "PlanMine RBH cache unreadable" };
+    var scope = o.mode === "complete" ? "full index" : o.mode === "seed" ? "seed slice" : "partial";
+    return { state: "ok", tag: TAGS.ok, val: "PlanMine RBH · " + o.symbols + " symbols · " + scope };
   }
 
   function engineLines(h) {
@@ -159,114 +220,141 @@
   }
 
   function runBoot() {
-    document.documentElement.classList.add("cb-booting");
+    var html = document.documentElement;
+    html.classList.add("cb-booting");
     var ui = buildOverlay();
     document.body.appendChild(ui.root);
 
     var reduced = prefersReducedMotion();
     var start = performance.now();
     var finished = false;
-    var queue = [];
-    var pumping = false;
-    var expected = reduced ? 1 : 6;
+    var total = CHECKS.length;
     var done = 0;
+    var flagged = [];
+    var orb = window.DdosBootOrb ? window.DdosBootOrb.create(ui.canvas, { total: total, reduced: reduced }) : null;
+    var clockTimer = reduced ? 0 : setInterval(tickClock, 50);
 
-    function progress() {
-      var u = Math.min(1, done / expected);
-      ui.fill.style.width = (u * 100).toFixed(1) + "%";
-      ui.pct.textContent = Math.round(u * 100) + "%";
+    function tickClock() {
+      ui.clock.textContent = "t+" + ((performance.now() - start) / 1000).toFixed(2) + " s";
     }
 
-    function cleanup() {
+    function counter() {
+      ui.count.textContent = "boot " + pad2(done) + "/" + pad2(total);
+      tickClock();
+    }
+
+    function settle(li, key, row) {
+      setLine(li, row.state, row.tag, row.val);
+      if (row.state === "warn" || row.state === "bad") flagged.push(key);
+      done += 1;
+      if (orb) orb.step(row.state || "off");
+      counter();
+    }
+
+    function line(key, row) {
+      settle(addLine(ui.log, key), key, row);
+    }
+
+    function finish(skipped) {
       if (finished) return;
       finished = true;
       markBooted();
-      ui.root.classList.add("cb-boot--out");
+      clearInterval(clockTimer);
+      document.removeEventListener("keydown", onSkip, true);
+      ui.root.removeEventListener("click", onSkip);
+      ui.root.classList.add(skipped ? "cb-boot--skip" : "cb-boot--out");
       setTimeout(function () {
+        if (orb) orb.destroy();
         if (ui.root.parentNode) ui.root.parentNode.removeChild(ui.root);
-        document.documentElement.classList.remove("cb-booting");
-      }, reduced ? 120 : 340);
+        html.classList.remove("cb-booting");
+      }, skipped || reduced ? OUT_FAST_MS : OUT_MS);
     }
 
-    function finishAfterHold() {
-      var elapsed = performance.now() - start;
-      setTimeout(cleanup, Math.max(HOLD_MS, MIN_MS - elapsed));
+    function onSkip() {
+      finish(true);
     }
 
-    function enqueue(fn) {
-      queue.push(fn);
-      if (!pumping) pump();
-    }
+    document.addEventListener("keydown", onSkip, true);
+    ui.root.addEventListener("click", onSkip);
+    setTimeout(function () {
+      finish(false);
+    }, MAX_MS);
 
-    function pump() {
-      if (finished || !queue.length) {
-        pumping = false;
-        return;
-      }
-      pumping = true;
-      queue.shift()();
-      setTimeout(pump, STEP_MS);
+    var probe = probeBoot();
+    var fonts = fontsReady();
+    var chain = Promise.resolve();
+
+    function next(fn) {
+      chain = chain
+        .then(function () {
+          if (!finished) return fn();
+        })
+        .then(function () {
+          if (!finished && !reduced) return wait(STEP_MS);
+        });
     }
 
     ui.root.classList.add("is-live");
 
-    if (reduced) {
-      var only = addLine(ui.log, "shell");
-      setLine(only, "ok", TAGS.ok, "interface loaded · engine probe skipped");
-      done = 1;
-      progress();
-      setTimeout(cleanup, REDUCED_MS);
-      return;
-    }
-
-    setTimeout(cleanup, MAX_MS);
-
-    var healthLine = null;
-    var health = probeHealth();
-
-    enqueue(function () {
-      setLine(addLine(ui.log, "shell"), "ok", TAGS.ok, "interface loaded");
-      done += 1;
-      progress();
+    next(function () {
+      var dom = Math.round(performance.now());
+      line("shell", { state: "ok", tag: TAGS.ok, val: "interface loaded · DOM ready in " + dom + " ms" });
     });
 
-    enqueue(function () {
-      healthLine = addLine(ui.log, "health");
-      setLine(healthLine, "", TAGS.pending, "GET /api/health");
+    next(function () {
+      return fonts.then(function (f) {
+        if (f && f.sans && f.mono) line("type", { state: "ok", tag: TAGS.ok, val: "IBM Plex Sans · IBM Plex Mono" });
+        else line("type", { state: "warn", tag: TAGS.warn, val: "IBM Plex unavailable · system fallback" });
+      });
     });
 
-    health.then(function (h) {
-      enqueue(function () {
+    next(function () {
+      var mods = pageModules();
+      line("modules", { state: "ok", tag: TAGS.ok, val: mods.length ? mods.join(" · ") : "shell only" });
+    });
+
+    var probeLi = null;
+    var boot = null;
+    next(function () {
+      probeLi = addLine(ui.log, "probe");
+      setLine(probeLi, "", TAGS.pending, "GET /api/boot");
+      return probe.then(function (h) {
+        boot = h;
         if (!h) {
-          setLine(healthLine, "warn", TAGS.fail, "no response — engine status unknown");
-          expected = 3;
+          total = done + 1;
+          if (orb) orb.setTotal(total);
+          settle(probeLi, "probe", { state: "warn", tag: TAGS.fail, val: "no response — cache / engine status unknown" });
         } else {
-          setLine(healthLine, "ok", TAGS.ok, "200 · ddOS v" + (h.version || "?"));
+          settle(probeLi, "probe", { state: "ok", tag: TAGS.ok, val: "200 · ddOS v" + (h.version || "?") + " · " + h._ms + " ms" });
         }
-        done += 1;
-        progress();
       });
+    });
 
-      var degraded = !h || !h.vina_ok || !h.p2rank_ok;
-      if (h) {
-        engineLines(h).forEach(function (row) {
-          enqueue(function () {
-            setLine(addLine(ui.log, row.key), row.state, row.tag, row.val);
-            done += 1;
-            progress();
-          });
-        });
-      }
-
-      enqueue(function () {
-        var sys = addLine(ui.log, "system");
-        if (!h) setLine(sys, "warn", TAGS.warn, "started · see /api/health");
-        else if (degraded) setLine(sys, "warn", TAGS.warn, "ready with warnings");
-        else setLine(sys, "ok", TAGS.ok, "ready");
-        done = expected;
-        progress();
-        finishAfterHold();
+    next(function () {
+      if (boot) line("cache", cacheLine(boot.caches && boot.caches.discovery));
+    });
+    next(function () {
+      if (boot) line("orthologs", orthologLine(boot.caches && boot.caches.orthologs));
+    });
+    [0, 1, 2].forEach(function (i) {
+      next(function () {
+        if (!boot) return;
+        var row = engineLines(boot)[i];
+        line(row.key, row);
       });
+    });
+
+    next(function () {
+      var sys = addLine(ui.log, "system");
+      if (!boot) setLine(sys, "warn", TAGS.warn, "started · see /api/health");
+      else if (flagged.length) setLine(sys, "warn", TAGS.warn, "ready · check " + flagged.join(", "));
+      else setLine(sys, "ok", TAGS.ok, "ready");
+      if (orb) orb.complete();
+      counter();
+      var elapsed = performance.now() - start;
+      setTimeout(function () {
+        finish(false);
+      }, reduced ? REDUCED_HOLD_MS : Math.max(HOLD_MS, MIN_MS - elapsed));
     });
   }
 

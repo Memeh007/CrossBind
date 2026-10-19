@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import shutil
+import sqlite3
 import threading
+from contextlib import closing
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -33,7 +35,8 @@ from crossbind.pubchem import name_to_smiles
 from crossbind.discovery import ortholog_panel, refresh_for_target, resolve_protein_query, run_discovery
 from crossbind.discovery.structure_convert import StructureConvertError, ensure_receptor_pdb, receptor_convert_meta
 from crossbind.discovery.pocket import auto_docking_box, resolve_pockets, select_pocket_by_id
-from crossbind.discovery.cache import structures_dir
+from crossbind.discovery.cache import DB_PATH as DISCOVERY_DB, structures_dir
+from crossbind.discovery.planmine import SEED_PATH as PLANMINE_SEED, db_path as planmine_db_path
 from crossbind.job_identity import identity_from_discovery, identity_from_manual
 from crossbind.residues import parse_residues
 from crossbind.security import assert_under, safe_filename
@@ -120,6 +123,47 @@ async def home(request: Request):
 @app.get("/api/health")
 async def health():
     return {"ok": True, "app": "ddOS", "version": __version__, **_engine_status()}
+
+
+def _sqlite_ro(path: Path) -> sqlite3.Connection:
+    return sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True, timeout=2)
+
+
+def _boot_status(
+    *,
+    discovery_db: Path | None = None,
+    planmine_db: Path | None = None,
+    jobs_dir: Path | None = None,
+) -> dict:
+    """Read-only local state for the boot splash. Never creates cache files."""
+    disc_path = Path(discovery_db or DISCOVERY_DB)
+    discovery: dict = {"present": disc_path.is_file(), "entries": 0}
+    if discovery["present"]:
+        try:
+            with closing(_sqlite_ro(disc_path)) as con:
+                discovery["entries"] = con.execute("SELECT COUNT(*) FROM entity_cache").fetchone()[0]
+        except sqlite3.Error:
+            discovery["error"] = "unreadable"
+
+    pm_path = Path(planmine_db or planmine_db_path())
+    orthologs: dict = {"present": pm_path.is_file(), "source": "planmine_rbh", "seed_available": PLANMINE_SEED.is_file()}
+    if orthologs["present"]:
+        try:
+            with closing(_sqlite_ro(pm_path)) as con:
+                meta = dict(con.execute("SELECT key, value FROM meta").fetchall())
+                orthologs["symbols"] = con.execute("SELECT COUNT(*) FROM queried_symbol").fetchone()[0]
+                orthologs["mode"] = "complete" if meta.get("complete") == "1" else meta.get("mode") or "partial"
+        except sqlite3.Error:
+            orthologs["error"] = "unreadable"
+
+    jdir = Path(jobs_dir or JOBS_DIR)
+    jobs = sum(1 for p in jdir.iterdir() if p.is_dir()) if jdir.is_dir() else 0
+    return {"caches": {"discovery": discovery, "orthologs": orthologs}, "jobs": jobs}
+
+
+@app.get("/api/boot")
+async def boot_status():
+    return {"ok": True, "app": "ddOS", "version": __version__, **_engine_status(), **_boot_status()}
 
 
 @app.post("/api/pubchem")
